@@ -2871,12 +2871,13 @@ ReadToken(char *string, int *position)
 }
 
 #ifdef	USE_XFT
-static struct _XmXftDrawCacheStruct {
-	Display	*display;
-	Window	window;
-	XftDraw	*draw;
-} *_XmXftDrawCache = NULL;
-static int _XmXftDrawCacheSize = 0;
+/*
+ * XftDraw management moved behind the XmPlat contract
+ * (XmPlat/XmPlatDraw.c owns the per-window XftDraw cache).  These
+ * wrappers keep the internal entry points used by widget code working;
+ * they build a stack XmPlat handle and let the backend do the work.
+ */
+#include "XmPlat/XmPlatP.h"
 
 #ifndef FIX_1444
 static XErrorHandler           oldErrorHandler;
@@ -2902,73 +2903,24 @@ _XmXftErrorHandler(
 XftDraw *
 _XmXftDrawCreate(Display *display, Window window)
 {
-	XftDraw			*draw;
-	int			i;
+	XmPlatSurface s ;
+	XmPlatDrawCtx c ;
+	XftDraw *draw ;
 
-	for (i=0; i<_XmXftDrawCacheSize; i++) {
-		if (_XmXftDrawCache[i].display == display &&
-		    _XmXftDrawCache[i].window == window) {
-			return _XmXftDrawCache[i].draw;
-		}
-	}
-
-#ifdef FIX_1444
-	if (!(draw = XftDrawCreate(display, window,
-	    DefaultVisual(display, DefaultScreen(display)),
-	    DefaultColormap(display, DefaultScreen(display))))) 
-            	draw = XftDrawCreateBitmap(display, window);
-#else
-	oldErrorHandler = XSetErrorHandler (_XmXftErrorHandler);	
-	xft_error = 0;
-	XGetWindowAttributes(display, window, &wa);
-	XSetErrorHandler(oldErrorHandler);
-	if (xft_error != BadWindow) {
-	    draw = XftDrawCreate(display, window,
-	        DefaultVisual(display, DefaultScreen(display)),
-	        DefaultColormap(display, DefaultScreen(display)));
-	} else {
-            draw = XftDrawCreateBitmap(display, window);
-        }
-#endif
-	/* Store it in the cache. Look for an empty slot first */
-	for (i=0; i<_XmXftDrawCacheSize; i++)
-		if (_XmXftDrawCache[i].display == NULL) {
-			_XmXftDrawCache[i].display = display;
-			_XmXftDrawCache[i].draw = draw;
-			_XmXftDrawCache[i].window = window;
-			return draw;
-		}
-	i = _XmXftDrawCacheSize;	/* Next free index */
-	_XmXftDrawCacheSize = _XmXftDrawCacheSize * 2 + 8;
-	_XmXftDrawCache = (struct _XmXftDrawCacheStruct *)
-		XtRealloc((char *)_XmXftDrawCache,
-		sizeof(struct _XmXftDrawCacheStruct) * _XmXftDrawCacheSize);
-#ifdef FIX_1449
-	memset(_XmXftDrawCache + i, 0, (_XmXftDrawCacheSize - i) * sizeof(*_XmXftDrawCache));
-#endif
-
-	_XmXftDrawCache[i].display = display;
-	_XmXftDrawCache[i].draw = draw;
-	_XmXftDrawCache[i].window = window;
-	
-	return draw;
+	s = _XmPlatSurfaceOfWindow (display, window) ;
+	c = _XmPlatCtx (display, window, NULL) ;
+	draw = _XmPlatXftDrawOf (c, s) ;
+	_XmPlatCtxFree (c) ;
+	_XmPlatSurfaceFree (s) ;
+	return draw ;
 }
 
 void
 _XmXftDrawDestroy(Display *display, Window window, XftDraw *draw)
 {
-    int i;
-
-    for (i=0; i<_XmXftDrawCacheSize; i++)
-	if (_XmXftDrawCache[i].display == display &&
-	    _XmXftDrawCache[i].window == window) {
-	        _XmXftDrawCache[i].display = NULL;
-	        _XmXftDrawCache[i].draw = NULL;
-	        _XmXftDrawCache[i].window = None;
-	        XftDrawDestroy(draw);
-	        return;
-        }
-    XmeWarning(NULL, "_XmXftDrawDestroy() this should not happen\n");
+    /* The XmPlat cache owns its XftDraw objects; external destroy is
+       no longer possible.  Kept as a no-op for source compatibility. */
+    (void) display; (void) window; (void) draw;
 }
 
 void
@@ -2980,38 +2932,24 @@ _XmXftDrawString2(Display *display, Window window, GC gc, XftFont *font, int bpc
 #endif
                 char *s, int len)
 {
-    XftDraw	*draw = _XmXftDrawCreate(display, window);
-    XGCValues gc_val;
-    XColor xcol;
-    XftColor xftcol;
-    
-    XGetGCValues(display, gc, GCForeground, &gc_val);
-
-    xcol.pixel = gc_val.foreground;
-    XQueryColor(display, DefaultColormap(display,
-        DefaultScreen(display)), &xcol);
-    xftcol.color.red = xcol.red;
-    xftcol.color.blue = xcol.blue;
-    xftcol.color.green = xcol.green;
-    xftcol.color.alpha = 0xFFFF;
+    XmPlatDrawCtx c ;
+    XmPlatFont f ;
+    int kind ;
 
     switch (bpc)
     {
-	case 1:
-		XftDrawStringUtf8(draw, &xftcol, font,
-			x, y, (XftChar8 *)s, len);
-		break;
-	case 2:
-		XftDrawString16(draw, &xftcol, font,
-			x, y, (XftChar16 *)s, len);
-		break;
-	case 4:
-		XftDrawString32(draw, &xftcol, font,
-			x, y, (XftChar32 *)s, len);
-		break;
+	case 1: kind = XmPlatTextUTF8 ; break ;
+	case 2: kind = XmPlatText16 ; break ;
+	case 4: kind = XmPlatText32 ; break ;
 	default:
 		XmeWarning(NULL, "_XmXftDrawString(unsupported bpc)\n");
+		return ;
     }
+    c = _XmPlatCtx (display, window, gc) ;
+    f = _XmPlatFontOfXftFontD (display, font) ;
+    _XmPlatDrawString (c, f, kind, s, len, x, y, 0) ;
+    _XmPlatCtxFree (c) ;
+    _XmPlatFontFree (f) ;
 }
 
 void
@@ -3029,99 +2967,122 @@ _XmXftDrawString(Display *display, Window window, XmRendition rend, int bpc,
 #endif
 		)
 {
-    XftDraw	*draw = _XmXftDrawCreate(display, window);
-    XftColor    fg_color = _XmRendXftFG(rend);
-
-    if (image)
-    {
-        XftColor bg_color = _XmRendXftBG(rend);
-	XGlyphInfo ext;
-	ext.xOff = 0;
-	
-	switch (bpc)
-	{
-	    case 1:
-	        XftTextExtentsUtf8(display, _XmRendXftFont(rend),
-		                (FcChar8*)s, len, &ext);
-		break;
-	    case 2:
-	        XftTextExtents16(display, _XmRendXftFont(rend),
-		                 (FcChar16*)s, len, &ext);
-		break;
-	    case 4:
-	        XftTextExtents32(display, _XmRendXftFont(rend),
-		                 (FcChar32*)s, len, &ext);
-		break;
-	}
-	
-	if (_XmRendBG(rend) == XmUNSPECIFIED_PIXEL)
-	{
-	    XGCValues gc_val;
-	    XColor xcol;
-
-	    XGetGCValues(display, _XmRendGC(rend), GCBackground, &gc_val);
-	    xcol.pixel = gc_val.background;
-            XQueryColor(display, DefaultColormapOfScreen(
-                  DefaultScreenOfDisplay(display)), &xcol);
-	    bg_color.pixel = xcol.pixel;
-	    bg_color.color.red = xcol.red;
-	    bg_color.color.green = xcol.green;
-	    bg_color.color.blue = xcol.blue;
-	    bg_color.color.alpha = 0xFFFF;
-	}
-#ifdef FIX_1451
-        XftDrawRect(draw, &bg_color, x, y - _XmRendXftFont(rend)->ascent,
-	            ext.xOff,
-		    _XmRendXftFont(rend)->ascent +
-		    _XmRendXftFont(rend)->descent);
-#else
-        XftDrawRect(draw, &bg_color, x - 10, y - _XmRendXftFont(rend)->ascent - 10,
-	            ext.xOff +20,
-		    _XmRendXftFont(rend)->ascent +
-		    _XmRendXftFont(rend)->descent + 20);
-#endif
-    }
-
-    if (_XmRendFG(rend) == XmUNSPECIFIED_PIXEL)
-    {
-        XGCValues gc_val;
-	XColor xcol;
-	XGetGCValues(display, _XmRendGC(rend), GCForeground, &gc_val);
-	xcol.pixel = gc_val.foreground;
-        XQueryColor(display, DefaultColormapOfScreen(
-              DefaultScreenOfDisplay(display)), &xcol);
-	fg_color.pixel = xcol.pixel;
-	fg_color.color.red = xcol.red;
-	fg_color.color.green = xcol.green;
-	fg_color.color.blue = xcol.blue;
-	fg_color.color.alpha = 0xFFFF;
-    }
+    XmPlatDrawCtx c ;
+    XmPlatFont f ;
+    XmPlatSurface surf ;
+    int kind ;
+    XmPlatColor fgcol, bgcol ;
 
     switch (bpc)
     {
-	case 1:
-		XftDrawStringUtf8(draw, &fg_color, _XmRendXftFont(rend),
-			x, y, (XftChar8 *)s, len);
-		break;
-	case 2:
-		XftDrawString16(draw, &fg_color, _XmRendXftFont(rend),
-			x, y, (XftChar16 *)s, len);
-		break;
-	case 4:
-		XftDrawString32(draw, &fg_color, _XmRendXftFont(rend),
-			x, y, (XftChar32 *)s, len);
-		break;
+	case 1: kind = XmPlatTextUTF8 ; break ;
+	case 2: kind = XmPlatText16 ; break ;
+	case 4: kind = XmPlatText32 ; break ;
 	default:
 		XmeWarning(NULL, "_XmXftDrawString(unsupported bpc)\n");
+		return ;
     }
+
+    memset (&fgcol, 0, sizeof (fgcol)) ;
+    memset (&bgcol, 0, sizeof (bgcol)) ;
+    fgcol.pixel = _XmRendXftFG(rend).pixel ;
+    fgcol.red = _XmRendXftFG(rend).color.red ;
+    fgcol.green = _XmRendXftFG(rend).color.green ;
+    fgcol.blue = _XmRendXftFG(rend).color.blue ;
+    fgcol.alpha = (unsigned short) _XmRendXftFG(rend).color.alpha ;
+
+    if (_XmRendFG(rend) == XmUNSPECIFIED_PIXEL)
+    {
+        { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, _XmRendGC(rend)) ;
+	fgcol.pixel = _XmPlatGetForeground (_c) ;
+	_XmPlatCtxFree (_c) ; }
+	{
+	XColor xcol;
+	xcol.pixel = fgcol.pixel;
+        XQueryColor(display, DefaultColormapOfScreen(
+              DefaultScreenOfDisplay(display)), &xcol);
+	fgcol.red = xcol.red;
+	fgcol.green = xcol.green;
+	fgcol.blue = xcol.blue;
+	fgcol.alpha = 0xFFFF;
+    }
+    }
+
+    surf = _XmPlatSurfaceOfWindow (display, window) ;
+    c = _XmPlatCtx (display, window, _XmRendGC(rend)) ;
+
+    if (image)
+    {
+	XmPlatFont _tf = _XmPlatFontOfXftFontD (display, _XmRendXftFont(rend)) ;
+	int _w ;
+
+	_w = _XmPlatTextWidth (_tf, kind, s, len) ;
+	_XmPlatFontFree (_tf) ;
+
+	bgcol.pixel = _XmRendXftBG(rend).pixel ;
+	bgcol.red = _XmRendXftBG(rend).color.red ;
+	bgcol.green = _XmRendXftBG(rend).color.green ;
+	bgcol.blue = _XmRendXftBG(rend).color.blue ;
+	bgcol.alpha = (unsigned short) _XmRendXftBG(rend).color.alpha ;
+
+	if (_XmRendBG(rend) == XmUNSPECIFIED_PIXEL)
+	{
+	    XColor xcol;
+	    { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, _XmRendGC(rend)) ;
+	    xcol.pixel = _XmPlatGetBackground (_c) ;
+	    _XmPlatCtxFree (_c) ; }
+            XQueryColor(display, DefaultColormapOfScreen(
+                  DefaultScreenOfDisplay(display)), &xcol);
+	    bgcol.pixel = xcol.pixel;
+	    bgcol.red = xcol.red;
+	    bgcol.green = xcol.green;
+	    bgcol.blue = xcol.blue;
+	    bgcol.alpha = 0xFFFF;
+	}
+	/* image background rect through the contract */
+	{
+	    XmPlatDrawCtx fc = _XmPlatCtx (display, window, NULL) ;
+	    XmPlatColor solid = bgcol ;
+
+	    _XmPlatSetForeground (fc, solid.pixel) ;
+	    _XmPlatFillRect (fc, x,
+			     y - _XmRendXftFont(rend)->ascent,
+			     (unsigned int) _w,
+			     (unsigned int) (_XmRendXftFont(rend)->ascent +
+					     _XmRendXftFont(rend)->descent)) ;
+	    _XmPlatCtxFree (fc) ;
+	}
+    }
+
+    f = _XmPlatFontOfXftFontD (display, _XmRendXftFont(rend)) ;
+    _XmPlatDrawStringColored (c, f, kind, s, len, x, y, image, &fgcol) ;
+    _XmPlatFontFree (f) ;
+    _XmPlatCtxFree (c) ;
+    _XmPlatSurfaceFree (surf) ;
 }
 
 void
 _XmXftSetClipRectangles(Display *display, Window window, Position x, Position y, XRectangle *rects, int n)
 {
-	XftDraw	*d = _XmXftDrawCreate(display, window);
+    /*
+     * Clip for Xft text lives on the XftDraw (which derives from the
+     * window); route through the contract's XftDraw seam so the
+     * backend cache owns it.
+     */
+    XmPlatSurface s = _XmPlatSurfaceOfWindow (display, window) ;
+    XmPlatDrawCtx c = _XmPlatCtx (display, window, NULL) ;
+    int i ;
 
-	XftDrawSetClipRectangles(d, x, y, rects, n);
+    (void) x ; (void) y ;
+    if (n == 0) {
+	XftDraw *draw = _XmPlatXftDrawOf (c, s) ;
+	XftDrawSetClip (draw, NULL) ;
+    } else {
+	XftDraw *draw = _XmPlatXftDrawOf (c, s) ;
+	XftDrawSetClipRectangles (draw, 0, 0, rects, n) ;
+    }
+    _XmPlatCtxFree (c) ;
+    _XmPlatSurfaceFree (s) ;
 }
 
 #ifdef FIX_1536
@@ -3194,14 +3155,13 @@ _XmXftGetXftColor(Display *display, Pixel color)
 #ifdef FIX_1415
 void _XmXftFontAverageWidth(Widget w, XtPointer f, int *width)
 {
-	XftFont *fp = (XftFont *)f;
-	static char	*s = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	XmPlatFont fp = _XmPlatFontOfXftFontD (XtDisplay (w), f) ;
 	int l = 62; /* strlen(s) */
-	XGlyphInfo	ext;
+	static char	*s = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-	XftTextExtents8(XtDisplay(w), fp, (unsigned char *)s, l, &ext);
-    if (width) 
-    	*width = ext.width / l;
+	if (width)
+		*width = _XmPlatTextWidth (fp, XmPlatText8, s, l) / l ;
+	_XmPlatFontFree (fp) ;
 }
 #endif
 
@@ -3419,37 +3379,36 @@ XmRenderTableGetDefaultFontExtents(XmRenderTable rendertable,
       success = _XmRenderTableFindFirstFont(rendertable, &indx, &rend);
 
     if (success) {
-        /* Find font height */
+        /* Find font height - through the font-token metrics prims */
+        XmPlatFont token = NULL ;
+
         switch (_XmRendFontType(rend)) {
             case XmFONT_IS_FONT:
-                if (_XmRendFont(rend)) {
-                    a = ((XFontStruct*)_XmRendFont(rend))->ascent;
-                    d = ((XFontStruct*)_XmRendFont(rend))->descent;
-                    h = a + d;
-                }
-                break;
+                if (_XmRendFont(rend))
+                    token = _XmPlatFontOfFontStructD (
+                                _XmRendDisplay(rend),
+                                (XFontStruct *) _XmRendFont(rend)) ;
+                break ;
             case XmFONT_IS_FONTSET:
-                if (_XmRendFont(rend)) {
-                    XFontStruct **font_struct_list;
-                    char **font_name_list;
-
-                    if (XFontsOfFontSet((XFontSet)_XmRendFont(rend),
-                                &font_struct_list, &font_name_list)) {
-                        a = font_struct_list[0]->ascent;
-                        d = font_struct_list[0]->descent;
-                        h = a + d;
-                    }
-                }
-                break;
-#ifdef USE_XFT
-                case XmFONT_IS_XFT:
-                    if (_XmRendXftFont(rend)) {
-                        a = _XmRendXftFont(rend)->ascent;
-                        d = _XmRendXftFont(rend)->descent;
-                        h = a + d;
-                    }
-                    break;
-#endif
+                if (_XmRendFont(rend))
+                    token = _XmPlatFontOfFontSetD (
+                                _XmRendDisplay(rend),
+                                (XFontSet) _XmRendFont(rend)) ;
+                break ;
+            case XmFONT_IS_XFT:
+                if (_XmRendXftFont(rend))
+                    token = _XmPlatFontOfXftFontD (
+                                _XmRendDisplay(rend),
+                                _XmRendXftFont(rend)) ;
+                break ;
+            default:
+                break ;
+        }
+        if (token != NULL) {
+            a = _XmPlatFontAscent (token) ;
+            d = _XmPlatFontDescent (token) ;
+            h = a + d ;
+            _XmPlatFontFree (token) ;
         }
     }
 

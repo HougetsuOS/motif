@@ -1509,9 +1509,11 @@ _XmTextFToggleCursorGC(Widget widget)
     values.function = GXxor;
   } else {
     valueMask = GCStipple;
-    if (XGetGCValues(XtDisplay(widget), tf->text.image_gc, 
-		     valueMask, &values))
-      stipple = values.stipple;
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (widget), 0, tf->text.image_gc) ;
+    XmPlatSurface _st = _XmPlatGetStipple (_c) ;
+    stipple = _st ? (Pixmap) _XmPlatSurfaceDrawable (_st) : None ;
+    if (_st) _XmPlatSurfaceFree (_st) ;
+    _XmPlatCtxFree (_c) ; }
     valueMask = GCFillStyle|GCFunction|GCForeground|GCBackground;
     if (XtIsSensitive(widget) && !tf->text.add_mode &&
 	(tf->text.has_focus || tf->text.has_destination)) {
@@ -2057,13 +2059,15 @@ DrawText(XmTextFieldWidget tf,
 	 int length)
 {
   if (TextF_UseFontSet(tf)) {
+    XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tf), XtWindow (tf), gc) ;
+    XmPlatFont _f = _XmPlatFontOfFontSetD (XtDisplay (tf),
+					   (XFontSet) TextF_Font (tf)) ;
     if (tf->text.max_char_size != 1) 
-      XwcDrawString (XtDisplay(tf), XtWindow(tf), (XFontSet)TextF_Font(tf),
-		     gc, x, y, (wchar_t*) string, length);
-    
+      _XmPlatDrawString (_c, _f, XmPlatTextWC, string, length, x, y, 0);
     else  /* one byte chars */
-      XmbDrawString (XtDisplay(tf), XtWindow(tf), (XFontSet)TextF_Font(tf),
-		     gc, x, y, string, length);
+      _XmPlatDrawString (_c, _f, XmPlatTextMB, string, length, x, y, 0);
+    _XmPlatFontFree (_f) ;
+    _XmPlatCtxFree (_c) ;
     
 #ifdef USE_XFT
   } else if (TextF_UseXft(tf)) {
@@ -2080,13 +2084,23 @@ DrawText(XmTextFieldWidget tf,
       num_bytes = wcstombs(tmp, wc_string,
 			   (int)((length + 1) * sizeof(wchar_t)));
       wc_string[length] = tmp_wc;
-      if (num_bytes >= 0)
-        _XmXftDrawString2(XtDisplay(tf), XtWindow(tf), gc, TextF_XftFont(tf),
-			1, x, y, tmp, num_bytes);
+      if (num_bytes >= 0) {
+        XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tf), XtWindow (tf), gc) ;
+        XmPlatFont _f = _XmPlatFontOfXftFontD (XtDisplay (tf),
+					       TextF_XftFont (tf)) ;
+        _XmPlatDrawString (_c, _f, XmPlatTextUTF8, tmp, num_bytes, x, y, 0) ;
+        _XmPlatFontFree (_f) ;
+        _XmPlatCtxFree (_c) ;
+      }
       XmStackFree(tmp, stack_cache);
-    } else /* one byte chars */
-        _XmXftDrawString2(XtDisplay(tf), XtWindow(tf), gc, TextF_XftFont(tf),
-			1, x, y, string, length);
+    } else /* one byte chars */ {
+        XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tf), XtWindow (tf), gc) ;
+        XmPlatFont _f = _XmPlatFontOfXftFontD (XtDisplay (tf),
+					       TextF_XftFont (tf)) ;
+        _XmPlatDrawString (_c, _f, XmPlatTextUTF8, string, length, x, y, 0) ;
+        _XmPlatFontFree (_f) ;
+        _XmPlatCtxFree (_c) ;
+    }
 #endif
   } else { /* have a font struct, not a font set */
     if (tf->text.max_char_size != 1) { /* was passed a wchar_t*  */
@@ -2133,14 +2147,20 @@ FindPixelLength(XmTextFieldWidget tf,
 		int length)
 {
   if (TextF_UseFontSet(tf)) {
+    XmPlatFont _f = _XmPlatFontOfFontSetD (XtDisplay (tf),
+					   (XFontSet) TextF_Font (tf)) ;
+    int _w ;
     if (tf->text.max_char_size != 1)
-      return (XwcTextEscapement((XFontSet)TextF_Font(tf), 
-				(wchar_t *) string, length));
+      _w = _XmPlatTextWidth (_f, XmPlatTextWC, string, length);
     else /* one byte chars */
-      return (XmbTextEscapement((XFontSet)TextF_Font(tf), string, length));
+      _w = _XmPlatTextWidth (_f, XmPlatTextMB, string, length);
+    _XmPlatFontFree (_f) ;
+    return _w ;
 #ifdef USE_XFT
   } else if (TextF_UseXft(tf)) {
-    XGlyphInfo	ext;
+    XmPlatFont _f = _XmPlatFontOfXftFontD (XtDisplay (tf),
+					   TextF_XftFont (tf)) ;
+    int _w ;
     if (tf->text.max_char_size != 1) { /* was passed a wchar_t*  */
       wchar_t *wc_string = (wchar_t*)string;
       wchar_t wc_tmp = wc_string[length];
@@ -2153,21 +2173,23 @@ FindPixelLength(XmTextFieldWidget tf,
       num_bytes = wcstombs(tmp, wc_string, 
 			   (int)((length + 1)*sizeof(wchar_t)));
       wc_string[length] = wc_tmp;
-      XftTextExtentsUtf8(XtDisplay(tf), TextF_XftFont(tf),
-              (FcChar8*)tmp, num_bytes, &ext);
+      _w = (num_bytes >= 0)
+	     ? _XmPlatTextWidth (_f, XmPlatTextUTF8, tmp, num_bytes) : 0 ;
       XmStackFree(tmp, stack_cache);
     } else /* one byte chars */
-      XftTextExtentsUtf8(XtDisplay(tf), TextF_XftFont(tf),
-              (FcChar8*)string, length, &ext);
-
-    return ext.xOff;
+      _w = _XmPlatTextWidth (_f, XmPlatTextUTF8, string, length) ;
+    _XmPlatFontFree (_f) ;
+    return _w ;
 #endif
   } else { /* have font struct, not a font set */
+    XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay (tf),
+					      TextF_Font (tf)) ;
+    int _w ;
     if (tf->text.max_char_size != 1) { /* was passed a wchar_t*  */
       wchar_t *wc_string = (wchar_t*)string;
       wchar_t wc_tmp = wc_string[length];
       char stack_cache[400], *tmp;
-      int num_bytes, ret_len = 0;
+      int num_bytes;
       
       wc_string[length] = 0L;
       tmp = (char*)XmStackAlloc((Cardinal)((length + 1) * sizeof(wchar_t)),
@@ -2179,16 +2201,18 @@ FindPixelLength(XmTextFieldWidget tf,
         { if (_XmIsISO10646(XtDisplay(tf), TextF_Font(tf))) {
             size_t str_len = 0;
             XChar2b *str = _XmUtf8ToUcs2(tmp, num_bytes, &str_len);
-            ret_len = XTextWidth16(TextF_Font(tf), str, str_len);
+            _w = _XmPlatTextWidth (_f, XmPlatText16, str, (int) str_len) ;
             XFree(str);
             }
           else
-            ret_len = XTextWidth(TextF_Font(tf), tmp, num_bytes);
+            _w = _XmPlatTextWidth (_f, XmPlatText8, tmp, num_bytes) ;
         }
+      else _w = 0 ;
       XmStackFree(tmp, stack_cache);
-      return (ret_len);
     } else /* one byte chars */
-        return XTextWidth(TextF_Font(tf), string, length);
+        _w = _XmPlatTextWidth (_f, XmPlatText8, string, length) ;
+    _XmPlatFontFree (_f) ;
+    return _w ;
   }
 }
 
@@ -3868,17 +3892,24 @@ PrintableString(XmTextFieldWidget tf,
 #else /* SUPPORT_ZERO_WIDTH */
   if (TextF_UseFontSet(tf)) {
       if(use_wchar) 
-	  return (XwcTextEscapement((XFontSet)TextF_Font(tf), (wchar_t *)str, n) != 0);
+	  { XmPlatFont _f = _XmPlatFontOfFontSetD (XtDisplay (tf),
+						   (XFontSet) TextF_Font (tf)) ;
+	  Boolean _p = (_XmPlatTextWidth (_f, XmPlatTextWC, str, n) != 0) ;
+	  _XmPlatFontFree (_f) ;
+	  return _p ; }
       else
-	  return (XmbTextEscapement((XFontSet)TextF_Font(tf), str, n) != 0);
+	  { XmPlatFont _f = _XmPlatFontOfFontSetD (XtDisplay (tf),
+						   (XFontSet) TextF_Font (tf)) ;
+	  Boolean _p = (_XmPlatTextWidth (_f, XmPlatTextMB, str, n) != 0) ;
+	  _XmPlatFontFree (_f) ;
+	  return _p ; }
 #ifdef USE_XFT
   } else if (TextF_UseXft(tf)) {
-    XGlyphInfo	ext;
-
-    XftTextExtentsUtf8(XtDisplay(tf), TextF_XftFont(tf),
-            (FcChar8*)str, n, &ext);
-
-    return ext.xOff != 0;
+    XmPlatFont _f = _XmPlatFontOfXftFontD (XtDisplay (tf),
+					   TextF_XftFont (tf)) ;
+    Boolean _p = (_XmPlatTextWidth (_f, XmPlatTextUTF8, str, n) != 0) ;
+    _XmPlatFontFree (_f) ;
+    return _p ;
 #endif
   }
   else {
@@ -3903,12 +3934,20 @@ PrintableString(XmTextFieldWidget tf,
       } while ( (ret_val > 0)&& (buf_size >= MB_CUR_MAX) && (count < n) ) ;
       if (ret_val == -1)    /* bad character */
 	return (False);
-      is_printable = XTextWidth(TextF_Font(tf), cache_ptr, tmp - cache_ptr);
+      { XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay (tf),
+						  TextF_Font (tf)) ;
+      is_printable = _XmPlatTextWidth (_f, XmPlatText8, cache_ptr,
+				       (int) (tmp - cache_ptr)) ;
+      _XmPlatFontFree (_f) ; }
       XmStackFree(cache_ptr, cache);
       return (is_printable);
     }
     else {
-      return (XTextWidth(TextF_Font(tf), str, n) != 0);
+      { XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay (tf),
+						  TextF_Font (tf)) ;
+      Boolean _p = (_XmPlatTextWidth (_f, XmPlatText8, str, n) != 0) ;
+      _XmPlatFontFree (_f) ;
+      return _p ; }
     }
   }
 #endif /* SUPPORT_ZERO_WIDTH */ 
@@ -7002,22 +7041,21 @@ LoadFontMetrics(XmTextFieldWidget tf)
       fs_extents->max_logical_extent.y;
 #ifdef USE_XFT
   } else if (TextF_UseXft(tf)) {
-#ifdef FIX_1415
-	  _XmXftFontAverageWidth((Widget) tf, TextF_XftFont(tf), (int *)&charwidth);
-#else
-    charwidth = TextF_XftFont(tf)->max_advance_width;
-#endif
-    TextF_FontAscent(tf) = TextF_XftFont(tf)->ascent;
-    TextF_FontDescent(tf) = TextF_XftFont(tf)->descent;
+    { XmPlatFont _f = _XmPlatFontOfXftFontD (XtDisplay (tf),
+					     TextF_XftFont (tf)) ;
+    charwidth = (unsigned long) _XmPlatFontAverageWidth (_f) ;
+    TextF_FontAscent(tf) = _XmPlatFontAscent (_f) ;
+    TextF_FontDescent(tf) = _XmPlatFontDescent (_f) ;
+    _XmPlatFontFree (_f) ; }
 #endif
   } else {
     font = TextF_Font(tf);
     if (!XGetFontProperty(font, XA_QUAD_WIDTH, &charwidth) ||
 	charwidth == 0) {
-      if (font->per_char && font->min_char_or_byte2 <= '0' &&
-	  font->max_char_or_byte2 >= '0')
-	charwidth = font->per_char['0' - font->min_char_or_byte2].width;
-      else
+      { XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay (tf), font) ;
+      charwidth = (unsigned long) _XmPlatDigitWidth (_f, 1) ;
+      _XmPlatFontFree (_f) ; }
+      if (charwidth == 0)
 	charwidth = font->max_bounds.width;
     }  
     TextF_FontAscent(tf) = font->max_bounds.ascent;
@@ -9250,9 +9288,12 @@ PreeditDraw(XIC xic,
         if (TextF_UseFontSet(tf)){
 
             if (call_data->text->encoding_is_wchar){
-                escapement = XwcTextExtents((XFontSet)TextF_Font(tf),
-                        call_data->text->string.wide_char, insert_length,
-                        &overall_ink, NULL);
+                { XmPlatFont _f = _XmPlatFontOfFontSetD (XtDisplay (tf),
+							 (XFontSet) TextF_Font (tf)) ;
+                escapement = _XmPlatTextWidth (_f, XmPlatTextWC,
+			    call_data->text->string.wide_char, insert_length) ;
+                overall_ink.width = (unsigned short) escapement ;
+                _XmPlatFontFree (_f) ; }
            	tab_wc = (wchar_t*) XtMalloc((unsigned)(1+1) * sizeof(wchar_t));
                 mbstowcs(tab_wc, "\t", 1);
                 if ( escapement == 0 && overall_ink.width == 0 &&
@@ -9265,8 +9306,12 @@ PreeditDraw(XIC xic,
             } else {
                 mb = XtMalloc((insert_length+1)*(tf->text.max_char_size));
                 strcpy(mb, call_data->text->string.multi_byte);
-                escapement = XmbTextExtents((XFontSet)TextF_Font(tf),
-                        mb, strlen(mb), &overall_ink, NULL);
+                { XmPlatFont _f = _XmPlatFontOfFontSetD (XtDisplay (tf),
+							 (XFontSet) TextF_Font (tf)) ;
+                escapement = _XmPlatTextWidth (_f, XmPlatTextMB, mb,
+					       (int) strlen (mb)) ;
+                _XmPlatFontFree (_f) ; }
+                overall_ink.width = (unsigned short) escapement ;
                 if ( escapement == 0 && overall_ink.width == 0 &&
                     strchr(call_data->text->string.multi_byte, '\t') == 0){
                         /* cursor on */
@@ -9561,29 +9606,36 @@ TextFieldResetIC(Widget w)
 
     if (insert_length > 0) {
         if (TextF_UseFontSet(tf)){
-            escapement = XmbTextExtents((XFontSet)TextF_Font(tf), mb,
-                        insert_length, &overall_ink, NULL );
+            { XmPlatFont _f = _XmPlatFontOfFontSetD (XtDisplay ((Widget) tf),
+						     (XFontSet) TextF_Font (tf)) ;
+            escapement = _XmPlatTextWidth (_f, XmPlatTextMB, mb, insert_length) ;
+            _XmPlatFontFree (_f) ; }
+            overall_ink.width = (unsigned short) escapement ;
             if ( escapement == 0 && overall_ink.width == 0 ) {
                 ResetUnder(tf);
                 return;
 	    }
 #ifdef USE_XFT
         } else if (TextF_UseXft(tf)) {
-          XGlyphInfo	ext;
-
-          XftTextExtentsUtf8(XtDisplay((Widget)tf), TextF_XftFont(tf),
-	      (FcChar8*)mb, insert_length, &ext);
-
-          if (!ext.xOff) {
-              ResetUnder(tf);
-	      return;
-	  }
-#endif
-        } else {
-            if (!XTextWidth(TextF_Font(tf), mb, insert_length)) {
+            { XmPlatFont _f = _XmPlatFontOfXftFontD (XtDisplay ((Widget) tf),
+						    TextF_XftFont (tf)) ;
+            if (!_XmPlatTextWidth (_f, XmPlatTextUTF8, mb, insert_length)) {
+                _XmPlatFontFree (_f) ;
                 ResetUnder(tf);
                 return;
-	    }
+            }
+            _XmPlatFontFree (_f) ; }
+#endif
+        } else {
+            { XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay ((Widget) tf),
+						       TextF_Font (tf)) ;
+            Boolean _z = (_XmPlatTextWidth (_f, XmPlatText8, mb,
+					    insert_length) == 0) ;
+            _XmPlatFontFree (_f) ;
+            if (_z) {
+                ResetUnder(tf);
+                return;
+            } }
         }
    }
 

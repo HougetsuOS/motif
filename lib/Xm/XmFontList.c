@@ -49,6 +49,7 @@ extern "C" { /* some 'locale.h' do not have prototypes (sun) */
 #include <Xm/XmosP.h>
 #include "XmI.h"
 #include "XmRenderTI.h"
+#include "XmPlat/XmPlatP.h"
 #include "XmStringI.h"
 
 
@@ -657,20 +658,16 @@ _XmGetFirstFont(
     }
   else if (type == XmFONT_IS_FONTSET)
     {
-      XFontStruct **font_struct_list;
-      char **font_name_list;
-
+      /* First font of the set, through the backend seam (which owns
+         the XFontsOfFontSet call). */
+      XmPlatFont _f = _XmPlatFontOfFontSetD (NULL, (XFontSet) font) ;
+      XFontStruct *_first = _XmPlatFontSetFirstStruct (_f) ;
+      _XmPlatFontFree (_f) ;
 #ifdef FIX_1252
-      if (XFontsOfFontSet((XFontSet)font,
-			  &font_struct_list, &font_name_list)
-	  && font_struct_list[0]->fid != 0)
+      font_struct = (_first != NULL && _first->fid != 0) ? _first : NULL ;
 #else
-      if (XFontsOfFontSet((XFontSet)font,
-			  &font_struct_list, &font_name_list))
+      font_struct = _first ;
 #endif
-	font_struct = font_struct_list[0];
-      else
-	font_struct = NULL;
     }
   else
     font_struct = (XFontStruct *)font;

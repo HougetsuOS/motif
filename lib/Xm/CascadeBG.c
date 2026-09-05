@@ -1059,7 +1059,9 @@ Redisplay(
 	    }
 #ifdef FIX_1395
 	    /* Fetch the select_color GetGC() actually used. */
-	    XGetGCValues(XtDisplay(cb), LabG_BackgroundGC(cb), GCBackground, &values);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)cb), 0, LabG_BackgroundGC (cb)) ;
+	    values.background = _XmPlatGetBackground (_c) ;
+	    _XmPlatCtxFree (_c) ; }
 	    if (values.background != select_pix)
 	    {
 			values.background = select_pix;

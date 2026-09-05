@@ -1459,12 +1459,6 @@ Redisplay(
     } else
     {
       _XmPlatClrClip (XtDisplay (lw), clipgc);
-#ifdef FIX_1521
-#ifdef USE_XFT
-      XftDraw* draw = _XmXftDrawCreate(XtDisplay(lw), XtWindow(lw));
-      XftDrawSetClip(draw, NULL);
-#endif
-#endif
     }
 
 #ifdef USE_XFT

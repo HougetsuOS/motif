@@ -1057,10 +1057,13 @@ Initialize(
 	    new_w->scale.font_struct = NULL;
 #ifndef USE_XFT
     } else {
-	new_w->scale.font_struct = 
-	  XLoadQueryFont (XtDisplay (new_w), XmDEFAULT_FONT);
-	if (new_w->scale.font_struct == NULL)
-	    new_w->scale.font_struct = XLoadQueryFont (XtDisplay (new_w), "*");
+	/* no fontlist: load the default core font through the contract */
+	{ XmPlatFont _f = _XmPlatFontLoad (XtDisplay (new_w), XmDEFAULT_FONT) ;
+	if (_f == NULL)
+	    _f = _XmPlatFontLoad (XtDisplay (new_w), "*") ;
+	new_w->scale.font_struct =
+	    (XFontStruct *) ( _f != NULL ? _XmPlatFontBacking (_f) : NULL ) ;
+	_XmPlatFontFree (_f) ; }
 #endif
     }
     
@@ -1397,8 +1400,12 @@ SetValues(
 
 #ifndef USE_XFT
 	if ((cur->scale.font_list == NULL) && 
-	    (cur->scale.font_struct != NULL))
-	    XFreeFont(XtDisplay (cur), cur->scale.font_struct);
+	    (cur->scale.font_struct != NULL)) {
+	    XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay (cur),
+						      cur->scale.font_struct) ;
+	    _XmPlatFontUnload (_f) ;
+	    cur->scale.font_struct = NULL ;
+	}
 #endif
 
         if (cur->scale.font_list) XmFontListFree(cur->scale.font_list);
@@ -1413,15 +1420,17 @@ SetValues(
 	    if (!XmeRenderTableGetDefaultFont(new_w->scale.font_list,
 					      &new_w->scale.font_struct))
 	        new_w->scale.font_struct = NULL;
-#ifdef USE_XFT
-        /* TODO: should it be ifndef? */
 	} else {
+	    /* no fontlist: load the default core font through the
+	       contract; the token frees it in destroy (see Destroy) */
+	    XmPlatFont _f = _XmPlatFontLoad (XtDisplay (new_w),
+					     XmDEFAULT_FONT) ;
+	    if (_f == NULL)
+		_f = _XmPlatFontLoad (XtDisplay (new_w), "*") ;
 	    new_w->scale.font_struct =
-		XLoadQueryFont(XtDisplay(new_w), XmDEFAULT_FONT);
-	    if (new_w->scale.font_struct == NULL)
-		new_w->scale.font_struct =
-		    XLoadQueryFont(XtDisplay(new_w), "*");
-#endif
+		(XFontStruct *) ( _f != NULL
+				  ? _XmPlatFontBacking (_f) : NULL ) ;
+	    _XmPlatFontFree (_f) ;
 	}
 
 	XtReleaseGC ((Widget) new_w, new_w->scale.foreground_GC);
@@ -1557,8 +1566,12 @@ Destroy(
     XtReleaseGC ((Widget) sw, sw->scale.foreground_GC);
 
 #ifdef USE_XFT
-    if (sw->scale.font_list == NULL && sw->scale.font_struct != NULL)
-	XFreeFont (XtDisplay (sw), sw->scale.font_struct);
+    if (sw->scale.font_list == NULL && sw->scale.font_struct != NULL) {
+	XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay (sw),
+						  sw->scale.font_struct) ;
+	_XmPlatFontUnload (_f) ;
+	sw->scale.font_struct = NULL ;
+    }
 #endif
 
     if (sw->scale.font_list) XmFontListFree(sw->scale.font_list);
@@ -1794,9 +1807,7 @@ ValueTroughHeight(
 #else
     char buff[15];
     register Dimension tmp_max, tmp_min, result;
-    int direction, ascent, descent;
-    XCharStruct overall_return;
-    
+
 #define GET_MAX(tmp, max_or_min_value) {\
     if (sw->scale.decimal_points)\
 	    sprintf(buff, "%d%c", max_or_min_value,\
@@ -1804,10 +1815,14 @@ ValueTroughHeight(
 	else\
 	    sprintf(buff, "%d", max_or_min_value);\
 	    \
-	XTextExtents(sw->scale.font_struct, buff, strlen(buff),\
-		     &direction, &ascent, &descent, &overall_return);\
+	{ XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay ((Widget) sw),\
+					    sw->scale.font_struct) ;\
+XmPlatCharInfo overall_return ;\
+_XmPlatTextExtents (_f, XmPlatText8, buff, (int) strlen (buff),\
+		    &overall_return) ;\
+_XmPlatFontFree (_f) ; }\
 	    \
-	    tmp = ascent + descent;\
+	    tmp = overall_return.ascent + overall_return.descent;\
 	    }
 	
     if (sw->scale.show_value) {
@@ -1836,9 +1851,7 @@ ValueTroughAscent(
 #else
     char buff[15];
     register Dimension tmp_max, tmp_min, result;
-    int direction, ascent, descent;
-    XCharStruct overall_return;
-    
+
 #define GET_MAX(tmp, max_or_min_value) {\
     if (sw->scale.decimal_points)\
 	    sprintf(buff, "%d%c", max_or_min_value,\
@@ -1846,10 +1859,14 @@ ValueTroughAscent(
 	else\
 	    sprintf(buff, "%d", max_or_min_value);\
 	    \
-	XTextExtents(sw->scale.font_struct, buff, strlen(buff),\
-		     &direction, &ascent, &descent, &overall_return);\
+	{ XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay ((Widget) sw),\
+					    sw->scale.font_struct) ;\
+XmPlatCharInfo overall_return ;\
+_XmPlatTextExtents (_f, XmPlatText8, buff, (int) strlen (buff),\
+		    &overall_return) ;\
+_XmPlatFontFree (_f) ; }\
 	    \
-	    tmp = ascent;\
+	    tmp = overall_return.ascent;\
 	    }
 	
     if (sw->scale.show_value) {
@@ -1878,9 +1895,7 @@ ValueTroughDescent(
 #else
     char buff[15];
     register Dimension tmp_max, tmp_min, result;
-    int direction, ascent, descent;
-    XCharStruct overall_return;
-    
+
 #define GET_MAX(tmp, max_or_min_value) {\
     if (sw->scale.decimal_points)\
 	    sprintf(buff, "%d%c", max_or_min_value,\
@@ -1888,10 +1903,14 @@ ValueTroughDescent(
 	else\
 	    sprintf(buff, "%d", max_or_min_value);\
 	    \
-	XTextExtents(sw->scale.font_struct, buff, strlen(buff),\
-		     &direction, &ascent, &descent, &overall_return);\
+	{ XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay ((Widget) sw),\
+					    sw->scale.font_struct) ;\
+XmPlatCharInfo overall_return ;\
+_XmPlatTextExtents (_f, XmPlatText8, buff, (int) strlen (buff),\
+		    &overall_return) ;\
+_XmPlatFontFree (_f) ; }\
 	    \
-	    tmp = descent;\
+	    tmp = overall_return.descent;\
 	    }
 	
     if (sw->scale.show_value) {
@@ -1912,9 +1931,7 @@ ValueTroughWidth(
 {
     char buff[15];
     register Dimension tmp_max, tmp_min, result;
-    int direction, ascent, descent;
-    XCharStruct overall_return;
-    
+
 #if USE_XFT
 #define GET_MAX(tmp, max_or_min_value) {\
     XmString tmp_str;\
@@ -1928,6 +1945,7 @@ ValueTroughWidth(
     XmStringFree(tmp_str);\
 }
 #else
+    int ascent, descent;
 #define GET_MAX(tmp, max_or_min_value) {\
     if (sw->scale.decimal_points)\
 	    sprintf(buff, "%d%c", max_or_min_value,\
@@ -1935,8 +1953,12 @@ ValueTroughWidth(
 	else\
 	    sprintf(buff, "%d", max_or_min_value);\
 	    \
-	XTextExtents(sw->scale.font_struct, buff, strlen(buff),\
-		     &direction, &ascent, &descent, &overall_return);\
+	{ XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay ((Widget) sw),\
+	    sw->scale.font_struct) ;\
+	XmPlatCharInfo overall_return ;\
+	_XmPlatTextExtents (_f, XmPlatText8, buff, (int) strlen (buff),\
+			    &overall_return) ;\
+	_XmPlatFontFree (_f) ; }\
 	    \
 	    tmp = overall_return.rbearing - overall_return.lbearing;\
 	    }
@@ -2867,10 +2889,9 @@ ShowValue(
     Dimension x, y, width, height;
 #else
     int x, y, width, height;
-#endif
     XCharStruct width_return;
+#endif
     char buffer[256];
-    int direction, descent;
     XmScrollBarWidget scrollbar;
     Region value_region = sw->scale.value_region;
     XRectangle value_rect;
@@ -2929,8 +2950,13 @@ ShowValue(
     sw->scale.show_value_width = width;
     sw->scale.show_value_height = height;
 #else
-    XTextExtents (sw->scale.font_struct, buffer, strlen(buffer),
-		  &direction, &height, &descent, &width_return);
+    { XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay ((Widget) sw),
+						sw->scale.font_struct) ;
+    XmPlatCharInfo _ci ;
+    _XmPlatTextExtents (_f, XmPlatText8, buffer, (int) strlen (buffer), &_ci) ;
+    height = _ci.ascent + _ci.descent;
+    width_return = _ci;
+    _XmPlatFontFree (_f) ; }
     width = width_return.rbearing - width_return.lbearing;
     sw->scale.show_value_width = width;
     sw->scale.show_value_height = height + descent;

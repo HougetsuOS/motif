@@ -14,6 +14,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
+#include <X11/Xft/Xft.h>
 #include "XmPlat/XmPlatTypes.h"
 #include "XmPlat/XmPlat.h"
 
@@ -30,13 +31,13 @@ struct _XmPlatSurfaceRec {
 };
 
 struct _XmPlatFontRec {
-    /* one of: XFontStruct* (kind 8/16), XFontSet (kind MB/WC), Font id (GC) */
+    /* one of: XFontStruct* (kind 8/16), XFontSet (kind MB), XftFont*
+       (kind XFT), NULL (kind GC - font id in fid) */
     void *f ;
     Font  fid ;       /* when kind == XmPlatTextGC */
-    int   kind ;      /* XmPlatText8/16/MB/WC/GC */
+    int   kind ;      /* XmPlatText8/16/MB/XFT/GC */
+    Display *dpy ;    /* owner display; metrics prims need it for Xft */
 };
-
-#define XmPlatTextGC 4  /* font carried in the GC (GCFont) */
 
 struct _XmPlatDrawCtxRec {
     Display     *dpy ;
@@ -53,6 +54,10 @@ extern XmPlatSurface _XmPlatSurfaceOf (Display *dpy, Drawable d,
 				       Visual *visual, int depth,
 				       Window window) ;
 extern XmPlatDrawCtx _XmPlatDrawCtxOf (Display *dpy, GC gc) ;
+
+/* Underlying drawable of a surface (backend seam; Phase-2 stipple
+   comparison sites use it). */
+extern Drawable _XmPlatSurfaceDrawable (XmPlatSurface surface) ;
 
 #endif /* XMPLATP_H */
 
@@ -89,7 +94,6 @@ _XmPlatCtxFree (XmPlatDrawCtx c)
 static XmPlatSurface
 _XmPlatSurfaceOfWindow (Display *dpy, Window w)
 {
-    XWindowAttributes wa ;
     XmPlatSurface s ;
 
     s = (XmPlatSurface) XtMalloc (sizeof (struct _XmPlatSurfaceRec)) ;
@@ -158,4 +162,36 @@ _XmPlatImageOf (XImage *ximage)
 extern XmPlatFont _XmPlatFontOfFontStruct (XFontStruct *fs) ;
 extern XmPlatFont _XmPlatFontOfFontSet (XFontSet fs) ;
 extern XmPlatFont _XmPlatFontOfGC (Display *dpy, GC gc) ;
+/* Phase-2 font seam: wrap a modern-rendering font (XftFont). */
+extern XmPlatFont _XmPlatFontOfXftFont (void *xftfont) ;
+/*
+ * Token builders that remember the owning Display (required for
+ * Xft-kind tokens: XftTextExtents* needs it).  The Display-less
+ * variants above stay for compatibility with existing seam callers;
+ * new code should prefer these.
+ */
+extern XmPlatFont _XmPlatFontOfFontStructD (Display *dpy, XFontStruct *fs) ;
+extern XmPlatFont _XmPlatFontOfFontSetD (Display *dpy, XFontSet fs) ;
+extern XmPlatFont _XmPlatFontOfXftFontD (Display *dpy, void *xftfont) ;
+
+/* Owner display of a font token (NULL if the token does not carry one). */
+extern Display * _XmPlatFontDisplay (XmPlatFont font) ;
+
+/*
+ * Backend backing pointer of a token (XFontStruct, XFontSet, or XftFont).
+ * Transitional seam for widgets whose records still store typed font
+ * pointers; Phase 3 removes those fields.
+ */
+extern void * _XmPlatFontBacking (XmPlatFont font) ;
+
+/*
+ * First XFontStruct of a font-set token (the historic
+ * "XFontsOfFontSet()[0]" extraction for the frozen
+ * XmeRenderTableGetDefaultFont API).  NULL when not a font-set token.
+ */
+extern XFontStruct * _XmPlatFontSetFirstStruct (XmPlatFont font) ;
+
+/* Internal seam (XmRenderT.c wrappers only): the backend's cached
+   XftDraw for a surface.  Do not use from widget code. */
+extern XftDraw * _XmPlatXftDrawOf (XmPlatDrawCtx ctx, XmPlatSurface surface) ;
 

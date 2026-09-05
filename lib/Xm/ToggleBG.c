@@ -2699,7 +2699,9 @@ DrawToggle(
 		if (TBG_FillOnSelect(w))
 		  {
 		    /* Fetch the select_color GetGC() actually used. */
-		    XGetGCValues(dpy, TBG_SelectGC(w), GCForeground, &values);
+		    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, TBG_SelectGC (w)) ;
+		    values.foreground = _XmPlatGetForeground (_c) ;
+		    _XmPlatCtxFree (_c) ; }
 		    values.background = values.foreground;
 		    values.foreground = TBG_UnselectColor(w);
 		    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, fill_gc) ;
@@ -4224,7 +4226,9 @@ DrawToggleLabel(
 	XGCValues values;
 	
 	/* Fetch the select_color GetGC() actually used. */
-	XGetGCValues(XtDisplay(tb), TBG_SelectGC(tb), GCForeground, &values);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)tb), 0, TBG_SelectGC (tb)) ;
+	values.foreground = _XmPlatGetForeground (_c) ;
+	_XmPlatCtxFree (_c) ; }
 	values.background = TBG_UnselectColor(tb);
 	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)tb), 0, TBG_IndeterminateGC(tb)) ;
   _XmPlatChangeGCValues (_c, GCForeground|GCBackground, &values) ;
@@ -4323,7 +4327,9 @@ DrawEtchedInMenu(
 	  {
 	    XGCValues values;
 	    /* Fetch the select_color GetGC() actually used. */
-	    XGetGCValues(XtDisplay(tb), TBG_SelectGC(tb), GCBackground, &values);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)tb), 0, TBG_SelectGC (tb)) ;
+	    values.background = _XmPlatGetBackground (_c) ;
+	    _XmPlatCtxFree (_c) ; }
 	    /* Before label expose call we should change bgc
 	     to correct color and then restore it.
 	    */

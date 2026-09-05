@@ -56,6 +56,7 @@ static char rcsid[] = "$TOG: Text.c /main/47 1999/01/26 15:18:26 mgreess $"
 #include "TextStrSoI.h"
 #include "VendorSEI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 #include "XmStringI.h"
 
 #define FIX_1367
@@ -3530,7 +3531,6 @@ PreeditDraw(XIC xic,
   int recover_len = 0;
   char *ptr;
   OutputData o_data = tw->text.output->data;
-  XFontStruct *font = o_data->font;
   XRectangle overall_ink;
   int escapement;
   size_t mb_siz;
@@ -3624,8 +3624,12 @@ PreeditDraw(XIC xic,
       }
 
       /* set TextExtents for preedit data, if unable, punt */
-      escapement = XmbTextExtents((XFontSet)font, mb, strlen(mb),
-                                  &overall_ink, NULL );
+      { XmPlatFont _f = _XmPlatFontOfFontSetD (XtDisplay (tw),
+					       (XFontSet) o_data->font) ;
+      escapement = _XmPlatTextWidth (_f, XmPlatTextMB, mb,
+				     (int) strlen (mb)) ;
+      overall_ink.width = (unsigned short) escapement ;
+      _XmPlatFontFree (_f) ; }
       if (escapement == 0 && overall_ink.width == 0 &&
           strchr(mb, '\t') == 0 ) {
 
@@ -3812,7 +3816,6 @@ _XmTextResetIC(Widget widget)
   XmTextWidget tw = (XmTextWidget) widget;
   InputData data = tw->text.input->data;
   OutputData o_data = tw->text.output->data;
-  XFontStruct *font = o_data->font;
 
   if (!PreUnder((XmTextWidget) widget))
     return;
@@ -3841,7 +3844,11 @@ _XmTextResetIC(Widget widget)
     (*tw->text.output->DrawInsertionPoint)(tw, tw->text.cursor_position, off);
     mb[n]='\0';
     if (o_data->use_fontset) {
-      escapement = XmbTextExtents((XFontSet)font, mb, n, &overall_ink, NULL );
+      { XmPlatFont _f = _XmPlatFontOfFontSetD (XtDisplay (tw),
+					       (XFontSet) o_data->font) ;
+      escapement = _XmPlatTextWidth (_f, XmPlatTextMB, mb, n) ;
+      overall_ink.width = (unsigned short) escapement ;
+      _XmPlatFontFree (_f) ; }
       if (escapement == 0 && overall_ink.width == 0 &&
           strchr(mb, '\t') == 0 ) {
         (*tw->text.output->DrawInsertionPoint)(tw,

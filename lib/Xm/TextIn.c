@@ -54,6 +54,7 @@ static char rcsid[] = "$TOG: TextIn.c /main/36 1999/01/27 16:10:29 mgreess $"
 #include <Xm/TextSelP.h>
 #include <Xm/TransltnsP.h>
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 #include "BaseClassI.h"
 #include "DestI.h"
 #include "DisplayI.h"
@@ -1333,15 +1334,23 @@ PrintableString(XmTextWidget tw,
 #else /* SUPPORT_ZERO_WIDTH */
   OutputData o_data = tw->text.output->data;
   if (o_data->use_fontset) {
-    return (XmbTextEscapement((XFontSet)o_data->font, str, n) != 0);
+    XmPlatFont _f = _XmPlatFontOfFontSetD (XtDisplay (tw),
+					   (XFontSet) o_data->font) ;
+    Boolean _p = (_XmPlatTextWidth (_f, XmPlatTextMB, str, n) != 0) ;
+    _XmPlatFontFree (_f) ;
+    return _p ;
 #ifdef USE_XFT
   } else if (o_data->use_xft) {
-    XGlyphInfo ext;
-    XftTextExtentsUtf8(XtDisplay(tw), (XftFont*)o_data->font, (_Xconst FcChar8 *)str, n, &ext);
-    return ext.xOff != 0;    
+    XmPlatFont _f = _XmPlatFontOfXftFontD (XtDisplay (tw), o_data->font) ;
+    Boolean _p = (_XmPlatTextWidth (_f, XmPlatTextUTF8, str, n) != 0) ;
+    _XmPlatFontFree (_f) ;
+    return _p ;
 #endif
   } else {
-    return (XTextWidth(o_data->font, str, n) != 0);
+    XmPlatFont _f = _XmPlatFontOfFontStructD (XtDisplay (tw), o_data->font) ;
+    Boolean _p = (_XmPlatTextWidth (_f, XmPlatText8, str, n) != 0) ;
+    _XmPlatFontFree (_f) ;
+    return _p ;
   }
 #endif /* SUPPORT_ZERO_WIDTH */ 
 }

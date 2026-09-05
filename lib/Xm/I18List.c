@@ -2265,15 +2265,11 @@ SetVisibleSize(Widget w, Boolean set_width)
 	if (height == 0)
 	    height = VERTICAL_SPACE * XmI18List_visible_rows(ilist);
 #else
-	XFontStruct	*font = (XFontStruct *) NULL;
+	{ XmRenderTableGetDefaultFontExtents(XmI18List_font_list(ilist),
+	                                     &height, NULL, NULL);
 
-	XmeRenderTableGetDefaultFont(XmI18List_font_list(ilist), &font);
-
-	if (font)
-	    height = (font->ascent + font->descent + VERTICAL_SPACE) * 
-		XmI18List_visible_rows(ilist);
-	else
-	    height = VERTICAL_SPACE * XmI18List_visible_rows(ilist);
+	if (height == 0)
+	    height = VERTICAL_SPACE * XmI18List_visible_rows(ilist); }
 #endif
     }
     else

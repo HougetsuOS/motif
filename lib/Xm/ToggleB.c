@@ -2275,8 +2275,9 @@ DrawToggle
 		if (w->toggle.fill_on_select) 
 		  {
 		    /* Fetch the select_color GetGC() actually used. */
-		    XGetGCValues(dpy, w->toggle.select_GC,
-				 GCForeground, &values);
+		    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, w->toggle.select_GC) ;
+		    values.foreground = _XmPlatGetForeground (_c) ;
+		    _XmPlatCtxFree (_c) ; }
 		    values.background = values.foreground;
 		    values.foreground = w->toggle.unselect_color;
 		    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, fill_gc) ;
@@ -3540,8 +3541,9 @@ DrawToggleLabel(
 	XGCValues values;
 	
 	/* Fetch the select_color GetGC() actually used. */
-	XGetGCValues(XtDisplay(tb), tb->toggle.select_GC, 
-		     GCForeground, &values);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)tb), 0, tb->toggle.select_GC) ;
+	values.foreground = _XmPlatGetForeground (_c) ;
+	_XmPlatCtxFree (_c) ; }
 	values.background = tb->toggle.unselect_color;
 	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)tb), 0, tb->toggle.indeterminate_GC) ;
   _XmPlatChangeGCValues (_c, GCForeground|GCBackground, &values) ;

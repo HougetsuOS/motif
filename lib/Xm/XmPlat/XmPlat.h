@@ -79,6 +79,16 @@ extern void _XmPlatSetClipOrigin (XmPlatDrawCtx ctx, int x, int y) ;
 /* Background pixel attribute. */
 extern void _XmPlatSetBackground (XmPlatDrawCtx ctx, XmPlatPixel bg) ;
 
+/* Read back the current foreground/background pixel and the GC's font
+   id (0 when none).  Replaces direct XGetGCValues calls in widget
+   code; the fields are the only GC state callers need to inspect. */
+extern XmPlatPixel _XmPlatGetForeground (XmPlatDrawCtx ctx) ;
+extern XmPlatPixel _XmPlatGetBackground (XmPlatDrawCtx ctx) ;
+extern unsigned long _XmPlatGetFontId (XmPlatDrawCtx ctx) ;
+/* Stipple pixmap id of the ctx GC (None when not stippled).  The
+   token is a backend surface; NULL means no stipple. */
+extern XmPlatSurface _XmPlatGetStipple (XmPlatDrawCtx ctx) ;
+
 /* Tile (2..32bpp pixmap surface) / stipple (1-bit) + origin for fill. */
 extern void _XmPlatSetTile   (XmPlatDrawCtx ctx, XmPlatSurface tile) ;
 extern void _XmPlatSetStipple(XmPlatDrawCtx ctx, XmPlatSurface stipple,
@@ -155,3 +165,67 @@ extern XmPlatDrawCtx _XmPlatCreateCtxOnSurface (XmPlatSurface surface,
 extern void _XmPlatDrawString (XmPlatDrawCtx ctx, XmPlatFont font,
 			       int kind, const void *text, int len,
 			       int x, int y, int image) ;
+
+/* ---- Font contract (Phase 2) --------------------------------------- */
+
+/*
+ * A font token is created once (at rendition creation / widget font
+ * setup) and handed to the prims below plus _XmPlatDrawString.  All
+ * metrics answers are integers in pixels, matching what the core-X
+ * structures expose.  A token is valid for the Display it was built
+ * for; the backend is free to keep a lazily-loaded representation.
+ */
+
+/* Kind introspection (XmPlatText8/16/MB/XFT/GC; WC/UTF8 never appear
+   as token kinds - they are text kinds). */
+extern int _XmPlatFontKind (XmPlatFont font) ;
+
+/* Release a font token (does not unload the underlying font; tokens
+   are cheap wrappers). */
+extern void _XmPlatFontFree (XmPlatFont font) ;
+
+/*
+ * Load (and later release) a core font by XLFD name.  Answers a
+ * token for the loaded font, or NULL when the name cannot be loaded.
+ * The token owns the font; _XmPlatFontUnload frees it.  (Legacy
+ * widgets stash the returned token in XFontStruct-typed fields via
+ * the backend seam until Phase 3 removes those fields.)
+ */
+extern XmPlatFont _XmPlatFontLoad (Display *dpy, const char *name) ;
+extern void _XmPlatFontUnload (XmPlatFont font) ;
+
+/* Line metrics. */
+extern int _XmPlatFontAscent  (XmPlatFont font) ;
+extern int _XmPlatFontDescent (XmPlatFont font) ;
+extern int _XmPlatFontHeight  (XmPlatFont font) ;
+/* Average advance of a representative digit run; falls back to
+   max-advance (Xft) or min/max midpoint (core fonts). */
+extern int _XmPlatFontAverageWidth (XmPlatFont font) ;
+
+/*
+ * String metrics.  kind selects the text encoding (XmPlatText8/16/MB/
+ * WC/UTF8); text/len are the string and its element count (bytes for
+ * 8/MB/UTF8, XChar2b units for 16, wchar_t units for WC).  overall
+ * receives ink/advance extents; it may be NULL when only the advance
+ * width is wanted.
+ */
+extern int  _XmPlatTextWidth (XmPlatFont font, int kind,
+			      const void *text, int len) ;
+extern void _XmPlatTextExtents (XmPlatFont font, int kind,
+				const void *text, int len,
+				XmPlatCharInfo *overall) ;
+/* Width of the single glyph/string "0" times n - tab-stop helper for
+   the backend renderers whose notion of a default digit advance
+   differs from XTextWidth semantics. */
+extern int _XmPlatDigitWidth (XmPlatFont font, int n) ;
+
+/*
+ * Text drawing with explicit foreground color for rendering backends.
+ * The core-X backend uses color->pixel through the GC; the kind/len
+ * rules are the same as _XmPlatTextWidth.  A NULL color means "use
+ * the ctx GC foreground" (the Phase-2 transitional behavior).
+ */
+extern void _XmPlatDrawStringColored (XmPlatDrawCtx ctx, XmPlatFont font,
+				      int kind, const void *text, int len,
+				      int x, int y, int image,
+				      const XmPlatColor *color) ;

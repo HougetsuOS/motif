@@ -493,7 +493,7 @@ static void ComputeMetrics(XmRendition rend,
 			   Dimension *descent,
                            Boolean utf8); 
 static Dimension ComputeWidth(unsigned char which,
-			      XCharStruct char_ret); 
+			      XmPlatCharInfo char_ret);
 static void _parse_locale( 
                         char *str,
                         int *indx,
@@ -3486,8 +3486,13 @@ SubStringPosition(
   
   if (_XmRendFontType(entry) == XmFONT_IS_FONT
       || _XmRendFontType(entry) == XmFONT_IS_XFT) {
-    XFontStruct *font_struct = (XFontStruct *)_XmRendFont(entry);
-    
+    XmPlatFont token = (_XmRendFontType(entry) == XmFONT_IS_XFT)
+			? _XmPlatFontOfXftFontD (_XmRendDisplay(entry),
+						 _XmRendXftFont(entry))
+			: _XmPlatFontOfFontStructD (_XmRendDisplay(entry),
+						    (XFontStruct *)
+						    _XmRendFont(entry)) ;
+    int kind = (one_byte)? XmPlatText8 : XmPlatText16 ;
     if (one_byte) {
       for (i = 0; i <= max; i++) {
 	fail = FALSE;
@@ -3503,35 +3508,21 @@ SubStringPosition(
 	  if (begin == 0)
 	    *under_begin = x;
 	  else
-	    if (_XmRendFontType(entry) == XmFONT_IS_FONT)
-	      *under_begin = x + abs(XTextWidth (font_struct, a, begin));
-#ifdef USE_XFT
-	    else {
-	      XGlyphInfo ext;
-	      XftTextExtentsUtf8(_XmRendDisplay(entry), _XmRendXftFont(entry),
-	                      (FcChar8*)a, begin, &ext);
-	      *under_begin = x + ext.xOff;
-	    }
-#endif
+	    *under_begin =
+	      x + abs(_XmPlatTextWidth (token, kind, a, begin));
+	  /* Xft widths are in glyph units for 16-bit; the token's kind
+	     already selects the right backend conversion. */
 
 	  width = _XmEntryWidthGet((_XmStringEntry)under_seg, rt);
 	  
 	  if (width == 0) {
-	    if (_XmRendFontType(entry) == XmFONT_IS_FONT)
-	      width = abs(XTextWidth(font_struct, b, under_seg_len));
-#ifdef USE_XFT
-	    else {
-	      XGlyphInfo ext;
-	      XftTextExtentsUtf8(_XmRendDisplay(entry), _XmRendXftFont(entry),
-	                      (FcChar8*)b, under_seg_len, &ext);
-	      width = ext.xOff;
-	    }
-#endif
+	    width = abs(_XmPlatTextWidth (token, kind, b, under_seg_len));
 	    _XmEntryWidthSet((_XmStringEntry)under_seg, rt, width);
 	  }
 	  
 	  *under_end = *under_begin + width;
 	  
+	  _XmPlatFontFree (token) ;
 	  return;
 	}
       }
@@ -3542,7 +3533,7 @@ SubStringPosition(
        */
       
       if (((seg_len % 2) != 0) || ((under_seg_len % 2) != 0))
-	return;
+	{ _XmPlatFontFree (token) ; return; }
       
       /*
        * search for the substring
@@ -3562,42 +3553,30 @@ SubStringPosition(
 	  if (begin == 0)
 	    *under_begin = x;
 	  else
-	    if (_XmRendFontType(entry) == XmFONT_IS_FONT)
-	      *under_begin = 
-	        x + abs(XTextWidth16 (font_struct, (XChar2b *) a, begin/2));
-#ifdef USE_XFT
-	    else {
-	      XGlyphInfo ext;
-	      XftTextExtents16(_XmRendDisplay(entry), _XmRendXftFont(entry),
-	                      (FcChar16*)a, begin, &ext);
-	      *under_begin = x + ext.xOff;
-	    }
-#endif
+	    *under_begin =
+	      x + abs(_XmPlatTextWidth (token, kind,
+					(const char *) a, begin / 2));
 	  
 	  width = _XmEntryWidthGet((_XmStringEntry)under_seg, rt);
 	  
 	  if (width == 0) {
-	    if (_XmRendFontType(entry) == XmFONT_IS_FONT)
-	      width = abs(XTextWidth16(font_struct, (XChar2b *) b, 
-				       under_seg_len/2));
-#ifdef USE_XFT
-	    else {
-	      XGlyphInfo ext;
-	      XftTextExtents16(_XmRendDisplay(entry), _XmRendXftFont(entry),
-	                      (FcChar16*)b, under_seg_len, &ext);
-	      width = ext.xOff;
-	    }
-#endif
+	    width = abs(_XmPlatTextWidth (token, kind,
+					  (const char *) b,
+					  under_seg_len / 2));
 	    _XmEntryWidthSet((_XmStringEntry)under_seg, rt, width);
 	  }
 	  
 	  *under_end = *under_begin + width;
+	  
+	  _XmPlatFontFree (token) ;
 	  return;
 	}
       }
     }
   } else {
-    XFontSet font_set = (XFontSet)_XmRendFont(entry);
+    XmPlatFont token = _XmPlatFontOfFontSetD (_XmRendDisplay(entry),
+					      (XFontSet)
+					      _XmRendFont(entry)) ;
     XmTextType type = (XmTextType) _XmEntryTextTypeGet(under_seg);
     int len_a, len_a1, len_b;
     
@@ -3659,17 +3638,19 @@ SubStringPosition(
 	  *under_begin = x;
 	else if (type == XmWIDECHAR_TEXT) {
 	  *under_begin =
-	    x + abs(XwcTextEscapement(font_set, (wchar_t *)a, 
-				      begin/sizeof(wchar_t)));
+	    x + abs(_XmPlatTextWidth (token, XmPlatTextWC, a,
+				      begin / (int) sizeof (wchar_t)));
         } else {
 #ifdef UTF8_SUPPORTED
             if (utf8)
                 *under_begin =
-                    x + abs(Xutf8TextEscapement(font_set, a, begin));
+                    x + abs(_XmPlatTextWidth (token, XmPlatTextUTF8,
+					      a, begin));
             else
 #endif
                 *under_begin =
-                    x + abs(XmbTextEscapement(font_set, a, begin));
+                    x + abs(_XmPlatTextWidth (token, XmPlatTextMB,
+					      a, begin));
         }
 	
 	width = _XmEntryWidthGet((_XmStringEntry)under_seg, rt);
@@ -3677,22 +3658,25 @@ SubStringPosition(
 	if (width == 0) {
 #ifdef UTF8_SUPPORTED
 	  width = (type == XmWIDECHAR_TEXT) 
-	    ? abs(XwcTextEscapement(font_set, (wchar_t *)b, 
-				  under_seg_len / sizeof(wchar_t)))
+	    ? abs(_XmPlatTextWidth (token, XmPlatTextWC, b,
+				    under_seg_len / (int) sizeof (wchar_t)))
 	    : (utf8
-                    ? abs(Xutf8TextEscapement(font_set, b, under_seg_len))
-                    : abs(XmbTextEscapement(font_set, b, under_seg_len)));
+                ? abs(_XmPlatTextWidth (token, XmPlatTextUTF8,
+					b, under_seg_len))
+                : abs(_XmPlatTextWidth (token, XmPlatTextMB,
+					b, under_seg_len)));
 #else
 	  width = (type == XmWIDECHAR_TEXT) 
-	    ? abs(XwcTextEscapement(font_set, (wchar_t *)b, 
-				  under_seg_len / sizeof(wchar_t)))
-	    : abs(XmbTextEscapement(font_set, b, under_seg_len));
+	    ? abs(_XmPlatTextWidth (token, XmPlatTextWC, b,
+				    under_seg_len / (int) sizeof (wchar_t)))
+	    : abs(_XmPlatTextWidth (token, XmPlatTextMB, b, under_seg_len));
 #endif	  
 	  _XmEntryWidthSet((_XmStringEntry)under_seg, rt, width);
 	}
 	
 	*under_end = *under_begin + width;
 	
+	_XmPlatFontFree (token) ;
 	return;
       }
     }
@@ -3736,7 +3720,9 @@ _XmStringDrawLining(Display *d,
     {
       if (fg != XmUNSPECIFIED_PIXEL)
 	{
-	  XGetGCValues(d, gc, GCForeground, &current_gcv);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+	  current_gcv.foreground = _XmPlatGetForeground (_c) ;
+	  _XmPlatCtxFree (_c) ; }
 	  if (current_gcv.foreground != fg)
 	    {
 	      old_fg = current_gcv.foreground;
@@ -3750,7 +3736,9 @@ _XmStringDrawLining(Display *d,
     
       if (bg != XmUNSPECIFIED_PIXEL)
 	{
-	  XGetGCValues(d, gc, GCBackground, &current_gcv);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+	  current_gcv.background = _XmPlatGetBackground (_c) ;
+	  _XmPlatCtxFree (_c) ; }
 	  if (current_gcv.background != bg)
 	    {
 	      old_bg = current_gcv.background;
@@ -3766,7 +3754,9 @@ _XmStringDrawLining(Display *d,
   if (mode == XmHIGHLIGHT_SECONDARY_SELECTED)
     {
       /* Draw lines */
-      XGetGCValues(d, gc, GCLineStyle, &current_gcv);
+      { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+      current_gcv.line_style = _XmPlatGetLineAttr (_c).style ;
+      _XmPlatCtxFree (_c) ; }
       old_style = current_gcv.line_style;
 
       style = LineSolid;
@@ -3784,7 +3774,9 @@ _XmStringDrawLining(Display *d,
     }
   else
     {
-      XGetGCValues(d, gc, GCLineStyle, &current_gcv);
+      { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+      current_gcv.line_style = _XmPlatGetLineAttr (_c).style ;
+      _XmPlatCtxFree (_c) ; }
       cur_style = old_style = current_gcv.line_style;
 
       if ((under != XmAS_IS) && (under != XmNO_LINE))
@@ -3993,7 +3985,9 @@ _XmStringDrawSegment(Display *d,
       
       if (fg != XmUNSPECIFIED_PIXEL)
 	{
-	  XGetGCValues(d, gc, GCForeground, &current_gcv);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+	  current_gcv.foreground = _XmPlatGetForeground (_c) ;
+	  _XmPlatCtxFree (_c) ; }
 	  if (current_gcv.foreground != fg)
 	    {
 	      old_fg = current_gcv.foreground;
@@ -4007,7 +4001,9 @@ _XmStringDrawSegment(Display *d,
     
       if (bg != XmUNSPECIFIED_PIXEL)
 	{
-	  XGetGCValues(d, gc, GCBackground, &current_gcv);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+	  current_gcv.background = _XmPlatGetBackground (_c) ;
+	  _XmPlatCtxFree (_c) ; }
 	  if (current_gcv.background != bg)
 	    {
 	      old_bg = current_gcv.background;
@@ -4029,7 +4025,9 @@ _XmStringDrawSegment(Display *d,
 
 	  text16 = two_byte_font(f);
 
-	  XGetGCValues(d, gc, GCFont, &current_gcv) ;
+	  { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+	  current_gcv.font = (Font) _XmPlatGetFontId (_c) ;
+	  _XmPlatCtxFree (_c) ; }
 
 	  xgcv.font = f->fid;			  /* get segment font */
 
@@ -4198,16 +4196,27 @@ _XmStringDrawSegment(Display *d,
   }
 #ifdef UTF8_SUPPORTED
           else if (utf8)
-            Xutf8DrawImageString(d, w, (XFontSet)_XmRendFont(rend), gc, x, y,
-                                 draw_text, seg_len);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  { XmPlatFont _f = _XmPlatFontOfFontSetD (d, (XFontSet) _XmRendFont (rend)) ;
+  _XmPlatDrawString (_c, _f, XmPlatTextUTF8, draw_text, seg_len, x, y, 1) ;
+  _XmPlatFontFree (_f) ; }
+  _XmPlatCtxFree (_c) ;
+  }
 #endif
 	  else if (multibyte) 
-	    XmbDrawImageString (d, w, (XFontSet)_XmRendFont(rend), gc, x, y,
-				draw_text, seg_len);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  { XmPlatFont _f = _XmPlatFontOfFontSetD (d, (XFontSet) _XmRendFont (rend)) ;
+  _XmPlatDrawString (_c, _f, XmPlatTextMB, draw_text, seg_len, x, y, 1) ;
+  _XmPlatFontFree (_f) ; }
+  _XmPlatCtxFree (_c) ;
+  }
 	  else if (widechar)
-	    XwcDrawImageString (d, w, (XFontSet)_XmRendFont(rend),
-				gc, x, y, (wchar_t *) draw_text,
-				(seg_len / sizeof(wchar_t)));
+	    { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  { XmPlatFont _f = _XmPlatFontOfFontSetD (d, (XFontSet) _XmRendFont (rend)) ;
+  _XmPlatDrawString (_c, _f, XmPlatTextWC, draw_text, seg_len / (int) sizeof (wchar_t), x, y, 1) ;
+  _XmPlatFontFree (_f) ; }
+  _XmPlatCtxFree (_c) ;
+  }
 	  else
 	    { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
   _XmPlatDrawString (_c, _XmPlatFontOfGC (d, gc), XmPlatText8, draw_text, seg_len, x, y, 1) ;
@@ -4239,16 +4248,27 @@ _XmStringDrawSegment(Display *d,
 	  }
 #ifdef UTF8_SUPPORTED
           else if (utf8)
-	    Xutf8DrawString(d, w, (XFontSet)_XmRendFont(rend), gc, x, y,
-                            draw_text, seg_len);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  { XmPlatFont _f = _XmPlatFontOfFontSetD (d, (XFontSet) _XmRendFont (rend)) ;
+  _XmPlatDrawString (_c, _f, XmPlatTextUTF8, draw_text, seg_len, x, y, 0) ;
+  _XmPlatFontFree (_f) ; }
+  _XmPlatCtxFree (_c) ;
+  }
 #endif
 	  else if (multibyte)
-	    XmbDrawString (d, w, (XFontSet)_XmRendFont(rend), gc, x, y,
-			   draw_text, seg_len);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  { XmPlatFont _f = _XmPlatFontOfFontSetD (d, (XFontSet) _XmRendFont (rend)) ;
+  _XmPlatDrawString (_c, _f, XmPlatTextMB, draw_text, seg_len, x, y, 0) ;
+  _XmPlatFontFree (_f) ; }
+  _XmPlatCtxFree (_c) ;
+  }
 	  else if (widechar)
-	    XwcDrawString (d, w, (XFontSet)_XmRendFont(rend),
-			   gc, x, y, (wchar_t *) draw_text,
-			   (seg_len / sizeof(wchar_t)));
+	    { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  { XmPlatFont _f = _XmPlatFontOfFontSetD (d, (XFontSet) _XmRendFont (rend)) ;
+  _XmPlatDrawString (_c, _f, XmPlatTextWC, draw_text, seg_len / (int) sizeof (wchar_t), x, y, 0) ;
+  _XmPlatFontFree (_f) ; }
+  _XmPlatCtxFree (_c) ;
+  }
 	  else 
 	    { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
   _XmPlatDrawString (_c, _XmPlatFontOfGC (d, gc), XmPlatText8, draw_text, seg_len, x, y, 0) ;
@@ -5242,15 +5262,10 @@ _render(Display *d,
       }
   }
   if (restore_clip) {
-#ifdef FIX_1521
-#ifdef USE_XFT
-	  if (_XmRendFontType((_XmStrOptimized(string)) ? rend2 : rend1) == XmFONT_IS_XFT) {
-		  XftDraw *draw = _XmXftDrawCreate(d, w);
-		  XftDrawSetClip(draw, NULL);
-	  } else
-#endif
-#endif
-		  _XmPlatClrClip (d, gc) ; 
+	  /* Clip is a GC attribute; clearing it through the contract
+	     clears it for both core-X and Xft draws (the backend's
+	     XftDraw derives its clip from the GC). */
+	  _XmPlatClrClip (d, gc) ; 
   }
 
   if (_XmRendTags(rend1) != NULL) XtFree((char *)_XmRendTags(rend1));
@@ -6314,7 +6329,7 @@ ComputeMetrics(XmRendition rend,
                Boolean utf8)
 {
   Dimension	wid, hi;
-  int		dir, asc, desc;
+  int		asc, desc;
   
   wid = 0;
   hi = 0;
@@ -6324,10 +6339,12 @@ ComputeMetrics(XmRendition rend,
   switch (_XmRendFontType(rend)) {
     case XmFONT_IS_FONT:
     {
-      XFontStruct *font_struct = (XFontStruct *)_XmRendFont(rend);
-      XCharStruct	char_ret;
+      XmPlatFont token = _XmPlatFontOfFontStructD (_XmRendDisplay(rend),
+						   (XFontStruct *)
+						   _XmRendFont(rend)) ;
+      XmPlatCharInfo char_ret ;
 
-      if (two_byte_font(font_struct))
+      if (two_byte_font((XFontStruct *)_XmRendFont(rend)))
 	{
 #ifdef FIX_1434
 	  if (byte_count >= 2 || utf8)
@@ -6342,18 +6359,24 @@ ComputeMetrics(XmRendition rend,
 		  size_t  str_len = 0;
 		  XChar2b *str = _XmUtf8ToUcs2(text, byte_count, &str_len);
 
-		  XTextExtents16(font_struct, str, str_len,
-			     &dir, &asc, &desc, &char_ret);
-		} else
-	      XTextExtents16(font_struct, 
-			     (XChar2b *)text, Half(byte_count),
-			     &dir, &asc, &desc, &char_ret);
+		  _XmPlatTextExtents (token, XmPlatText16, str, (int) str_len,
+				      &char_ret) ;
+		} else {
+		  _XmPlatTextExtents (token, XmPlatText16, text,
+				      Half (byte_count), &char_ret) ;
+		}
+	      /* Line metrics are the FONT's ascent/descent (what the old
+	         XTextExtents 2nd/3rd out params returned), not the ink
+	         extents of this particular string. */
+	      asc = _XmPlatFontAscent (token) ;
+	      desc = _XmPlatFontDescent (token) ;
 		  
 	      wid = ComputeWidth(which_seg, char_ret);
 	      
 	      /* pir 2967 */
 	      if (wid == 0)
-		wid = Half(byte_count) * (font_struct->max_bounds.width);
+		wid = Half(byte_count) *
+		  ((XFontStruct *)_XmRendFont(rend))->max_bounds.width;
 	      hi = asc + desc;
 	    }
 	}
@@ -6361,50 +6384,66 @@ ComputeMetrics(XmRendition rend,
 	{
 	  if (byte_count >= 1)
 	    {
-	      XTextExtents(font_struct, (char *)text, byte_count,
-			   &dir, &asc, &desc, &char_ret);
+	      _XmPlatTextExtents (token, XmPlatText8, text, byte_count,
+				  &char_ret) ;
+	      asc = _XmPlatFontAscent (token) ;
+	      desc = _XmPlatFontDescent (token) ;
 		  
 	      wid = ComputeWidth(which_seg, char_ret);
 
 	      /* pir 2967 */
 	      if (wid == 0)
-		wid = byte_count * (font_struct->max_bounds.width);
+		wid = byte_count *
+		  ((XFontStruct *)_XmRendFont(rend))->max_bounds.width;
 	      hi = asc + desc;
 	    }
 	}
+      _XmPlatFontFree (token) ;
     }
     break;
     case XmFONT_IS_FONTSET:
     {
       if (byte_count >= 1) 
 	{
-	  XFontSet font_set = (XFontSet)_XmRendFont(rend);
-	  XRectangle ink, logical;
+	  XmPlatFont token = _XmPlatFontOfFontSetD (_XmRendDisplay(rend),
+						    (XFontSet)
+						    _XmRendFont(rend)) ;
+	  XmPlatCharInfo char_ret ;
 
 	  if (type == XmWIDECHAR_TEXT)
-	    XwcTextExtents(font_set, (wchar_t *)text,
-			   byte_count/sizeof(wchar_t),
-			   &ink, &logical);
+	    _XmPlatTextExtents (token, XmPlatTextWC, text,
+				byte_count / (int) sizeof (wchar_t),
+				&char_ret) ;
 	  else {
 #ifdef UTF8_SUPPORTED
               if (utf8)
-                  Xutf8TextExtents(font_set, (char *)text, byte_count,
-                          &ink, &logical);
+                  _XmPlatTextExtents (token, XmPlatTextUTF8, text,
+				      byte_count, &char_ret) ;
               else
 #endif
-                  XmbTextExtents(font_set, (char *)text, byte_count,
-                          &ink, &logical);
+                  _XmPlatTextExtents (token, XmPlatTextMB, text,
+				      byte_count, &char_ret) ;
           }
 
-	  if (logical.height == 0)
-	    { 
-	      XFontSetExtents *extents = XExtentsOfFontSet(font_set);
-	      logical.height = extents->max_logical_extent.height;
+	  if (char_ret.ascent + char_ret.descent == 0)
+	    {
+	      XFontSetExtents *extents =
+		XExtentsOfFontSet ((XFontSet) _XmRendFont(rend));
+	      char_ret.ascent = (short)
+		(extents->max_logical_extent.height +
+		 extents->max_logical_extent.y) ;
+	      char_ret.descent = (short)
+		-(extents->max_logical_extent.y) ;
 	    }
-	  wid = logical.width;
-	  hi = logical.height;
-	  asc = -(logical.y);
-	  desc = logical.height + logical.y;
+	  /* Line metrics from the fontset's max_logical_extent (what
+	     the old XmbTextExtents logical rect gave): the MB/WC/UTF8
+	     extents mapping already puts ascent = height + y and
+	     descent = -y into char_ret, so keep them. */
+	  asc = char_ret.ascent;
+	  desc = char_ret.descent;
+	  wid = char_ret.width;
+	  hi = char_ret.ascent + char_ret.descent;
+	  _XmPlatFontFree (token) ;
 	}
     }
     break;
@@ -6419,12 +6458,10 @@ ComputeMetrics(XmRendition rend,
 	 */
 	hi = asc+desc;
     {
-	XGlyphInfo	info;
-	XftTextExtentsUtf8(_XmRendDisplay(rend),
-		_XmRendXftFont(rend),
-		text, byte_count,
-		&info);
-	wid = info.xOff;
+	XmPlatFont token = _XmPlatFontOfXftFontD (_XmRendDisplay(rend),
+						  _XmRendXftFont(rend)) ;
+	wid = _XmPlatTextWidth (token, XmPlatTextUTF8, text, byte_count) ;
+	_XmPlatFontFree (token) ;
     }
 #endif
   }
@@ -6463,7 +6500,7 @@ ComputeMetrics(XmRendition rend,
 
 static Dimension
 ComputeWidth(unsigned char which,
-	     XCharStruct char_ret)
+	     XmPlatCharInfo char_ret)
 {
   Dimension wid = 0;
   int bearing;

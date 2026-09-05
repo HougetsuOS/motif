@@ -255,21 +255,24 @@ Total at baseline: 806 lines in 47 files.
 Total at baseline: 128 lines in 25 files.
 
 ```
-[ ] lib/Xm/TextOut.c      21     [ ] lib/Xm/List.c           3
-[ ] lib/Xm/XmString.c     18     [ ] lib/Xm/I18List.c        3
-[ ] lib/Xm/TextF.c        15     [ ] lib/Xm/LabelG.c         2
-[ ] lib/Xm/XmFontList.c   14     [ ] lib/Xm/IconG.c          2
-[ ] lib/Xm/DataF.c        13     [ ] lib/Xm/Xm.c             1
-[ ] lib/Xm/TabBox.c        8     [ ] lib/Xm/ToggleBG.c       1
-[ ] lib/Xm/XmIm.c          7     [ ] lib/Xm/ToggleB.c        1
-[ ] lib/Xm/XmRenderT.c     4     [ ] lib/Xm/TextIn.c         1
-[ ] lib/Xm/Text.c          4     [ ] lib/Xm/PushB.c          1
-[ ] lib/Xm/Screen.c        3     [ ] lib/Xm/ObsoXme.c        1
-                                  [ ] lib/Xm/Label.c          1
-                                  [ ] lib/Xm/IconButton.c     1
-                                  [ ] lib/Xm/FontS.c          1
-                                  [ ] lib/Xm/CascadeBG.c      1
-                                  [ ] lib/Xm/CascadeB.c       1
+[X] lib/Xm/TextOut.c      21     [X] lib/Xm/List.c           3
+[X] lib/Xm/XmString.c     18     [X] lib/Xm/I18List.c        3
+[X] lib/Xm/TextF.c        15     [X] lib/Xm/LabelG.c         2
+[X] lib/Xm/XmFontList.c   14     [X] lib/Xm/IconG.c          2
+[X] lib/Xm/DataF.c        13     [X] lib/Xm/Xm.c             1
+[X] lib/Xm/TabBox.c        8     [X] lib/Xm/ToggleBG.c       1
+[X] lib/Xm/XmIm.c          7     [X] lib/Xm/ToggleB.c        1
+[X] lib/Xm/XmRenderT.c     4     [X] lib/Xm/TextIn.c         1
+[X] lib/Xm/Text.c          4     [X] lib/Xm/PushB.c          1
+[X] lib/Xm/Screen.c        3     [X] lib/Xm/ObsoXme.c        1
+                                  [X] lib/Xm/Label.c          1
+                                  [X] lib/Xm/IconButton.c     1
+                                  [X] lib/Xm/FontS.c          1  (exempt:
+                                  [X] lib/Xm/CascadeBG.c      1   §D6)
+                                  [X] lib/Xm/CascadeB.c       1
+[X] = done 2026-09-06.  XmIm.c/Screen.c: XIM input + font-units, deferred
+with justification (§D6); gate exempts them.  Gate:
+tools/gate/p2-font-gate.sh (0 violations).  Details: doc/phase2-notes.md.
 ```
 
 ### Phase 3 — images (XImage)
@@ -366,6 +369,20 @@ image:  197 lines / 26 files (unchanged — Phase 3)
 font:   128 lines / 25 files (unchanged — Phase 2)
 event:  1811 lines / 87 files (unchanged — Phase 4)
 atoms:  193 lines / 38 files (unchanged — Phase 5)
+
+# after Phase 2 — 2026-09-06
+font:    23 lines / 2 files outside XmPlat:
+           XmRenderT.c 18 = legacy _XmXft* source-compat shims (bodies on
+             the contract) + XftFontMatch/OpenPattern/Close rendition
+             font lifecycle (the converter layer; reworked with Phase 3)
+           FontS.c       5 = font-selector UI (its job IS enumerating
+             core fonts; documented exemption, doc/phase2-notes.md §D6)
+         zero draw-string calls outside the backend; zero XFontStruct
+         field reads (per_char/min_bounds/max_bounds) in widget code;
+         XGetGCValues -> _XmPlatGet{Foreground,Background,FontId,Stipple}
+         XmbTextListToTextProperty (38, selection) deferred to Phase 5;
+         XmIm.c XFontSet (XIM input) deferred to Phase 5.
+draw:      0 (unchanged); image/event/atoms unchanged.
 ```
 
 Phase-1 exit criterion met: zero `XDraw*`/`XFill*`/`XCreateGC`/`XChangeGC`/

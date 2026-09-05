@@ -164,13 +164,36 @@ moves GC management behind the contract entirely.
 
 ### 4.4 Text drawing
 
-`XDrawString`/`XDrawString16`/`XDrawImageString*` migrate to
-`_XmPlatDrawString (ctx, font_token, kind, text, len, x, y, image)` where
-`font_token` is currently `_XmPlatFontOfGC (dpy, gc)` — the font riding in
-the GC.  **This is the least stable part of the Phase-1 seam**: Phase 2
-replaces the token with the real `XmFont` handle.  If your widget draws
-text, either (a) use the token now and expect a one-line change in Phase 2,
-or (b) leave text on Xlib until Phase 2 lands and do one combined migration.
+Phase 2 has landed, so the full font contract is available
+(`lib/Xm/XmPlat/XmPlat.h` "Font contract"):
+
+```c
+/* build a token once per font (Display-carrying variants preferred) */
+XmPlatFont f = _XmPlatFontOfFontStructD (dpy, fs);   /* or OfFontSetD /
+                                                        OfXftFontD */
+
+/* metrics */
+int asc  = _XmPlatFontAscent (f);
+int desc = _XmPlatFontDescent (f);
+int w    = _XmPlatTextWidth (f, XmPlatTextMB, text, len);
+XmPlatCharInfo ci;
+_XmPlatTextExtents (f, XmPlatTextUTF8, text, len, &ci);
+
+/* draw */
+_XmPlatDrawString (ctx, f, XmPlatText8, text, len, x, y, 0);
+_XmPlatDrawStringColored (ctx, f, kind, text, len, x, y, 0, &color);
+```
+
+Kinds: `XmPlatText8/16/MB/WC/UTF8/32` select the encoding per call; the
+token itself remembers its backend font.  `_XmPlatFontOfGC` (font riding
+in the GC) still works but is transitional.  The per-char XFontStruct
+fields (`per_char`, `min_bounds`, `max_bounds`, `default_char`) have no
+contract equivalent — string metrics prims answer what those reads
+computed; custom widgets doing glyph-table math should call
+`_XmPlatTextWidth`/`_XmPlatTextExtents` per character instead.
+
+Loading a core font by name: `_XmPlatFontLoad` / `_XmPlatFontUnload`
+(replaces `XLoadQueryFont`/`XFreeFont`).
 
 ### 4.5 Checklist
 
@@ -251,7 +274,7 @@ phases land.
 | Phase | Lands | You must do | This guide |
 |---|---|---|---|
 | 0–1 | done (`0451e00`) | nothing (apps); §4 (custom drawing) | §4 |
-| 2 — fonts | next | switch `_XmPlatFontOfGC` text sites to `XmFont`; Xft-only default | §4.4 update |
+| 2 — fonts | done | switch `_XmPlatFontOfGC` text sites to font tokens (`_XmPlatFontOf*D`); metrics via `_XmPlatTextWidth`/`Extents` | §4.4 |
 | 3 — images | after 2 | replace `_XmPlatImageOf`/`XPutImage` sites with `XmImage` | §4 table update |
 | 4 — events | after 3 | nothing yet (XEvent handling unchanged) | new section |
 | 5 — atoms/DnD/mwm | after 4 | nothing for apps | new section |

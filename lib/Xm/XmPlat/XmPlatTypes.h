@@ -41,6 +41,40 @@ enum {
     XmPlatTextWC   /* wide char *       (XFontSet path)      */
 } ;
 
+/*
+ * Additional kind codes shared by font tokens and text-kind arguments.
+ * XmPlatTextGC marks a font token whose font rides in the GC (Phase-1
+ * shim); XmPlatTextXFT marks a font token holding a backend font of
+ * the modern-rendering family; XmPlatTextUTF8/32 extend the text-kind
+ * argument of the string prims.
+ */
+#define XmPlatTextGC   4
+#define XmPlatTextXFT  5
+#define XmPlatTextUTF8 6
+#define XmPlatText32   7
+
+/*
+ * Char metrics, field-for-field equivalent of the core-X char struct.
+ * Filled by _XmPlatTextExtents; lbearing/rbearing are ink offsets from
+ * the origin, width is the advance, ascent/descent the ink extents.
+ */
+typedef struct {
+    short lbearing, rbearing, width ;
+    short ascent, descent ;
+    unsigned short attributes ;
+} XmPlatCharInfo ;
+
+/*
+ * Color for text/image prims on rendering backends that need explicit
+ * color (alpha-capable).  pixel is the colormap index when one exists;
+ * red/green/blue/alpha are 16-bit components.  Core-X backends use
+ * pixel; cairo backends use the components.
+ */
+typedef struct {
+    unsigned long  pixel ;
+    unsigned short red, green, blue, alpha ;
+} XmPlatColor ;
+
 /* Fill styles */
 #define XmPlatFillSolid      0
 #define XmPlatFillTiled      1

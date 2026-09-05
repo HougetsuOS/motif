@@ -967,7 +967,9 @@ Redisplay(widget, event, region)
     Boolean getNewGC = False;
     if(gc)
     {
-      XGetGCValues(XtDisplay(widget), gc, GCBackground, &gcValues);
+      { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(widget), 0, gc) ;
+      gcValues.background = _XmPlatGetBackground (_c) ;
+      _XmPlatCtxFree (_c) ; }
       if (tab->core.background_pixel != gcValues.background)
       {
         XtReleaseGC(widget, gc);
@@ -5112,29 +5114,28 @@ CalcCornerSize(tab)
     while( (entry = XmFontListNextEntry(fc)) != NULL )
     {
 	value = (XtPointer) XmFontListEntryGetFont(entry, &font_type);
-
-	if( font_type == XmFONT_IS_FONT )
 	{
-	    XFontStruct     *font;
+	    XmPlatFont token ;
 
-	    font = (XFontStruct*) value;
-	    tmp = font->ascent + font->descent;
-	    AssignMax(size, tmp);
-	}
-#ifdef USE_XFT
-        else if (1/*font_type == XmFONT_IS_XFT*/)
-	{
-	    tmp = ((XftFont*)value)->ascent + ((XftFont*)value)->descent;
-	    AssignMax(size, tmp);
-	}
-#endif
-	else
-	{
-	    XFontSetExtents *extents;
+	    if (font_type == XmFONT_IS_FONT)
+		token = _XmPlatFontOfFontStructD (XtDisplay((Widget) tab),
+						  (XFontStruct *) value) ;
+	    else if (font_type == XmFONT_IS_XFT)
+		token = _XmPlatFontOfXftFontD (XtDisplay((Widget) tab),
+					       value) ;
+	    else
+		token = _XmPlatFontOfFontSetD (XtDisplay((Widget) tab),
+					       (XFontSet) value) ;
 
-	    extents = XExtentsOfFontSet((XFontSet) value);
-	    tmp = extents->max_logical_extent.height;
+	    if (font_type == XmFONT_IS_FONTSET) {
+		XFontSetExtents *extents =
+		    XExtentsOfFontSet((XFontSet) value);
+		tmp = extents->max_logical_extent.height;
+	    } else {
+		tmp = _XmPlatFontAscent (token) + _XmPlatFontDescent (token) ;
+	    }
 	    AssignMax(size, tmp);
+	    _XmPlatFontFree (token) ;
 	}
     }
     XmFontListFreeFontContext(fc);
