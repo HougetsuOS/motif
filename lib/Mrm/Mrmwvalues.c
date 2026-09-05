@@ -231,6 +231,7 @@ UrmFetchSetValues (MrmHierarchy		hierarchy_id ,
 	  else
 	    result = Urm__CW_FixupValue (val, reptype, (XtPointer)val, 
 					 file_id, &swap_needed) ;
+	  /* FALLTHRU */
 
 	default:
 	  result = 

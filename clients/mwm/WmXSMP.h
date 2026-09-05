@@ -44,7 +44,11 @@
 
 extern void AddSMCallbacks(void);
 extern void ResignFromSM(void);
+#if defined(__GNUC__)
+extern __attribute__((noreturn)) void ExitWM(int exitCode);
+#else
 extern void ExitWM(int exitCode);
+#endif
 extern XrmDatabase LoadClientResourceDB(void);
 extern XrmDatabase SaveClientResourceDB(void);
 extern Boolean FindClientDBMatch(ClientData *, char **);

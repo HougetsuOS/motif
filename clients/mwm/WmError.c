@@ -100,6 +100,10 @@ static char *pchErrorFormat [NUM_E_STRINGS];
  *
  *************************************<->***********************************/
 
+#if defined(__GNUC__)
+static __attribute__((noreturn)) void WmXtErrorHandlerNoreturn (char *message);
+#endif
+
 void
 WmInitErrorHandler (Display *display)
 {
@@ -131,7 +135,7 @@ WmInitErrorHandler (Display *display)
     XSetIOErrorHandler (WmXIOErrorHandler);
 
     XtSetWarningHandler (WmXtWarningHandler);
-    XtSetErrorHandler (WmXtErrorHandler);
+    XtSetErrorHandler (WmXtErrorHandlerNoreturn);
 
 } /* END OF FUNCTION WmInitErrorHandler */
 
@@ -277,6 +281,16 @@ WmXtErrorHandler (char *message)
     ExitWM (WM_ERROR_EXIT_VALUE);
 
 } /* END OF FUNCTION WmXtErrorHandler */
+
+/* Conf XtNoreturn-type-compatible handler for XtSetErrorHandler. */
+#if defined(__GNUC__)
+__attribute__((noreturn))
+#endif
+static void
+WmXtErrorHandlerNoreturn (char *message)
+{
+    WmXtErrorHandler (message);
+} /* END OF FUNCTION WmXtErrorHandlerNoreturn */
 
 
 

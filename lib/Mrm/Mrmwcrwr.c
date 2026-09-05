@@ -424,16 +424,18 @@ UrmCWRSetCompressedArgTag (URMResourceContextPtr	context_id,
   /*
    *  Local variables
    */
-  RGMArgListDescPtr	argdesc ;	/* arglist desc in record */
-  RGMArgumentPtr	argptr ;	/* argument being set */
+  Cardinal		result ;	/* function results */
+  RGMArgListDescPtr	argdesc = (RGMArgListDescPtr) NULL ;	/* arglist desc in record */
+  RGMArgumentPtr	argptr = (RGMArgumentPtr) NULL ;	/* argument being set */
 
 
   /*
    * Validate record, arglist descriptor, and argument number
    */
   UrmCWR__ValidateContext (context_id, "UrmCWRSetCompressedArgTag") ;
-  UrmCWR__BindArgPtrs
+  result = UrmCWR__BindArgPtrs
     (context_id, "UrmCWRSetCompressedArgTag", arg_ndx, &argdesc, &argptr) ;
+  if ( result != MrmSUCCESS ) return result ;
 
   /*
    * Validate the compressed code and set the argument.
@@ -503,8 +505,9 @@ UrmCWRSetUncompressedArgTag (URMResourceContextPtr	context_id ,
    * Validate record, arglist descriptor, and argument number
    */
   UrmCWR__ValidateContext (context_id, "UrmCWRSetUncompressedArgTag") ;
-  UrmCWR__BindArgPtrs
+  result = UrmCWR__BindArgPtrs
     (context_id, "UrmCWRSetUncompressedArgTag", arg_ndx, &argdesc, &argptr) ;
+  if ( result != MrmSUCCESS ) return result ;
 
   /*
    * Append the tag string to the record and set the argument
@@ -888,9 +891,12 @@ UrmCWRSetArgChar8Vec (URMResourceContextPtr	context_id,
     (context_id, "UrmCWRSetArgChar8Vec", arg_ndx, &argdesc, &argptr) ;
 
   /*
-   * Validate vector - make sure it doesn't contain too many elements
+   * Validate vector - make sure it doesn't contain too many elements.
+   * (MrmCount is a short int, so it can never exceed RGMListSizeMax;
+   * the comparison is kept with a cast to unsigned to preserve the
+   * original guard for a future wider type.)
    */
-  if ( num_stg > (int)RGMListSizeMax )
+  if ( (unsigned int)num_stg > (unsigned int)RGMListSizeMax )
     return Urm__UT_Error ("DwUrmCWRSetArgChar8Vec", _MrmMMsg_0095,
 			  NULL, context_id, MrmVEC_TOO_BIG) ;
 
@@ -1003,7 +1009,7 @@ UrmCWRSetArgCStringVec (URMResourceContextPtr	context_id,
   /*
    * Validate vector - make sure it doesn't contain too many elements
    */
-  if ( num_cstg > (int)RGMListSizeMax )
+  if ( (unsigned int)num_cstg > (unsigned int)RGMListSizeMax )
     return Urm__UT_Error ("DwUrmCWRSetArgCStringVec", _MrmMMsg_0095,
 			  NULL, context_id, MrmVEC_TOO_BIG) ;
 
@@ -1482,8 +1488,9 @@ UrmCWRSetExtraArgs (URMResourceContextPtr	context_id ,
   /*
    *  Local variables
    */
-  RGMArgListDescPtr	argdesc ;	/* arglist desc in record */
-  RGMArgumentPtr	argptr ;	/* argument being set */
+  Cardinal		result ;	/* function results */
+  RGMArgListDescPtr	argdesc = (RGMArgListDescPtr) NULL ;	/* arglist desc in record */
+  RGMArgumentPtr	argptr = (RGMArgumentPtr) NULL ;	/* argument being set */
 
 
   /*
@@ -1491,8 +1498,9 @@ UrmCWRSetExtraArgs (URMResourceContextPtr	context_id ,
    * argptr not used. Set the extra args field.
    */
   UrmCWR__ValidateContext (context_id, "UrmCWRSetExtraArgs") ;
-  UrmCWR__BindArgPtrs
+  result = UrmCWR__BindArgPtrs
     (context_id, "UrmCWRSetExtraArgs", 0, &argdesc, &argptr) ;
+  if ( result != MrmSUCCESS ) return result ;
 
   argdesc->extra = nextra ;
   return MrmSUCCESS ;

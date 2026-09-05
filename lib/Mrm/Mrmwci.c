@@ -867,7 +867,7 @@ hash_function(int	l_length,
   /* END OSF Fix CR 5232 */
 
   bzero((char *)al_value, sizeof(int) * 20);
-  strncpy((char *)al_value, c_value, l_length);
+  memcpy((char *)al_value, c_value, l_length);
   l_hash_code = 0;
 
   for (i = 0 ; i < l_limit ; i++)
