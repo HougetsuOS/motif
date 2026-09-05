@@ -272,7 +272,7 @@ HelpCB(Widget   w,
        XtPointer cb
       )
 {
- int       what_kind_of_help = (int)cd;  
+ unsigned long what_kind_of_help = (unsigned long)(XtPointer) cd;  
  char      help_string[500]; 
  XmString  hs_as_cs; 
  Widget    dialog_general_help; 

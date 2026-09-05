@@ -1214,9 +1214,8 @@ static Boolean
 RenditionsCompatible(_XmStringEntry seg1,
 		     _XmStringEntry seg2)
 {
-  int		i;
-  XmStringTag	*begin1, *begin2, *end1, *end2;
-  short		bcnt1, bcnt2, ecnt1, ecnt2, diff;
+  XmStringTag	*begin1, *end2;
+  short		bcnt1, bcnt2, ecnt1, ecnt2;
 
   _XmProcessLock();
   bcnt1 = _XmEntryRendBeginCountGet(seg1);
@@ -1224,8 +1223,6 @@ RenditionsCompatible(_XmStringEntry seg1,
   ecnt1 = _XmEntryRendEndCountGet(seg1);
   ecnt2 = _XmEntryRendEndCountGet(seg2);  
   begin1 = _XmEntryRendCountedBegins(seg1, bcnt1);
-  begin2 = _XmEntryRendCountedBegins(seg2, bcnt2);
-  end1 = _XmEntryRendCountedEnds(seg1, ecnt1);
   end2 = _XmEntryRendCountedEnds(seg2, ecnt2);
   _XmProcessUnlock();
   
@@ -1461,8 +1458,8 @@ XmStringConcatAndFree(XmString a,
 	    (a_len == 0))) &&
 	  (a_type == b_type || a_type == XmNO_TEXT || b_type == XmNO_TEXT) &&
 	  ((a_len + b_len) < (1 << BYTE_COUNT_BITS)) &&
-	  ((_XmStrText(a) && b_tabs==0) || 
-	   (!_XmStrText(a) && a_tabs+b_tabs <= 3)))
+	  ((a_len > 0 && b_tabs == 0) ||
+	   (a_len == 0 && a_tabs + b_tabs <= 3)))
 	{
 	  /* Compatible strings.  Make an optimized string. */
 	  if ((b_len == 0) && (_XmStrRefCountGet(a) == 1))
@@ -5517,7 +5514,7 @@ _XmStringNonOptCreate(
 
 	  _XmEntryTextTypeSet(&seg, XmWIDECHAR_TEXT);
 	  prev_type = XmWIDECHAR_TEXT;
-	  /* Fall through */
+	  /* FALLTHRU */
 	case XmSTRING_COMPONENT_LOCALE_TEXT:
 	  if (txt_seen)
 	    {
@@ -5534,7 +5531,7 @@ _XmStringNonOptCreate(
 	  _XmUnoptSegTag(&seg) = 
 	    _XmStringCacheTag((char *) XmFONTLIST_DEFAULT_TAG, 
 			      XmSTRING_TAG_STRLEN);
-	  /* Fall through to regular text. */
+	  /* FALLTHRU */
 	case XmSTRING_COMPONENT_TEXT:
 	  if (txt_seen)
 	    {
@@ -5736,7 +5733,7 @@ XmCvtByteStreamToXmString(unsigned char *property)
 	      break;
 	    }
 
-          /* Else fall through to text case. */
+          /* FALLTHRU */
         case XmSTRING_COMPONENT_TEXT:
           if (txt_seen ||
 	      (((c_opt + length + _asn1_size(length)) < end) || 
@@ -5957,7 +5954,8 @@ _XmEntryTextSet(_XmStringEntry entry,
        parameter, or requires that the byte count is set in the segment.
        However, to my knowledge, nobody needs this now. But it needs to
        be looked at.. */
-    strcpy((char *)((_XmStringOptSeg)(entry))->data.chars, (char *)val)) :
+    (val ? strcpy((char *)((_XmStringOptSeg)(entry))->data.chars,
+		  (char *)val) : (void) 0)) :
    (((_XmStringUnoptSeg)(entry))->data.text = val));
 }
 
@@ -8462,6 +8460,7 @@ XmStringUnparse(XmString          string,
 	case XmSTRING_COMPONENT_END:
 	  done = True;
 	  /* We're done after processing this component. */
+	  /* FALLTHRU */
 	default:
 	  /* Non-text components are under the control of parse_model. */
 	  if (non_text_match)
@@ -8936,7 +8935,7 @@ XmeStringGetComponent(_XmStringContext context,
           _XmProcessUnlock();
 	  return XmSTRING_COMPONENT_LAYOUT_PUSH;
 	} 
-      /* Fall through if no push components exist. */ 
+      /* FALLTHRU */
 
     case BEGIN_REND_STATE:
       tmp_index = ((_XmStrContState(context) == BEGIN_REND_STATE) ?
@@ -8963,7 +8962,7 @@ XmeStringGetComponent(_XmStringContext context,
           _XmProcessUnlock();
 	  return XmSTRING_COMPONENT_RENDITION_BEGIN;
 	}
-      /* Fall through if there are no more rendition starts. */
+      /* FALLTHRU */
 
     case TAG_STATE:
       /* Don't output implicit leading charset component. */
@@ -9013,7 +9012,7 @@ XmeStringGetComponent(_XmStringContext context,
 		      XmSTRING_COMPONENT_CHARSET : XmSTRING_COMPONENT_LOCALE);
 	    }
 	}
-      /* Fall through if no tag set. */
+      /* FALLTHRU */
 
     case TAB_STATE: 
       tmp_index = ((_XmStrContState(context) == TAB_STATE) ?
@@ -9031,7 +9030,7 @@ XmeStringGetComponent(_XmStringContext context,
 	  _XmProcessUnlock();
 	  return XmSTRING_COMPONENT_TAB;
 	} 
-      /* Fall through if there are no tabs. */
+      /* FALLTHRU */
 
     case DIR_STATE:
       dir = (optimized ? _XmStrDirection(opt) : _XmEntryDirectionGet(seg));
@@ -9083,7 +9082,7 @@ XmeStringGetComponent(_XmStringContext context,
 	      return XmSTRING_COMPONENT_DIRECTION;
 	    }
 	}
-      /* Fall through if no direction set. */
+      /* FALLTHRU */
 
     case TEXT_STATE:
       switch (text_type)
@@ -9137,7 +9136,7 @@ XmeStringGetComponent(_XmStringContext context,
 	  _XmProcessUnlock();
 	  return XmSTRING_COMPONENT_END;
 	}
-      /* Fall through if there is no text. */
+      /* FALLTHRU */
 
     case END_REND_STATE:
       tmp_index = ((_XmStrContState(context) == END_REND_STATE) ?
@@ -9164,7 +9163,7 @@ XmeStringGetComponent(_XmStringContext context,
 	  _XmProcessUnlock();
 	  return XmSTRING_COMPONENT_RENDITION_END;
 	}
-      /* Fall through if there are no more rendition ends. */
+      /* FALLTHRU */
 
     case POP_STATE:
       pop_dir = (optimized ? 0 : _XmEntryPopGet(seg));
@@ -9177,7 +9176,7 @@ XmeStringGetComponent(_XmStringContext context,
 	  _XmProcessUnlock();
 	  return XmSTRING_COMPONENT_LAYOUT_POP;
 	}
-      /* Fall through if there is no pop layout direction. */
+      /* FALLTHRU */
 
     case SEP_STATE:
       /* This is the last possible component for a segment. */

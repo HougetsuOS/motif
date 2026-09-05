@@ -99,11 +99,11 @@ static XtResource resources[] = {
   { XtNfontPattern, XtCFontPattern, XmRString, sizeof(String),
     XtOffset(ApplicationDataPtr, fontpattern), XmRString, "*" },
   { XtNmaxFont, XtCMaxFont, XmRInt, sizeof(int),
-    XtOffset(ApplicationDataPtr, maxfont), XmRImmediate, (caddr_t) 1000 },
+    XtOffset(ApplicationDataPtr, maxfont), XmRImmediate, (XtPointer) 1000 },
   { XtNmaxLen, XtCMaxLen, XmRInt, sizeof(int),
-    XtOffset(ApplicationDataPtr, maxlen), XmRImmediate, (caddr_t) 10 },
+    XtOffset(ApplicationDataPtr, maxlen), XmRImmediate, (XtPointer) 10 },
   { XtNuseGadget, XtCUseGadget, XmRBoolean, sizeof (Boolean),
-    XtOffset(ApplicationDataPtr, usegadget), XmRImmediate, (caddr_t) TRUE }
+    XtOffset(ApplicationDataPtr, usegadget), XmRImmediate, (XtPointer) TRUE }
 };
 
 /*-------------------------------------------------------------
@@ -417,8 +417,8 @@ Select 'quit' from the 'exit' menu to exit this application.");
 */
 void SelectFontCB (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  data from application   */
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  data from application   */
+XtPointer		call_data;	/*  data from widget class  */
 {
 	Widget		message_box;
 
@@ -440,8 +440,8 @@ caddr_t		call_data;	/*  data from widget class  */
 */
 void CloseCB  (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  font pointer	*/
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  font pointer	*/
+XtPointer		call_data;	/*  data from widget class  */
 {
 	XFontStruct	*font	= (XFontStruct *) client_data;
 	Widget		message_box	= XtParent (w);
@@ -466,8 +466,8 @@ caddr_t		call_data;	/*  data from widget class  */
 */
 void HelpCB (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  data from application   */
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  data from application   */
+XtPointer		call_data;	/*  data from widget class  */
 {
 	Widget		message_box;		/*  MessageBox		*/
 
@@ -489,8 +489,8 @@ caddr_t		call_data;	/*  data from widget class  */
 */
 void QuitCB (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  data from applicaiton   */
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  data from applicaiton   */
+XtPointer		call_data;	/*  data from widget class  */
 {
 
 

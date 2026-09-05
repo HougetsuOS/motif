@@ -26,6 +26,10 @@
  * HISTORY
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdlib.h>
 #include <Xm/XmAll.h>
 #include <Xmd/Help.h>   
@@ -289,8 +293,8 @@ String name ;
     for (j=0; j < 256; j++) buff_line[j] = ' ' ;
     for (i = 0 ; i < num_resources; i++) {
 	if ((i%2) == 0) {
-	    strncpy (buff_line, resource_list[i].resource_name,
-		     strlen(resource_list[i].resource_name)) ;
+	    snprintf (buff_line, sizeof(buff_line), "%s",
+		      resource_list[i].resource_name) ;
 	} else {
 	    strcpy (buff_line + 37, resource_list[i].resource_name) ;
 	    AddToBuffer(" %s\n", buff_line);
@@ -314,8 +318,8 @@ String name ;
 	for (j=0; j < 256; j++) buff_line[j] = ' ' ;
 	for (i = 0 ; i < num_resources; i++) {
 	    if ((i%2) == 0) {
-		strncpy (buff_line, resource_list[i].resource_name,
-			 strlen(resource_list[i].resource_name)) ;
+		snprintf (buff_line, sizeof(buff_line), "%s",
+			  resource_list[i].resource_name) ;
 	    } else {
 		strcpy (buff_line + 37, resource_list[i].resource_name) ;
 		AddToBuffer(" %s\n", buff_line);
@@ -344,10 +348,8 @@ String name ;
 		   i, res_sec_list[i]->num_resources);
 	    for (j = 0 ; j < res_sec_list[i]->num_resources; j++) {
 		if ((j%2) == 0) {
-		    strncpy (buff_line, 
-			     res_sec_list[i]->resources[j].resource_name,
-			     strlen(
-				res_sec_list[i]->resources[j].resource_name)) ;
+		    snprintf (buff_line, sizeof(buff_line), "%s",
+			      res_sec_list[i]->resources[j].resource_name) ;
 		} else {
 		    strcpy (buff_line + 37, 
 			    res_sec_list[i]->resources[j].resource_name) ;
@@ -485,8 +487,8 @@ int argc ; char **argv;
 */
 static void QuitCB (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  data from applicaiton   */
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  data from applicaiton   */
+XtPointer		call_data;	/*  data from widget class  */
 {
     exit (0);
 }
@@ -496,8 +498,8 @@ caddr_t		call_data;	/*  data from widget class  */
 */
 static void HelpCB (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  data from application   */
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  data from application   */
+XtPointer		call_data;	/*  data from widget class  */
 {
     static Widget help_widget = NULL ;
 

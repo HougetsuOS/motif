@@ -1453,7 +1453,7 @@ InitWmScreen (WmScreenData *pSD, int sNum)
      * Save screen context
      */
     XSaveContext (DISPLAY, pSD->rootWindow, wmGD.screenContextType,
-	(caddr_t)pSD);
+	(XtPointer)pSD);
     /*
      * Create shell widget for screen resource hierarchy
      */
@@ -1957,7 +1957,7 @@ void SetupWmWorkspaceWindows (void)
 			pSD->wmWorkspaceWin);
 #ifdef WSM
 	    XSaveContext (DISPLAY, pSD->wmWorkspaceWin, 
-		    wmGD.mwmWindowContextType, (caddr_t)pSD);
+		    wmGD.mwmWindowContextType, (XtPointer)pSD);
 #endif /* WSM */
 	}
     }
@@ -2437,16 +2437,16 @@ void
 InitWmDisplayEnv (void)
 {
     char *pDisplayName;
-    char buffer[256];
+    char buffer[512];
     char displayName[256];
 
     pDisplayName = DisplayString (DISPLAY);
-    
+
     /*
-     * Construct displayString for this string.  
+     * Construct displayString for this string.
      */
     strcpy(displayName, pDisplayName);
-    sprintf(buffer, "DISPLAY=%s",displayName);
+    snprintf(buffer, sizeof(buffer), "DISPLAY=%s", displayName);
     
     /*		
      * Allocate space for the display string

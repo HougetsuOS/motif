@@ -200,8 +200,8 @@ FileData *       filedata;
 */
 void OpenCB (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  data from application   */
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  data from application   */
+XtPointer		call_data;	/*  data from widget class  */
 {
 	static Widget fsb_box = NULL ;
 
@@ -221,8 +221,8 @@ caddr_t		call_data;	/*  data from widget class  */
 */
 void QuitCB (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  data from applicaiton   */
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  data from applicaiton   */
+XtPointer		call_data;	/*  data from widget class  */
 {
     exit (0);
 }
@@ -233,8 +233,8 @@ caddr_t		call_data;	/*  data from widget class  */
 */
 void HelpCB (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  data from application   */
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  data from application   */
+XtPointer		call_data;	/*  data from widget class  */
 {
 	static Widget message_box = NULL ;
 
@@ -250,8 +250,8 @@ caddr_t		call_data;	/*  data from widget class  */
 */
 void ReadCB (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  data from application   */
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  data from application   */
+XtPointer		call_data;	/*  data from widget class  */
 {
     FileData * filedata = (FileData *) client_data ;
     String file_name ;
@@ -296,8 +296,8 @@ caddr_t		call_data;	/*  data from widget class  */
 */
 void ValueCB (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  data from application   */
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  data from application   */
+XtPointer		call_data;	/*  data from widget class  */
 {
     FileData * filedata = (FileData *) client_data ;
 
@@ -314,8 +314,8 @@ caddr_t		call_data;	/*  data from widget class  */
 */
 void DrawCB (w, client_data, call_data) 
 Widget		w;		/*  widget id		*/
-caddr_t		client_data;	/*  data from application   */
-caddr_t		call_data;	/*  data from widget class  */
+XtPointer		client_data;	/*  data from application   */
+XtPointer		call_data;	/*  data from widget class  */
 {
     
     XmDrawingAreaCallbackStruct * dacs =

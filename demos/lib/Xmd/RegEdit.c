@@ -1777,7 +1777,7 @@ Widget w;
 			  XtRString, XtREditresBlock, CvtStringToBlock,
 			  NULL, (Cardinal) 0, XtCacheAll, NULL);
 
-    XtGetApplicationResources( w, (caddr_t) &globals, resources,
+    XtGetApplicationResources( w, (XtPointer) &globals, resources,
 			      XtNumber(resources), NULL, (Cardinal) 0);
 }
 

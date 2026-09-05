@@ -35,11 +35,13 @@
 
 /* October 2004, source code review by Thomas Biege <thomas@suse.de> */
 
-/* Official version number */
-static char *RCS_Version = "$XpmVersion: 3.4i $";
+/* October 2004, source code review by Thomas Biege <thomas@suse.de> */
 
-/* Internal version number */
-static char *RCS_Id = "$XpmId: xpm.shar,v 3.62 96/09/14 02:33:07 lehors Exp $";
+/* Official version number (kept for reference; RCS tags only) */
+#define XPM_RCS_VERSION "$XpmVersion: 3.4i $"
+
+/* Internal version number (kept for reference; RCS tags only) */
+#define XPM_RCS_ID "$XpmId: xpm.shar,v 3.62 96/09/14 02:33:07 lehors Exp $"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

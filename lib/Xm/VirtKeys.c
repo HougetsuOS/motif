@@ -706,6 +706,7 @@ EffectiveStdModMask(Display *dpy,
   switch (ks_per_kc)
     {
     default:	/* CR 8799: Ignore non-standard modifier groups. */
+	/* FALLTHRU */
     case 4:
       if (kc_map[3] != NoSymbol)
 	{
@@ -715,7 +716,8 @@ EffectiveStdModMask(Display *dpy,
 	   * all "effective" standard modifiers.
 	   */
 	  break;
-	} 
+	}
+	/* FALLTHRU */
     case 3:
       if (kc_map[2] == NoSymbol)
 	{
@@ -736,9 +738,10 @@ EffectiveStdModMask(Display *dpy,
 	      break;
 	    }
 	} 
-      /* At this fall-through, the group modifier bits have been
-       * decided, while the case is still out on Shift/Lock.
+      /* The group modifier bits have been decided, while the case is
+       * still out on Shift/Lock.
        */
+      /* FALLTHRU */
     case 2:
       if (kc_map[1] != NoSymbol)
 	{
@@ -748,6 +751,7 @@ EffectiveStdModMask(Display *dpy,
 	   */
 	  break;
 	} 
+      /* FALLTHRU */
     case 1:
       if (kc_map[0] != NoSymbol)
 	{

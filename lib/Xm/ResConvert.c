@@ -993,7 +993,7 @@ GetNextFontListEntry (
     char *delim )
 {
     char *fontName;
-    char *fontTag;
+    char *fontTag = NULL;
     char *fontPtr;
     String params[2];
     Cardinal num_params;
@@ -1741,7 +1741,6 @@ XmeGetDefaultRenderTable(
 #endif /* NeedWidePrototypes */
 {
     XmFontList fontlist = NULL;
-    static XmFontList sFontList = NULL;
     Widget origw = w;
     XmFontListEntry fontListEntry;
     char *s;

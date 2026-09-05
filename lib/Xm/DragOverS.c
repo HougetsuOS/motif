@@ -825,6 +825,7 @@ GetIconPosition(
 
 	    default:
 		XmeWarning ((Widget) icon, MESSAGE2); /* cast ok here */
+            /* FALLTHRU */
             case XmATTACH_NORTH_WEST:
                 *iconX = icon->drag.offset_x;
                 *iconY = icon->drag.offset_y;
@@ -1637,6 +1638,7 @@ GetDragIconColors(
 
 	default:
 	    XmeWarning ((Widget) dos, MESSAGE3);
+	/* FALLTHRU */
 	case XmNO_DROP_SITE:
             fg = dc->drag.noneCursorForeground;
 	    break;
@@ -2903,6 +2905,7 @@ _XmDragOverChange(
 
 	default:
 	    XmeWarning( (Widget) dc, MESSAGE4);
+	/* FALLTHRU */
 	case XmBLEND_ALL:
 	    /*
 	     *  Get the operation icon bitmap.
@@ -2919,7 +2922,7 @@ _XmDragOverChange(
 	        }
 	    }
 
-	    /* fall through */
+	    /* FALLTHRU */
 
 	case XmBLEND_STATE_SOURCE:
 	    /*

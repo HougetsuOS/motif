@@ -554,7 +554,6 @@ externaldef(uil_sym_glbl) key_keytable_entry_type *key_table_case_ins =\n\
 
 
 FILE			*outfil;	/* output file */
-int			ndx;		/* loop index */
 int			maxlen = 0;	/* max keyword length */
 int			maxkey = 0;	/* # entries in keyword table */
 
@@ -618,10 +617,10 @@ for ( ndx=0 ; ndx<tokvec->cnt ; ndx++ )
     wmlTokenClassString (tkclass, tok);
     wmlTokenSymKString (tksym, tok);
     wmlTokenTokenString (tktoken, tok);
-    fprintf (outfil, "    {%s, %s, %d, %s, \"%s\"},\n",
+    fprintf (outfil, "    {%s, %s, %lu, %s, \"%s\"},\n",
 	     tkclass,
 	     tksym,
-	     strlen(tokstg),
+	     (unsigned long) strlen(tokstg),
 	     tktoken,
 	     tokstg);
     if ( (int)strlen(tokstg) > *maxlen )

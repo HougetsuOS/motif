@@ -167,8 +167,10 @@ ConvertCallback(Widget  w,
   /* Convert any lowercase letters in the selection to uppercase. */
     while (*selected_text)  {
        if (islower(*selected_text))
-         *selected_text = toupper(*selected_text); 
+       {
+         *selected_text = toupper(*selected_text);
          selected_text++;
+       }
     }
 
   /* Place the converted text into the XmConvertCallbackStruct. */ 
@@ -235,13 +237,15 @@ TransferProc(Widget  w,
      }
 
      if (MYTEXT_is_supported)
+     {
        printf("TransferProc: Requesting conversion of MYTEXT.\n");
        XmTransferValue(scs->transfer_id, MYTEXT,
                    (XtCallbackProc)TransferProc, NULL,
                    XtLastTimestampProcessed(XtDisplay(w)));
-   }
+     }
+   }  /* if (scs->target == TARGETS) */
 
-  if ((scs->target == MYTEXT)) { 
+  if ((scs->target == MYTEXT)) {
     XmTextPosition current_insertion_position;
 
     printf("TransferProc: source has converted MYTEXT.\n");
@@ -343,7 +347,7 @@ HelpCB(Widget   w,
        XtPointer cb
       )
 {
- int       what_kind_of_help = (int)cd;  
+ unsigned long what_kind_of_help = (unsigned long)(XtPointer) cd;  
  char      help_string[500]; 
  XmString  hs_as_cs; 
  Widget    dialog_general_help; 

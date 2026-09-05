@@ -55,7 +55,7 @@ extern WSM_UI* wsm_ui;
 
 extern Boolean wsm_shown;
 
-int debug_index = 0;
+unsigned long debug_index = 0;
 
 #define GET_COMMAND_ID(dpy) ((CARD32) XAllocID(dpy))
 

@@ -466,6 +466,7 @@ _XmPictureParseNode(XmPictureRec *picture, char **in_string,
 	    /*
 	     * It's not a special character, so it must be a literal
 	     */
+	    /* FALLTHRU */
 	default:
 	    newnode = _XiGetNewNode(picture);
 	    newtrans = _XiGetNewTransition(LiteralCharacter,

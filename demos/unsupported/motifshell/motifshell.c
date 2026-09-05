@@ -52,6 +52,10 @@ static char rcsid[] = "$TOG: motifshell.c /main/7 1997/03/31 13:41:20 dbl $"
 *                                                  *
 ****************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <X11/Xos.h>
 
 /*  Standard C headers  */
@@ -196,7 +200,8 @@ void FontTest (Widget w, XtPointer client_data, XtPointer call_data)
     return;
 
   textstr = ExtractNormalString (callback_data->value);
-  if (textstr == NULL) sprintf(textstr, "%s", DEFAULT_FONT);
+  if (textstr == NULL)
+    textstr = XtNewString(DEFAULT_FONT);
 
   if ((mfinfo = XLoadQueryFont(display, textstr))==NULL)
       printf ("couldn't open %s font\n", textstr);
@@ -277,7 +282,10 @@ char *search_in_env (char *filename)
       while ((prefix = NextCap(envpath, cp, len)))
 	{
 	  cp += strlen(prefix);
-	  strncat(prefix, filename, len);
+	  {
+	    size_t used = strlen(prefix);
+	    snprintf(prefix + used, strlen(filename) + 1, "%s", filename);
+	  }
 
 	  if (file_exist(prefix))
 	    return(prefix);
@@ -314,10 +322,8 @@ char *GetSource (char *fileptr)
 	{
 	  catlen = strlen(defaultcap);
 	  datahome = (char *) malloc(catlen + strlen(fileptr) + 2);
-	  strncpy(datahome, defaultcap, catlen);
-	  datahome[catlen] = '/';
-	  datahome[catlen + 1] = '\0';
-	  strcat(datahome, fileptr);
+	  snprintf(datahome, catlen + strlen(fileptr) + 2, "%s/%s",
+		   defaultcap, fileptr);
 
 	  if ((fd = open(datahome, O_RDONLY)) < 0)
 	    {
@@ -641,7 +647,7 @@ void Quit(int i)
  *-------------------------------------------------------------*/
 void Menu1CB (Widget w, XtPointer clientData, XtPointer callData)
 {
-  int   itemNo = (int)clientData;
+  unsigned long itemNo = (unsigned long)(XtPointer) clientData;
 
   switch (itemNo)
     {
@@ -656,7 +662,7 @@ void Menu1CB (Widget w, XtPointer clientData, XtPointer callData)
  *-------------------------------------------------------------*/
 void Menu2CB (Widget w, XtPointer clientData, XtPointer callData)
 {
-  int        itemNo = (int)clientData;
+  unsigned long itemNo = (unsigned long)(XtPointer) clientData;
   char      *buffer = NULL;
   XmString   labelStr;
 
@@ -681,7 +687,7 @@ void Menu2CB (Widget w, XtPointer clientData, XtPointer callData)
  *-------------------------------------------------------------*/
 void Menu3CB (Widget w, XtPointer clientData, XtPointer callData)
 {
-  int      itemNo = (int)clientData;
+  unsigned long itemNo = (unsigned long)(XtPointer) clientData;
   XmString labelStr;
 
 
@@ -703,7 +709,7 @@ void Menu3CB (Widget w, XtPointer clientData, XtPointer callData)
  *-------------------------------------------------------------*/
 void Menu4CB (Widget w, XtPointer clientData, XtPointer callData)
 {
-  int       itemNo = (int)clientData;
+  unsigned long itemNo = (unsigned long)(XtPointer) clientData;
   char     *buffer;
   XmString  labelStr;
 
@@ -751,7 +757,7 @@ void Menu4CB (Widget w, XtPointer clientData, XtPointer callData)
  *-------------------------------------------------------------*/
 void Menu5CB (Widget w, XtPointer clientData, XtPointer callData)
 {
-  int itemNo = (int)clientData;
+  unsigned long itemNo = (unsigned long)(XtPointer) clientData;
 
   switch (itemNo)
     {
@@ -768,7 +774,7 @@ void Menu5CB (Widget w, XtPointer clientData, XtPointer callData)
  *-------------------------------------------------------------*/
 void Menu6CB (Widget w, XtPointer clientData, XtPointer callData)
 {
-  int itemNo = (int)clientData;
+  unsigned long itemNo = (unsigned long)(XtPointer) clientData;
 
   switch (itemNo)
     {
@@ -787,7 +793,7 @@ void Menu6CB (Widget w, XtPointer clientData, XtPointer callData)
  *-------------------------------------------------------------*/
 void Menu7CB (Widget w, XtPointer clientData, XtPointer callData)
 {
-  int itemNo = (int)clientData;
+  unsigned long itemNo = (unsigned long)(XtPointer) clientData;
   
 
   switch (itemNo)

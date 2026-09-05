@@ -29,12 +29,38 @@ static char rcsid[] = "$XConsortium: xrmLib.c /main/6 1995/07/14 10:01:41 drk $"
 #endif
 #endif
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <Xm/Xm.h>
 #include "wsm.h"
 #include "wsmDebug.h"
 #include "wsmData.h"
+
+/* mkstemp()-based replacement for tempnam(); returns a path suitable for
+ * XrmPutFileDatabase() or NULL.  The caller free()s the result. */
+static char *
+_XmWsMakeTemp(const char *prefix)
+{
+    static const char tmpl_fmt[] = "/tmp/%s-XXXXXX";
+    char *path;
+
+    path = (char *) malloc(sizeof(tmpl_fmt) - 2 + strlen(prefix));
+    if (path == NULL)
+        return NULL;
+    (void) sprintf(path, tmpl_fmt, prefix);
+    if (mkstemp(path) < 0)
+    {
+        free(path);
+        return NULL;
+    }
+    return path;
+}
 
 
 XrmDatabase wsm_dbase = NULL;
@@ -1088,12 +1114,12 @@ PurgeAllWindowConfiguration(Widget w,
   if (room_list != NULL)
     XtFree((XtPointer)room_list);
 
-  if ((del_db = tempnam(NULL, "wsmD")) == NULL)
+  if ((del_db = _XmWsMakeTemp("wsmD")) == NULL)
   {
       del_db = ".wsmDelDB";
       free_del = False;
   }
-  if ((save_db = tempnam(NULL, "wsmS")) == NULL)
+  if ((save_db = _XmWsMakeTemp("wsmS")) == NULL)
   {
       save_db = ".wsmSaveDB";
       free_save = False;
@@ -1196,12 +1222,12 @@ PurgeWindowConfiguration(Widget w,
 			  &value);
     }
 
-  if ((del_db = tempnam(NULL, "wsmD")) == NULL)
+  if ((del_db = _XmWsMakeTemp("wsmD")) == NULL)
   {
       del_db = ".wsmDelDB";
       free_del = False;
   }
-  if ((save_db = tempnam(NULL, "wsmS")) == NULL)
+  if ((save_db = _XmWsMakeTemp("wsmS")) == NULL)
   {
       save_db = ".wsmSaveDB";
       free_save = False;

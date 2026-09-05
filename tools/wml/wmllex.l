@@ -24,6 +24,10 @@
 /*
  * HISTORY
  */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #if defined(__STDC__)
 #include <string.h>
 #endif

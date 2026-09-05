@@ -303,7 +303,7 @@ GetDefaultColors(
 		    if (aproc == NULL)
 			aproc = DEFAULT_ALLOCCOLOR_PROC;
 
-			if ((*aproc)(DisplayOfScreen(screen), color_map,
+		    if ((*aproc)(DisplayOfScreen(screen), color_map,
 				color_def))
 			{
 				background = color_def->pixel;

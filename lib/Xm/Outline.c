@@ -527,9 +527,9 @@ SetValues(Widget current, Widget request, Widget set,
 	XmOutlineWidgetClass oc = (XmOutlineWidgetClass) XtClass(set);
 	XmOutlineCalcLocationProc calc_locations;
 	
-        _XmProcessLock()
+        _XmProcessLock();
 	calc_locations = oc->outline_class.calc_locations;
-        _XmProcessUnlock()
+        _XmProcessUnlock();
 	(*calc_locations)(set, True);
 	
 	LayoutChildren(set, NULL);
@@ -567,9 +567,9 @@ ChangeManaged(Widget w)
     if (XmHierarchy_refigure_mode(ow)) {
 	XmOutlineCalcLocationProc calc_locations;
 	
-	_XmProcessLock()
+	_XmProcessLock();
 	calc_locations = oc->outline_class.calc_locations;
-	_XmProcessUnlock()
+	_XmProcessUnlock();
 	(*calc_locations)(w, True);
 	
 	LayoutChildren(w, NULL);
@@ -660,9 +660,9 @@ GeometryManager(Widget w, XtWidgetGeometry * request,
     if (XmHierarchy_refigure_mode(ow)) {
 	XmOutlineCalcLocationProc calc_locations;
 	
-	_XmProcessLock()
+	_XmProcessLock();
 	calc_locations = oc->outline_class.calc_locations;
-	_XmProcessUnlock()
+	_XmProcessUnlock();
 	(*calc_locations)(XtParent(w), True);
 	
 	LayoutChildren(XtParent(w), w);
@@ -826,23 +826,22 @@ static void
 ToggleNodeState(Widget w, XtPointer node_ptr, XtPointer call_data)
 {
     Widget ow = XtParent(w);
-    XmOutlineWidgetClass oc = (XmOutlineWidgetClass) XtClass(ow);
 
     {
 	XtCallbackProc toggle_node_state;
 	
-	_XmProcessLock()
+	_XmProcessLock();
 	toggle_node_state = SUPERCLASS->hierarchy_class.toggle_node_state;
-	_XmProcessUnlock()
+	_XmProcessUnlock();
 	(*toggle_node_state)(w, node_ptr, call_data);
     }
 
     {
 	XmOutlineCalcLocationProc calc_locations;
 	
-	_XmProcessLock()
-	calc_locations = oc->outline_class.calc_locations;
-	_XmProcessUnlock()
+	_XmProcessLock();
+	calc_locations = ((XmOutlineWidgetClass) XtClass(ow))->outline_class.calc_locations;
+	_XmProcessUnlock();
 	(*calc_locations)(ow, True);
     }
     LayoutChildren(ow, NULL);
@@ -919,7 +918,7 @@ CalcLocations(Widget w, Boolean allow_resize)
 	
 	_XmProcessLock();
 	calc_max_width = oc->outline_class.calc_max_width;
-	_XmProcessUnlock()
+	_XmProcessUnlock();
 	XmOutline_max_width(ow) = (*calc_max_width)(w);
     }
 
@@ -1501,7 +1500,7 @@ ProcessNode(OutlineConstraints node)
 	{
 	    XmHierarchyNodeProc map_node;
 	    _XmProcessLock();
-	    map_node = tc->hierarchy_class.map_node
+	    map_node = tc->hierarchy_class.map_node;
 	    _XmProcessUnlock();
 	    (*map_node)((HierarchyConstraints) node);
 	}
@@ -1512,7 +1511,7 @@ ProcessNode(OutlineConstraints node)
 	{
 	    XmHierarchyNodeProc	unmap_node;
 	    _XmProcessLock();
-	    unmap_node = tc->hierarchy_class.unmap_node
+	    unmap_node = tc->hierarchy_class.unmap_node;
 	    _XmProcessUnlock();
 	    (*unmap_node)((HierarchyConstraints) node);
 	}

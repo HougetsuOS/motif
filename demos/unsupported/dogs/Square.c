@@ -58,7 +58,7 @@ static Boolean ConstraintSetValues();
 static XmPartResource resources[] = {
     {
     SquareNmajorDimension, SquareCMajorDimension, XmRInt, sizeof(int),
-    XmPartOffset(Square,major_dimension), XmRImmediate, (caddr_t)SquareWIDTH
+    XmPartOffset(Square,major_dimension), XmRImmediate, (XtPointer)SquareWIDTH
     }
 };
 
@@ -66,7 +66,7 @@ static XmPartResource constraints[] = {
    {
     SquareNmakeSquare, SquareCMakeSquare, XmRBoolean, sizeof(Boolean),
     XmConstraintPartOffset(Square,make_square),
-    XmRImmediate, (caddr_t)False
+    XmRImmediate, (XtPointer)False
    }
 };
 

@@ -3242,7 +3242,7 @@ ConstraintSetValues(
             	nc->visible_in_outline = pc->visible_in_outline;
 	    else
 	    	nc->visible_in_outline = False;
-   		if ((!nc->visible_in_outline) || 
+	    if ((!nc->visible_in_outline) ||
 	   	 (!CtrLayoutIsOUTLINE_DETAIL(cw)))
 	    	    HideCwid(ncwid);
 	    }
@@ -3354,7 +3354,6 @@ TestFitItem(
     if (CtrSpatialStyleIsNONE(cw))
       {
 	XtWidgetGeometry child_req;
-	XtGeometryResult result;
 
 	/* If we don't need to resize,  just return */
 	if ((XtWidth(cw) >= (x + XtWidth(cwid) + cw -> container.margin_w)) &&
@@ -3367,7 +3366,7 @@ TestFitItem(
 	child_req.y = y;
 
 	/* Make the request,  but always allow the drop */
-	result = _XmMakeGeometryRequest(cwid, &child_req);
+	(void)_XmMakeGeometryRequest(cwid, &child_req);
       }
     return(True);
 }
@@ -3434,8 +3433,10 @@ RemoveItem(
 	XSubtractRegion(cw->container.cells_region,cwid_region,
 			cw->container.cells_region);
 	XDestroyRegion(cwid_region);
+	/* FALLTHRU */
     case XmGRID:
 	cw->container.cells[c->cell_idx]--;
+	/* FALLTHRU */
     case XmNONE:
         c->cell_idx = NO_CELL;
     }
@@ -5379,7 +5380,6 @@ ContainerDestPrehookProc(
 	XtPointer	closure, /* unused */
         XmDestinationCallbackStruct *cs)
 {
-  XmContainerWidget		cw = (XmContainerWidget)wid;
   XmDropProcCallbackStruct *	dropproc_cs;
   XPoint			*loc_data;
 
@@ -7907,6 +7907,7 @@ RecalcMarquee(
 				x = cw->container.anchor_point.x;
 				y = cw->container.anchor_point.y;
 				}
+			/* FALLTHRU */
 	case	XmMARQUEE_EXTEND_START:
 			if CtrTechIsMARQUEE_ES(cw)
                         {
@@ -7915,6 +7916,7 @@ RecalcMarquee(
 				else
 					cwid = NULL;
                         }
+			/* FALLTHRU */
 			if (cwid)
 				{
 				XtVaGetValues(cwid,XmNx,&cwid_x,
@@ -7952,6 +7954,7 @@ RecalcMarquee(
 					}
 				break;
 				}
+			/* FALLTHRU */
 	case	XmMARQUEE:
 	case	XmTOUCH_OVER:
 			cw->container.marquee_start.x =
@@ -8136,6 +8139,7 @@ RedirectTraversal(
     Widget to_widget = new_focus;
     Boolean wrap;
 
+
   if ( (old_focus == NULL)
     || (focus_policy != XmEXPLICIT) 
     || (   direction != XmTRAVERSE_PREV 
@@ -8147,7 +8151,7 @@ RedirectTraversal(
 	&& direction != XmTRAVERSE_HOME))
     return new_focus;
 
-    if ( ((cw=(XmContainerWidget)XtParent(old_focus)) == NULL)
+  if ( ((cw=(XmContainerWidget)XtParent(old_focus)) == NULL)
       || (!XmIsContainer(cw))
       || (CtrLayoutIsSPATIAL(cw))
       || (CtrOUTLINE_BUTTON(old_focus)))
@@ -8499,7 +8503,6 @@ GetPrevTraversalWidget(
 {
     CwidNode	child_node;
     CwidNode	prev_node;
-    CwidNode	last_node;
 
     if (cw == NULL || child == NULL)
 	return(NULL);
@@ -8740,6 +8743,7 @@ CallSelectCB(
 	{
 	case	XmSINGLE_SELECT:
 			cbs.reason = XmCR_SINGLE_SELECT;
+			/* FALLTHRU */
 	case	XmBROWSE_SELECT:
 			if (CtrPolicyIsBROWSE(cw))
 				cbs.reason = XmCR_BROWSE_SELECT;
@@ -8754,6 +8758,7 @@ CallSelectCB(
 			break;
 	case	XmMULTIPLE_SELECT:
 			cbs.reason = XmCR_MULTIPLE_SELECT;
+			/* FALLTHRU */
 	case	XmEXTENDED_SELECT:
 			if (CtrPolicyIsEXTENDED(cw))
 				cbs.reason = XmCR_EXTENDED_SELECT;

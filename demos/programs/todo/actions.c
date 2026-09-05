@@ -30,6 +30,10 @@ static char *rcsid = "$TOG: actions.c /main/7 1997/05/02 10:01:40 dbl $";
 #endif
 #endif
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <X11/Intrinsic.h>

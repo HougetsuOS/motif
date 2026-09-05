@@ -141,9 +141,11 @@ OpenReadFile(filename, mdata)
     xpmData *mdata;
 {
 #ifndef NO_ZPIPE
-    char *compressfile, buf[(2*MAXPATHLEN) + 1];
 # ifdef STAT_ZFILE
+    char *compressfile, buf[(2*MAXPATHLEN) + 1];
     struct stat status;
+# else
+    char buf[(2*MAXPATHLEN) + 1];
 # endif
 #endif
 

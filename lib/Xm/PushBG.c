@@ -1569,7 +1569,7 @@ BorderUnhighlight(
 			     x, y, width, height, border);
 	      break;
 	    }
-	  /* else fall through to XmEXTERNAL_HIGHLIGHT. */
+	  /* FALLTHRU */
 
 	case XmEXTERNAL_HIGHLIGHT:
 	  (*(xmGadgetClassRec.gadget_class.border_unhighlight)) (wid);
@@ -2913,10 +2913,8 @@ Redisplay(
     {
       if (LabG_IsMenupane(pb))
 	{
-	  XmDisplay dpy = (XmDisplay) XmGetXmDisplay(XtDisplay(wid));
-	  Boolean etched_in = dpy->display.enable_etched_in_menu;
 	  ShellWidget mshell = (ShellWidget)XtParent(XtParent(pb));
-	  
+
 	  if (!mshell->shell.popped_up)
 	    return;
 

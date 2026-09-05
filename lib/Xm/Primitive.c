@@ -1180,7 +1180,7 @@ FocusChange(
 		{
 		    break ;
 		}
-	    /* Drop through. */
+	    /* FALLTHRU */
 	case XmFOCUS_IN:
 	    if(change == XmFOCUS_IN    ) /* Because of drop-though. */ {
 		((XmPrimitiveWidget) wid)->primitive.have_traversal = TRUE ;
@@ -1197,7 +1197,7 @@ FocusChange(
 		{
 		    break ;
 		}
-	    /* Drop through. */
+	    /* FALLTHRU */
 	case XmFOCUS_OUT:
 	    if(change == XmFOCUS_OUT    ) /* Because of drop-though. */{
 		

@@ -1417,7 +1417,7 @@ _XmOSGenerateMaskName(
     else
       len = strlen(imageName);
 
-    strncpy(maskNameBuf, imageName, len);
+    memcpy(maskNameBuf, imageName, len);
     maskNameBuf += len;
     strcpy(maskNameBuf, "_m");
     if (suffix) 

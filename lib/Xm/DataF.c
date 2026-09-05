@@ -1467,7 +1467,6 @@ ClassInit()
 ClassInit(void)
 #endif
 {
-    XmDataFieldClassRec* wc = &xmDataFieldClassRec;
     XmTransferTrait tt;
 
     /* set TextField's transfer trait */
@@ -4438,8 +4437,10 @@ df_SetDestination(
         }
     } else {
         if (XmTextF_has_destination(tf))
-	   if (!set_time) set_time = df_GetServerTime(w);
+        {
+           if (!set_time) set_time = df_GetServerTime(w);
            XtDisownSelection(w, MOTIF_DESTINATION, set_time);
+        }
 
           /* Call XmGetDestination(dpy) to get widget that last had
              destination cursor. */
@@ -4577,7 +4578,7 @@ _XmDataFieldIsWSpace(
 {
    int i;
 
-   for (i=num_entries; i > 0; i--){
+   for (i=0; i < num_entries; i++){
       if (wide_char == white_space[i]) return True;
    }
    return False;
@@ -4996,7 +4997,7 @@ PrintableString(XmDataFieldWidget tf,
       cache_ptr = tmp = XmStackAlloc(buf_size, cache);
    
       tmp_str = (wchar_t *)str;
-      // Fixed MZ BZ#1257: by Brad Despres <brad@sd.aonix.com>
+      /* Fixed MZ BZ#1257: by Brad Despres <brad@sd.aonix.com> */
       count = 0;
       do {
 	ret_val = wctomb(tmp, *tmp_str);
@@ -5082,10 +5083,15 @@ df_InsertChar(
       return;
 
     _XmDataFieldDrawInsertionPoint(tf, False);
+    cursorPos = nextPos = XmTextF_cursor_position(tf);
     if (df_NeedsPendingDeleteDisjoint(tf)){
-       if (!XmDataFieldGetSelectionPosition(w, &cursorPos, &nextPos) ||
-            cursorPos == nextPos) {
+       XmTextPosition sel_left, sel_right;
+       if (!XmDataFieldGetSelectionPosition(w, &sel_left, &sel_right) ||
+            sel_left == sel_right) {
           XmTextF_prim_anchor(tf) = XmTextF_cursor_position(tf);
+       } else {
+          cursorPos = sel_left;
+          nextPos = sel_right;
        }
        pending_delete = True;
 
@@ -5179,17 +5185,16 @@ df_InsertString(
 	  }
 
 	  _XmDataFieldDrawInsertionPoint(tf, False);
+	  cursorPos = nextPos = XmTextF_cursor_position(tf);
 	  if (df_NeedsPendingDeleteDisjoint(tf)){
 	      if (!XmDataFieldGetSelectionPosition(w, &cursorPos, &nextPos) ||
 		  cursorPos == nextPos) {
+		  cursorPos = nextPos = XmTextF_cursor_position(tf);
 		  XmTextF_prim_anchor(tf) = XmTextF_cursor_position(tf);
 	      }
 	      pending_delete = True;
 	      
 	      XmTextF_prim_anchor(tf) = XmTextF_cursor_position(tf);
-	      
-	  } else {
-	      cursorPos = nextPos = XmTextF_cursor_position(tf);
 	  }
 
 	  
@@ -6645,7 +6650,7 @@ df_MoveDestination(
 #endif /* _NO_PROTO */
 {
   XmDataFieldWidget tf = (XmDataFieldWidget) w;
-  XmTextPosition left, right;
+  XmTextPosition left = 0, right = 0;
   XmTextPosition new_position;
   Boolean old_has_focus = XmTextF_has_focus(tf);
   Boolean reset_cursor = False;
@@ -9218,7 +9223,7 @@ df_InitializeTextStruct(
       /* CR03685 */
       SGI_hack_XmImRegister((Widget)tf);
 #else
-      XmImRegister((Widget)tf, (unsigned int) NULL);
+      XmImRegister((Widget)tf, 0u);
 #endif
       df_GetXYFromPos(tf, XmTextF_cursor_position(tf), &xmim_point.x, &xmim_point.y);
       n = 0;
@@ -10729,7 +10734,7 @@ df_SetValues(
            diff_values = True;
            if (XmTextF_wc_value(new_tf) == NULL) {
               XmTextF_wc_value(new_tf) = (wchar_t*) XtMalloc(sizeof(wchar_t));
-              *XmTextF_wc_value(new_tf) = (wchar_t)NULL;
+              *XmTextF_wc_value(new_tf) = (wchar_t)0;
            }
            df_ValidateString(new_tf, (char*)XmTextF_wc_value(new_tf), True);
         } else if (XmTextF_value(new_tf) != XmTextF_value(old_tf)) {
@@ -11252,7 +11257,6 @@ XmDataFieldGetStringWcs(
 {
     XmDataFieldWidget tf = (XmDataFieldWidget) w;
     wchar_t *temp_wcs;
-    int num_wcs = 0;
 
     _XmWidgetToAppContext(w);    
     _XmAppLock(app);
@@ -11266,10 +11270,11 @@ XmDataFieldGetStringWcs(
 	    (void)memcpy((void*)temp_wcs, (void*)XmTextF_wc_value(tf), 
 			 sizeof(wchar_t) * (XmTextF_string_length(tf) + 1));
 	} 
-	else 
+	else
 	{
-	    num_wcs = mbstowcs(temp_wcs, XmTextF_value(tf),
+	    int num_wcs = mbstowcs(temp_wcs, XmTextF_value(tf),
 			       XmTextF_string_length(tf) + 1);
+	    (void)num_wcs;
 	}
 
 	_XmAppUnlock(app);
@@ -11384,9 +11389,6 @@ XmDataFieldSetString(
     XmTextPosition fromPos, toPos, newInsert;
     int length;
     int free_insert = False;
-    int ret_val = 0;
-    char * tmp_ptr;
-    char * mod_value = NULL;
 
     _XmWidgetToAppContext(w);    
     _XmAppLock(app);
@@ -11875,7 +11877,7 @@ XmDataFieldSetEditable(
        /* CR03685 */
        SGI_hack_XmImRegister((Widget)tf);
 #else
-       XmImRegister((Widget)tf, (unsigned int) NULL);
+       XmImRegister((Widget)tf, 0u);
 #endif
        df_GetXYFromPos(tf, XmTextF_cursor_position(tf), &xmim_point.x, 
 		       &xmim_point.y);

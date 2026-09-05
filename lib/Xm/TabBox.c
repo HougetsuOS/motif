@@ -231,10 +231,10 @@ static void CheckSetRenderTable(Widget wid, int offs, XrmValue *value);
 #define CacheSensitive(t,i)  XmTabBox__cache((t))[InfoToIndex(t,i)].sensitive
 
 #ifndef AssignMax
-#define AssignMax(x,y) if((y)>(x)) (x)=(y); else
+#define AssignMax(x,y) do { if((y)>(x)) (x)=(y); } while (0)
 #endif
 #ifndef AssignMin
-#define AssignMin(x,y) if((y)<(x)) (x)=(y); else
+#define AssignMin(x,y) do { if((y)<(x)) (x)=(y); } while (0)
 #endif
 #ifndef Max
 #define Max(x,y) (((x)>(y))?(x):(y))

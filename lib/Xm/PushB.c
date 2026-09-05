@@ -1919,7 +1919,7 @@ BorderUnhighlight(
 	      FillBorderWithParentColor(pb, border, x, y, width, height);
 	      break;
 	    }
-	  /* else fall through to XmEXTERNAL_HIGHLIGHT. */
+	  /* FALLTHRU */
 
 	case XmEXTERNAL_HIGHLIGHT:
 	  (*(xmLabelClassRec.primitive_class.border_unhighlight)) (wid) ;
@@ -2036,7 +2036,6 @@ static void
 SetPushButtonSize(
      XmPushButtonWidget newpb)
 {
-  XmLabelPart *lp = &(newpb->label);
   unsigned int onW = 0, onH = 0, onW2 = 0, onH2 = 0;
   XtWidgetProc resize;
   

@@ -165,7 +165,7 @@ typedef struct
 #define		sym_m_cycle_checked	(1 << 1)
 	/* set if the widget entry for this name has been checked for	*/
 	/* cyclic references.						*/
-#define		sym_m_has_cycle		(2 << 1)
+#define		sym_m_has_cycle		(1 << 2)
 	/* set if a cycle was detected for a widget entry		*/
 #define		sym_m_charset		(1 << 3)
        /* set if symbol being used as charset name. */

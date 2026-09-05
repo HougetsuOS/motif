@@ -33,7 +33,15 @@
 
 %{
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "wml.h"
+
+/* yacc/bison do not declare these; wmllex.c (included below) defines them. */
+extern int yylex(void);
+extern int yyerror(char *s);
 
 #if defined(__STDC__)
 #include <string.h>		/* for strcpy() */

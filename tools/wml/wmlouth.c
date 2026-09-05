@@ -203,7 +203,6 @@ char		*canned8 =
 FILE			*outfil;	/* output file */
 int			ndx;		/* loop index */
 WmlClassDefPtr		clsobj;		/* class object */
-WmlDataTypeDefPtr	datobj;		/* data type object */
 WmlResourceDefPtr	resobj;		/* resource object */
 WmlEnumSetDefPtr	enumsetobj;	/* enumeration set object */
 WmlEnumValueDefPtr	enumvalobj;	/* enumeration value object */
@@ -1412,7 +1411,6 @@ externaldef(uil_sym_glbl) char **uil_child_names =\n\
 FILE			*outfil;	/* output file */
 int			ndx;		/* loop index */
 WmlClassDefPtr		clsobj;		/* class object */
-WmlClassDefPtr		varobj;		/* gadget class object */
 WmlSynClassDefPtr	synobj;		/* syntactic object */
 WmlResourceDefPtr	resobj;		/* argument/reason object */
 WmlSynResourceDefPtr	synres;		/* arg/reason syntactic object */

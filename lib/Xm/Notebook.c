@@ -1334,7 +1334,7 @@ SetValues (
     if (relayout)
 	{
 	Dimension save_width, save_height;
-	XtWidgetGeometry preferred_geo;
+	XtWidgetGeometry preferred_geo = {0};
 
 	/* Store new w/h, restore old w/h, and adjust geometry to the old */
 	save_width = XtWidth(new_w);
@@ -6574,6 +6574,7 @@ GetNextTab (
 	  child = nb->composite.children[i];
 	  nc = NotebookConstraint(child);
 	  if ((nc->active) && (NB_IS_CHILD_MAJOR(nc->child_type)))
+	  {
 	    switch (target_dir)
 	    {
 	    case _HOME:
@@ -6609,6 +6610,7 @@ GetNextTab (
             case _END:
 		target = child;
 	    } /* switch */
+	  } /* nc->active && major */
 	    i++;
 	  }   /* while  */
 	}     /* if     */
@@ -6626,6 +6628,7 @@ GetNextTab (
 	  && (nc->page_number > top_major_page))
 	    target_found = True;
 	  else
+	  {
 	    if ((nc->active)
 		&& (NB_IS_CHILD_MINOR(nc->child_type))
 		&& (nc->page_number >= top_major_page))
@@ -6664,6 +6667,7 @@ GetNextTab (
 	      case _END:
 		target = child;
 	      } /* switch */
+	  } /* else: minor child */
 	    i++;
 	  }     /* while  */
 	}       /* else   */

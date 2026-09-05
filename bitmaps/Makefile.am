@@ -5,6 +5,7 @@ EXTRA_DIST =
 bmdir = @INCDIR@/bitmaps
 
 bm_HEADERS = \
+	gray \
 	xm_error \
 	xm_hour16 \
 	xm_hour16m \

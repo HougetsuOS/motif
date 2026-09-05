@@ -342,7 +342,7 @@ UrmCWRInitArglist (URMResourceContextPtr	context_id,
   /*
    * Error check that the number of arguments is reasonable
    */
-  if ( nargs > RGMListSizeMax )
+  if ( nargs > (int)RGMListSizeMax )
     return Urm__UT_Error ("UrmCWRInitArgList", _MrmMMsg_0092,
 			  NULL, context_id, MrmTOO_MANY) ;
 
@@ -890,7 +890,7 @@ UrmCWRSetArgChar8Vec (URMResourceContextPtr	context_id,
   /*
    * Validate vector - make sure it doesn't contain too many elements
    */
-  if ( num_stg > RGMListSizeMax )
+  if ( num_stg > (int)RGMListSizeMax )
     return Urm__UT_Error ("DwUrmCWRSetArgChar8Vec", _MrmMMsg_0095,
 			  NULL, context_id, MrmVEC_TOO_BIG) ;
 
@@ -1003,7 +1003,7 @@ UrmCWRSetArgCStringVec (URMResourceContextPtr	context_id,
   /*
    * Validate vector - make sure it doesn't contain too many elements
    */
-  if ( num_cstg > RGMListSizeMax )
+  if ( num_cstg > (int)RGMListSizeMax )
     return Urm__UT_Error ("DwUrmCWRSetArgCStringVec", _MrmMMsg_0095,
 			  NULL, context_id, MrmVEC_TOO_BIG) ;
 
@@ -1125,7 +1125,7 @@ UrmCWRSetArgCallback (URMResourceContextPtr	context_id ,
    * item is added for a terminating NULL for runtime use as an
    * in-memory list.
    */
-  if ( nitems > RGMListSizeMax )
+  if ( nitems > (int)RGMListSizeMax )
     return Urm__UT_Error ("UrmCWRSetArgCallback", _MrmMMsg_0109,
 			  NULL, context_id, MrmTOO_MANY) ;
 
@@ -1557,7 +1557,7 @@ UrmCWRInitChildren (URMResourceContextPtr	context_id ,
   /*
    * Error check that the number of children is reasonable
    */
-  if ( nchildren > RGMListSizeMax )
+  if ( nchildren > (int)RGMListSizeMax )
     return Urm__UT_Error ("UrmCWRInitChildren", _MrmMMsg_0099,
 			  NULL, context_id, MrmTOO_MANY) ;
 
@@ -1832,7 +1832,7 @@ UrmCWRSetCreationCallback (URMResourceContextPtr	context_id ,
    * allocate a callback descriptor. Initialize it. As in SetArgCallbac,
    * an extra item is added for runtime use.
    */
-  if ( nitems > RGMListSizeMax )
+  if ( nitems > (int)RGMListSizeMax )
     return Urm__UT_Error ("UrmCWRSetCreationCallback", _MrmMMsg_0109,
 			  NULL, context_id, MrmTOO_MANY) ;
 

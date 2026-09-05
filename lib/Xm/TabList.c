@@ -383,7 +383,7 @@ XmTabbedStackListInsert(tab_list, position, mask, attributes)
 	newTab->background_pixmap = attributes->background_pixmap;
     }
 
-    if( mask * XmTAB_SENSITIVE )
+    if( mask & XmTAB_SENSITIVE )
     {
 	newTab->sensitive = attributes->sensitive;
     }
@@ -485,7 +485,9 @@ XmTabbedStackListModify(tab_list, position, mask, attributes)
 	 * to share.
 	 */
 	tab->value_mode = attributes->value_mode;
-	tab->label_string = XiXmStringCopy(attributes->label_string);
+	tab->label_string = (attributes->label_string != (XmString)NULL)
+				? XiXmStringCopy(attributes->label_string)
+				: (XmString) NULL;
     }
     
     if( mask & XmTAB_LABEL_STRING )
@@ -493,7 +495,9 @@ XmTabbedStackListModify(tab_list, position, mask, attributes)
 	if( tab->value_mode == XmTAB_VALUE_COPY )
 	{
 	    XiXmStringFree(tab->label_string);
-	    tab->label_string = XiXmStringCopy(attributes->label_string);
+	    tab->label_string = (attributes->label_string != (XmString)NULL)
+				? XiXmStringCopy(attributes->label_string)
+				: (XmString) NULL;
 	}
 	else
 	{
@@ -748,6 +752,8 @@ XmTabbedStackListSimpleModify(tab_list, position, label_string)
 {
     XmTabAttributeRec attributes;
 
+    (void) memset(&attributes, 0, sizeof(attributes));
+    attributes.label_string = label_string;
     XmTabbedStackListModify(tab_list, position, XmTAB_LABEL_STRING, &attributes);
 }
 
@@ -774,6 +780,7 @@ XmTabbedStackListSimpleQuery(tab_list, position)
 {
     XmTabAttributeRec attributes;
 
+    (void) memset(&attributes, 0, sizeof(attributes));
     XmTabbedStackListQuery(tab_list, position, &attributes);
 
     if( attributes.value_mode != XmTAB_VALUE_COPY )

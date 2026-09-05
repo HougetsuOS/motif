@@ -1181,6 +1181,9 @@ ResignFromSM(void)
 /*
  *  Exit the WM, being polite by first resigning from session mgmt.
  */
+#if defined(__GNUC__)
+__attribute__((noreturn))
+#endif
 void
 ExitWM(int exitCode)
 {

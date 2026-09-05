@@ -264,8 +264,8 @@ extern void (*_XtProcessLock)();
 # define _XmDisplayToAppContext(d)
 # define _XmAppLock(app)
 # define _XmAppUnlock(app)
-# define _XmProcessLock()
-# define _XmProcessUnlock()
+# define _XmProcessLock()	do { } while (0)
+# define _XmProcessUnlock()	do { } while (0)
 # define _XmIsThreadInitialized()	(FALSE)
 
 #endif /* XTHREADS && XUSE_MTSAFE_API */

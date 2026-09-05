@@ -553,7 +553,9 @@ typedef int _Xgetservbynameparams; /* dummy */
 #   define dirent direct
 #  endif
 # endif
-# if defined(XUSE_MTSAFE_API) || defined(XUSE_MTSAFE_DIRENTAPI)
+# if defined(XNO_MTSAFE_DIRENTAPI)
+#  undef XOS_USE_MTSAFE_DIRENTAPI
+# elif defined(XUSE_MTSAFE_API) || defined(XUSE_MTSAFE_DIRENTAPI)
 #  define XOS_USE_MTSAFE_DIRENTAPI 1
 # endif
 #endif

@@ -32,7 +32,7 @@
 #include <Xm/ActivatableT.h>
 #include <stdio.h>
 #include <Xm/IconButtonP.h>
-#include <X11/bitmaps/gray>
+#include <bitmaps/gray>
 #include <Xm/ExtP.h>
 #include "PrimitiveI.h"
 #include "XmStrDefsI.h"
@@ -750,9 +750,10 @@ SetValues(Widget current, Widget request, Widget set,
     /* now make sense of the pixmap changes */
     if (pixmapChanged && !pixmapGeoChanged)
     {
-	/* for backward compatibility, reset values and fall through to 
-	** GetDesiredSize
+	/* For backward compatibility, reset values and fall through to
+	** GetDesiredSize.
 	*/
+	/* FALLTHRU */
 	resetPixmapValues = True;
     }
     else if (pixmapGeoChanged && !pixmapChanged)

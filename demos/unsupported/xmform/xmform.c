@@ -50,6 +50,12 @@ xmform*topShadowColor:           white
 xmform*bottomShadowColor:        black
 ***-------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <stdlib.h>
+#include <string.h>
 #include <Xm/Xm.h>
 #include <Xm/Form.h>
 #include <Xm/PushB.h>

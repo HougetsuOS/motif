@@ -26,6 +26,10 @@
  * HISTORY
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -69,12 +73,12 @@ int main(int argc, char **argv)
   char       ** temp_argv = argv;
 
 
-  (void) strncpy(name, base(argv[0]), 132);
+  (void) snprintf(name, sizeof(name), "%s", base(argv[0]));
 
   /* handle the '-name' option */
   while (*temp_argv) {
     if (strcmp(*temp_argv, "-name") == 0) {
-      (void) strncpy(name, *++temp_argv, 132);
+      (void) snprintf(name, sizeof(name), "%s", *++temp_argv);
       break;
     }
     temp_argv++;

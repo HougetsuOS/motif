@@ -66,7 +66,7 @@ static XtResource resources[] = {
     { 
 	XmNspeed, XmCSpeed, XmRInt, sizeof(int),
 	XtOffsetOf (ApplicationData, speed), 
-	XmRImmediate, (caddr_t) 50 },
+	XmRImmediate, (XtPointer) 50 },
 
     /* overwrite the default colors (doing that will lead to weird
        behavior if you specify -fg or -bg on the command line, but
@@ -82,7 +82,7 @@ static XtResource resources[] = {
     {
         XmNpersue, XmCPersue, XmRBoolean, sizeof (Boolean),
 	XtOffsetOf (ApplicationData, persue),
-	XmRImmediate, (caddr_t) 0}
+	XmRImmediate, (XtPointer) 0}
 };
 
 static XrmOptionDescRec options[] = {

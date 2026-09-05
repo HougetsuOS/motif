@@ -110,7 +110,7 @@ EvaluateConvenienceStructure(
 {
         XmRowColumnWidget rc = (XmRowColumnWidget) wid ;
 	int i, n;
-	char name_buf[20];
+	char name_buf[32];
 	int button_count = 0;
 	int separator_count = 0;
 	int label_count = 0;
@@ -173,6 +173,7 @@ EvaluateConvenienceStructure(
 			break;
 			case XmDOUBLE_SEPARATOR:
 				XtSetArg(args[n], XmNseparatorType, XmDOUBLE_LINE); n++;
+				/* FALLTHRU */
 			case XmSEPARATOR:
 				sprintf(name_buf,"separator_%d", separator_count++);
 				child = XtCreateManagedWidget(name_buf, 
@@ -190,6 +191,7 @@ EvaluateConvenienceStructure(
 			break;
 			case XmRADIOBUTTON:
 				XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
+				/* FALLTHRU */
 			case XmCHECKBUTTON:
 				sprintf(name_buf,"button_%d", button_count++);
 				XtSetArg(args[n], XmNindicatorOn, TRUE); n++;

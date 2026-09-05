@@ -134,10 +134,10 @@ static XtActionsRec actionsList[] = {
 
 static XmPartResource resources[] = {
     {DogNwagTime, DogCWagTime, XtRInt, sizeof(int),
-	XmPartOffset(Dog,wag_time), XmRImmediate, (caddr_t)100},
+	XmPartOffset(Dog,wag_time), XmRImmediate, (XtPointer)100},
     {DogNbarkTime, DogCBarkTime, XtRInt, sizeof(int),
-	XmPartOffset(Dog,bark_time), XmRImmediate, (caddr_t)1000},
-    {DogNbarkCallback, XtCCallback, XtRCallback, sizeof(caddr_t),
+	XmPartOffset(Dog,bark_time), XmRImmediate, (XtPointer)1000},
+    {DogNbarkCallback, XtCCallback, XtRCallback, sizeof(XtPointer),
 	XmPartOffset(Dog,bark_callback), XtRCallback, NULL}
 };
 

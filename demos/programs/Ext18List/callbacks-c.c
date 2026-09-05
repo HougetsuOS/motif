@@ -329,7 +329,7 @@ ChoosePlayerCB(Widget w,XtPointer client, XtPointer call )
 	XmString xmstring;
 	static Widget info = NULL;
 
-	if ((int) row_info[i].data == playernum) {
+	if ((int)(unsigned long)(XtPointer) row_info[i].data == playernum) {
 	    
 	    if (info == NULL) {
 		Arg args[5];
@@ -359,7 +359,7 @@ ChoosePlayerCB(Widget w,XtPointer client, XtPointer call )
 	}
     }
 
-    row_info[num_rows].data = (XtPointer) playernum;
+    row_info[num_rows].data = (XtPointer)(unsigned long) playernum;
 
     switch (players[playernum].picture) {
     case PPORSCHE:

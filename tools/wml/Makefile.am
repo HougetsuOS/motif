@@ -68,5 +68,9 @@ motif.wmd: wmldbcreate
 clean-local:
 	$(RM) $(WMLTARGETS) $(WMDTABLE) $(REPORT) lex.yy.c libwml.a wml \
 	*.mm *.sdml *.txt wmlparse.c wmlparse.h wmluiltok wmllex.c \
-	tokens.dat DONE wmluiltok.c Uil.c Uil.h wml.report UilLexPars.[ch] ylwrap
+	tokens.dat DONE wmluiltok.c wml.report ylwrap
+# Uil.c/Uil.h/UilLexPars.[ch] are distributed in the tarball; regenerating
+# them requires byacc (system yacc may be bison and produce different
+# code).  Do not delete them in 'clean'.
+
  

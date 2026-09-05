@@ -170,12 +170,12 @@ static XtResource resources[] =
 /* Two of the three resources will also be handled as synthetic resources. */ 
 static XmSyntheticResource syn_resources[] =
 {
-    { 
-	XmNmarginWidth, 
+    {
+	XmNmarginWidth,
 	sizeof (Dimension),
-	XtOffsetOf( ExmSimpleRec, simple.margin_width), 
+	XtOffsetOf( ExmSimpleRec, simple.margin_width),
 	XmeFromHorizontalPixels,
-	XmeToHorizontalPixels 
+	XmeToHorizontalPixels
     },
     { 
 	XmNmarginHeight, 

@@ -64,7 +64,7 @@ static char *uid_files[UIL_FILE_COUNT] = {NULL};
 static MrmHierarchy theUIDdatabase = NULL;  /* MRM database hierarchy id */
 /*
 static MRMRegisterArg regvec[] = {
-        {"exit_proc", (caddr_t) ExitCallback},
+        {"exit_proc", (XtPointer) ExitCallback},
 };
 
 static MrmCount regnum = sizeof(regvec) / sizeof(MRMRegisterArg);

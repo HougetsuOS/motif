@@ -136,7 +136,7 @@ png_load_file(FILE *infile, unsigned long *pWidth,
     png_infop info_ptr = NULL;
     int bit_depth, color_type;
     png_uint_32 width, height;
-//    int rc;
+/*    int rc; */
     unsigned char sig[8];
     png_color_16p pBackground;
     double gamma;
@@ -276,7 +276,9 @@ png_process_image(Screen *screen,
     unsigned char *src;
     char *dest;
     unsigned char r, g, b, a;
-    unsigned long i, row, lastrow = 0;
+    unsigned long i, row;
+    unsigned long lastrow = 0;
+    (void)lastrow;
     unsigned long pixel;
     int ximage_rowbytes = ximage->bytes_per_line;
     static int RShift, GShift, BShift;

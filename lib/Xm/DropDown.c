@@ -92,7 +92,6 @@ static void ClassPartInitialize(WidgetClass);
 static void ClassInitialize();
 static void ExposeMethod(Widget, XEvent*, Region);
 
-static Boolean ComboBoxParentProcess(Widget wid, XmParentProcessData event);
 
 /************************
  * Actions and callbacks.
@@ -117,7 +116,7 @@ static void SBBtnUpEH (Widget, XtPointer, XEvent *, Boolean *);
 static XmDropDownWidget FindComboBox(Widget);
 
 static void PopdownList(Widget);
-static void LoseFocusHandler(Widget, XtPointer, XEvent *, Boolean *);
+
 static void RegisterShellHandler(Widget);
 static void CreateChildren(Widget, ArgList, Cardinal);
 static void CreatePopup(Widget, ArgList, Cardinal);
@@ -1390,35 +1389,6 @@ ShellButtonEvent(Widget w, XtPointer cbw_ptr, XEvent *event, Boolean *dispatch)
     	ArrowClicked(XmDropDown_arrow(cbw), cbw_ptr, NULL);
 }
 
-/*	Function Name: LoseFocusHandler
- *	Description: This function is called whenever the shell loses focus
- *                   in this case we should bring down the list.
- *	Arguments: w - the shell widget.
- *                 cbw_ptr - the combo box widget pointer.
- *                 event - the event that caused this action.
- *                 junk - *** UNUSED ***.
- *	Returns: none.
- */
-
-/* ARGSUSED */
-
-static void
-LoseFocusHandler(Widget w, XtPointer cbw_ptr, XEvent *event, Boolean *junk)
-{
-    XmDropDownWidget cbw = (XmDropDownWidget) cbw_ptr;
-    XFocusChangeEvent *fevent = &(event->xfocus);
-
-    if ((event->xany.type != FocusOut) || (XmDropDown_list_state(cbw) != XmDropDown_UNPOSTED) ||
-	(fevent->detail == NotifyInferior))
-    {
-	return;
-    }
-
-#ifndef FIX_1446
-    ArrowClicked(XmDropDown_arrow(cbw), cbw_ptr, NULL);
-#endif
-}
-
 /*	Function Name: ComboUnpost
  *	Description:   Called when the user wants to remove the list from the
  *                     screen.
@@ -2673,7 +2643,6 @@ Widget XmDropDownGetList(Widget w)
 
 Widget XmDropDownGetChild(Widget w, int num)
 {
-    XmDropDownWidget cbw = (XmDropDownWidget) w;
     Widget child;
 
     _XmWidgetToAppContext(w);    
@@ -2685,16 +2654,20 @@ Widget XmDropDownGetChild(Widget w, int num)
 	return NULL;
       }
 
-    switch (num) 
+    switch (num)
     {
-        XmDROPDOWN_LABEL:
+        case XmDROPDOWN_LABEL:
 	    child = XmDropDown_label(w);
-        XmDROPDOWN_TEXT:
+	    /* FALLTHRU */
+        case XmDROPDOWN_TEXT:
 	    child = XmDropDown_text(w);
-        XmDROPDOWN_ARROW_BUTTON:
+	    /* FALLTHRU */
+        case XmDROPDOWN_ARROW_BUTTON:
 	    child = XmDropDown_arrow(w);
-        XmDROPDOWN_LIST:
+	    /* FALLTHRU */
+        case XmDROPDOWN_LIST:
 	    child = XmDropDown_list(w);
+	    /* FALLTHRU */
         default:
 	    child = NULL;
     }

@@ -2472,7 +2472,7 @@ Urm__CW_ConvertValue (Widget			parent,
       break;
     case MrmRtypeHorizontalInteger:
       orientation = XmHORIZONTAL;
-      /* fall through */
+      /* FALLTHRU */
     case MrmRtypeVerticalInteger:
       if (orientation == XmNO_ORIENTATION)
 	{

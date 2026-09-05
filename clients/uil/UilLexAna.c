@@ -1275,6 +1275,7 @@ found_16bit_char:
 
 	    case class_eol:
 		src_az_current_source_buffer->w_current_position--;
+		/* FALLTHRU */
 	    case class_illegal:
 		issue_control_char_diagnostic( next_char );
 		break;
@@ -1565,12 +1566,13 @@ found_token:
     case token_ustring:
 
 	diag_issue_diagnostic
-		( d_unterm_seq, 
+		( d_unterm_seq,
 		  src_az_current_source_record,
 		  src_az_current_source_buffer->w_current_position - 1,
 		  "character string",
 		  "before end of line" );
 
+	/* FALLTHRU */
   case token_comment:       /* RAP preserve comments */
     {
       int size;
@@ -1662,12 +1664,13 @@ found_primitive_string:
     case token_ugstr:
 
 	diag_issue_diagnostic
-		( d_unterm_seq, 
+		( d_unterm_seq,
 		  src_az_current_source_record,
 		  src_az_current_source_buffer->w_current_position - 1,
 		  "character string",
 		  "before end of line" );
 
+	/* FALLTHRU */
     case token_gstr:
 
 	/*

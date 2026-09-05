@@ -1676,6 +1676,8 @@ KeySelection(Widget w,
 	     Cardinal *num_params)
 {
   XmTextPosition position, left, right, cursorPos;
+
+  position = left = right = 0;
   XmTextWidget tw = (XmTextWidget) w;
   InputData data = tw->text.input->data;
   XmTextScanDirection  cursorDir;                              /* PIR1858 */
@@ -4085,6 +4087,8 @@ DoExtendedSelection(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   InputData data = tw->text.input->data;
   XmTextPosition position, left, right, cursorPos;
+
+  position = left = right = 0;
   float bal_point;
   
   if (data->cancel) {
@@ -4180,7 +4184,10 @@ DoSecondaryExtend(Widget w,
 					 data->select_pos_y);
   
   _XmTextDisableRedisplay(tw, FALSE);
-  _XmTextGetSel2(tw, &left, &right);
+  if (!_XmTextGetSel2(tw, &left, &right)) {
+    left = data->Sel2OrigLeft;
+    right = data->Sel2OrigRight;
+  }
   /* check for change in extend direction */
   if ((data->Sel2ExtendDir == XmsdRight && position < data->Sel2OrigLeft) ||
       (data->Sel2ExtendDir == XmsdLeft &&
@@ -6023,15 +6030,10 @@ _XmTextInputCreate(Widget wid,
 		   Cardinal num_args)
 {
   
-  Arg im_args[17];  /* To set initial values to input method */
-  Cardinal n = 0;
   XmTextWidget tw = (XmTextWidget) wid;
   Input input;
   InputData data;
   XtPointer temp_ptr;
-  OutputData o_data = tw->text.output->data;
-  XRectangle xmim_area;
-  XPoint xmim_point;
   
   tw->text.input = input = (Input) XtMalloc((unsigned) sizeof(InputRec));
   input->data = data = (InputData) XtMalloc((unsigned) sizeof(InputDataRec));

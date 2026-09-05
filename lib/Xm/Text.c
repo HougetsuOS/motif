@@ -631,14 +631,14 @@ NullSetSelection(XmTextSource source,
 static void 
 _XmCreateCutBuffers(Widget w)
 {
-  static XContext context = (XContext)NULL;
+  static XContext context = 0;
   char * tmp = NULL;
   Display *dpy = XtDisplay(w);
   Screen *screen = XtScreen(w);
   XContext local_context;
 
   _XmProcessLock();
-  if (context == (XContext)NULL) context = XUniqueContext();
+  if (context == 0) context = XUniqueContext();
 
   local_context = context;
   _XmProcessUnlock();
@@ -3016,7 +3016,7 @@ _XmTextSetEditable(Widget widget,
   if (!tw->text.editable && editable) {
     OutputData o_data = tw->text.output->data;
     
-    XmImRegister(widget, (unsigned int) NULL);
+    XmImRegister(widget, 0u);
     
     (*tw->text.output->PosToXY)(tw, tw->text.cursor_position,
 				&xmim_point.x, &xmim_point.y);

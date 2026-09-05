@@ -58,9 +58,9 @@ extern "C" {
 
 #ifndef XTHREADS
 #define _XmFastSubclassInit(wc, bit_field) { \
-	if((_Xm_fastPtr = _XmGetBaseClassExtPtr( wc, XmQmotif)) && \
-	   (*_Xm_fastPtr)) \
-		_XmSetFlagsBit((*_Xm_fastPtr)->flags, bit_field) ; \
+	_Xm_fastPtr = _XmGetBaseClassExtPtr(wc, XmQmotif); \
+	if (_Xm_fastPtr && *_Xm_fastPtr) \
+		_XmSetFlagsBit((*_Xm_fastPtr)->flags, bit_field); \
    }
 
 /* _XmGetBaseClassExtPtr can return NULL or a pointer to a NULL extension,
@@ -70,10 +70,10 @@ extern "C" {
  */
 
 #define _XmIsFastSubclass(wc, bit) \
-	((_Xm_fastPtr = _XmGetBaseClassExtPtr((wc),XmQmotif)) && \
-         (*_Xm_fastPtr)) ? \
-	     (_XmGetFlagsBit(((*_Xm_fastPtr)->flags), bit) ? TRUE : FALSE) \
-		 : FALSE
+	((_Xm_fastPtr = _XmGetBaseClassExtPtr((wc),XmQmotif), \
+	  _Xm_fastPtr && *_Xm_fastPtr) \
+	     ? (_XmGetFlagsBit(((*_Xm_fastPtr)->flags), bit) ? TRUE : FALSE) \
+	     : FALSE)
 
 #else
 extern void _XmFastSubclassInit(WidgetClass, unsigned int);

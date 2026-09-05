@@ -1491,7 +1491,9 @@ TextDestinationCallback(Widget w,
   static char *atom_names[] = { XmSTARGETS, XmS_MOTIF_DROP };
 
   Atom atoms[XtNumber(atom_names)];
-  XPoint DropPoint;
+  /* location_data is handed to the drop-transfer machinery; it must
+     outlive this callback, so the point is function-static. */
+  static XPoint DropPoint;
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
   XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);

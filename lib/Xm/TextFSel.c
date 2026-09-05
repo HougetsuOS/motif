@@ -78,14 +78,6 @@ static void SetDropContext(Widget w);
 
 static void DeleteDropContext(Widget w);
 
-static void HandleTargets(Widget w, 
-			  XtPointer ignore, 
-			  XmSelectionCallbackStruct *ds);
-
-static void HandleDrop(Widget w,
-		       XmDropProcCallbackStruct *cb,
-		       XmDestinationCallbackStruct *ds);
-     
 static void DropDestroyCB(Widget w,
 			  XtPointer clientData,
 			  XtPointer callData);
@@ -1225,11 +1217,13 @@ DoStuff(Widget w,
       if (tf->text.has_primary) {
 	if (ds->selection == atoms[XmACLIPBOARD]) {
 	  if (left != right && (!dest_disjoint || !tf->text.add_mode))
+	  {
 	    _XmProcessLock();
 	    _XmTextFieldStartSelection(tf, TextF_CursorPosition(tf),
 				       TextF_CursorPosition(tf),
 				       prim_select->time);
 	    _XmProcessUnlock();
+	  }
 	} else {
 	  _XmProcessLock();
 	  if (tf->text.selection_move && left < prim_select->position)
@@ -1623,7 +1617,9 @@ TextFieldDestinationCallback(Widget w,
   enum { XmATARGETS, XmA_MOTIF_DROP, NUM_ATOMS };
   static char *atom_names[] = { XmSTARGETS, XmS_MOTIF_DROP };
   Atom atoms[XtNumber(atom_names)];
-  XPoint DropPoint;
+  /* location_data is handed to the drop-transfer machinery; it must
+     outlive this callback, so the point is function-static. */
+  static XPoint DropPoint;
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
   XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);

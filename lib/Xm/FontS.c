@@ -22,6 +22,9 @@
  * 
  */
 #define dbg() fprintf(stderr, "file: %s - XtWidgetToApplicationContext() on line: %d\n", __FILE__, __LINE__);
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -1269,7 +1272,7 @@ DisplayCurrentFont(XmFontSelectorWidget fsw, String font)
 	    strcpy(right_buf, ptr);
 	    strcpy(left_buf, font);
 	    left_buf[i] = '\0';
-	    sprintf(fbuf, "%s-140%s", left_buf, right_buf);
+	    snprintf(fbuf, sizeof(fbuf), "%s-140%s", left_buf, right_buf);
 
 	    if ((fontdata = XLoadQueryFont(XtDisplay((Widget) fsw), 
 					   fbuf)) == NULL) 
@@ -2764,7 +2767,7 @@ CreateEncodingMenu(XmFontSelectorWidget fsw,
 	XmStringFree(label);
 
 	XtAddCallback(button,
-		      XmNactivateCallback, ChangeEncoding, (XtPointer) i);
+		      XmNactivateCallback, ChangeEncoding, (XtPointer)(unsigned long) i);
 
 	if (streq(*encodings, ENCODING_STRING(fsw)))
 	{
@@ -2926,7 +2929,7 @@ ChangeEncoding(Widget w, XtPointer data, XtPointer junk)
     fsw = (XmFontSelectorWidget) w;
     cf = XmFontS_font_info(fsw)->current_font;
 
-    if ((int) data == 0)
+    if ((unsigned long)(XtPointer) data == 0)
 	{
 	XtFree(ENCODING_STRING(fsw));
 	ENCODING_STRING(fsw) = XtNewString(ANY_ENCODING);
@@ -2934,7 +2937,7 @@ ChangeEncoding(Widget w, XtPointer data, XtPointer junk)
     else
 	{
 	XtFree(ENCODING_STRING(fsw));
-	ENCODING_STRING(fsw) = XtNewString(ENCODING_LIST(fsw)[(int) data - 1]);
+	ENCODING_STRING(fsw) = XtNewString(ENCODING_LIST(fsw)[(unsigned long)(XtPointer) data - 1]);
 	}
 
     UpdateFamilies(fsw);
@@ -3692,7 +3695,7 @@ SetValues(Widget old, Widget request, Widget set,
 	    num_largs = 0;
 	    XtSetArg(largs[num_largs], XmNmenuHistory, button); num_largs++;
 	    XtSetValues(XmFontS_option_menu(set_fsw), largs, num_largs);
-	    ChangeEncoding((Widget) set_fsw, (XtPointer) current, NULL);
+	    ChangeEncoding((Widget) set_fsw, (XtPointer)(unsigned long) current, NULL);
 	}
 	else
 	{

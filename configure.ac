@@ -33,6 +33,28 @@ dnl AC_DISABLE_STATIC
 
 AC_CONFIG_HEADERS(include/config.h lib/Xm/Xm.h)
 
+dnl The code assumes POSIX.1/misc libc extensions (isascii, fileno, snprintf
+dnl with C99 semantics) that strict -std=c89/c99 header-guarding would hide.
+dnl This must be defined before any libc header is included, so it goes at the
+dnl very top of config.h.
+AH_TOP([/* Expose POSIX/library extensions even under -std=c89/-std=c99. */
+#ifndef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE 1
+#endif
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 700
+#endif
+
+/* Motif's directory scanning predates readdir_r(); route _XReaddir to the
+   readdir()-based wrapper so no deprecated API is referenced. */
+#ifndef XNO_MTSAFE_DIRENTAPI
+#define XNO_MTSAFE_DIRENTAPI 1
+#endif
+])
+
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CPP
@@ -160,8 +182,28 @@ fi
 if test x$GCC = xyes
 then
     CFLAGS="$CFLAGS -Wall -g -fno-strict-aliasing -Wno-unused -Wno-comment"
-    if test ` $CC -dumpversion | sed -e 's/\(^.\).*/\1/'` = "4" ; then
-        CFLAGS="$CFLAGS -fno-tree-ter"
+    case ` $CC -dumpversion | sed -e 's/\(^.\).*/\1/'` in
+        4) CFLAGS="$CFLAGS -fno-tree-ter" ;;
+        *) ;;
+    esac
+    dnl Xt class records rely on implicit zero-fill of trailing fields;
+    dnl -Wextra's missing-field-initializers flags that idiom thousands of times.
+    dnl Installing callbacks whose signatures are ABI-compatible with
+    dnl XtCallbackProc but nominally stricter (e.g. XmAnyCallbackStruct
+    dnl instead of XtPointer) is pervasive Xt idiom; -Wcast-function-type
+    dnl flags every one of them, so it is suppressed build-wide.
+    dnl _XmIsFastSubclass() writes a shared scratch pointer on each expansion;
+    dnl two uses in one expression (e.g. LayoutG(a) != LayoutG(b)) are flagged
+    dnl by -Wsequence-point.  Each expansion in isolation is well-defined;
+    dnl the double-use sites are benign in practice, so suppressed.
+    dnl -Wformat-truncation fires on snprintf calls whose output *may* be
+    dnl clipped; snprintf clipping is exactly the intended behavior, so
+    dnl suppressed.
+    AC_ARG_ENABLE(extra-warnings, [  --enable-extra-warnings
+                       Enable -Wextra (default=no)])
+    if test "$enable_extra_warnings" = "yes"
+    then
+        CFLAGS="$CFLAGS -Wextra -Wno-missing-field-initializers -Wno-unused-parameter -Wno-sign-compare -Wno-cast-function-type -Wno-sequence-point -Wno-format-truncation"
     fi
 fi
 AC_DEFINE(NO_OL_COMPAT, 1, "No OL Compatability")

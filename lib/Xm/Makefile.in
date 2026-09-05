@@ -488,7 +488,8 @@ CLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST = xmstring.list Xm.msg \
              XmStrDefs.ct
 
-INCLUDES = -I.. -I$(srcdir)/.. -DXMBINDDIR_FALLBACK=\"@XMBINDDIR_FALLBACK@\" \
+INCLUDES = -I.. -I$(srcdir)/.. -I$(top_srcdir) \
+           -DXMBINDDIR_FALLBACK=\"@XMBINDDIR_FALLBACK@\" \
            -DINCDIR=\"@INCDIR@\" \
            -DLIBDIR=\"@LIBDIR@\" \
            ${X_CFLAGS}

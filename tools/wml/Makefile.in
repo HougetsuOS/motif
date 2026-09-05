@@ -825,8 +825,30 @@ motif.wmd: wmldbcreate
 clean-local:
 	$(RM) $(WMLTARGETS) $(WMDTABLE) $(REPORT) lex.yy.c libwml.a wml \
 	*.mm *.sdml *.txt wmlparse.c wmlparse.h wmluiltok wmllex.c \
-	tokens.dat DONE wmluiltok.c Uil.c Uil.h wml.report UilLexPars.[ch] ylwrap
+	tokens.dat DONE wmluiltok.c wml.report ylwrap
+# Uil.c/Uil.h/UilLexPars.[ch] are distributed in the tarball; regenerating
+# them requires byacc (system yacc may be bison and produce different
+# code).  Do not delete them in 'clean'.
+
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
+
+# flex-generated code needs feature macros before flex's own libc includes
+# and contains unused helper functions by design.  wmlparse.c #includes
+# wmllex.c, so wmlparse needs the same flags.  These explicit rules override
+# the generic suffix rules for those objects.
+WML_FLEX_CFLAGS = -D_DEFAULT_SOURCE=1 -Wno-unused-function
+
+wmlparse.o: wmlparse.c
+	$(COMPILE) $(WML_FLEX_CFLAGS) -MT $@ -MD -MP -MF $(DEPDIR)/wmlparse.Tpo -c -o $@ wmlparse.c
+	$(am__mv) $(DEPDIR)/wmlparse.Tpo $(DEPDIR)/wmlparse.Po
+
+wmlparse.lo: wmlparse.c
+	$(LTCOMPILE) $(WML_FLEX_CFLAGS) -MT $@ -MD -MP -MF $(DEPDIR)/wmlparse.Tpo -c -o $@ wmlparse.c
+	$(am__mv) $(DEPDIR)/wmlparse.Tpo $(DEPDIR)/wmlparse.Plo
+
+wmluiltok.o: wmluiltok.c
+	$(COMPILE) $(WML_FLEX_CFLAGS) -MT $@ -MD -MP -MF $(DEPDIR)/wmluiltok.Tpo -c -o $@ wmluiltok.c
+	$(am__mv) $(DEPDIR)/wmluiltok.Tpo $(DEPDIR)/wmluiltok.Po

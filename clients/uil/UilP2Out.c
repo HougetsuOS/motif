@@ -685,15 +685,12 @@ urm_status = UrmCWRInit (out_az_context, widget_name, access_code, FALSE);
 if( urm_status != MrmSUCCESS)
     issue_urm_error( "initializing context" );
 
-    /*
-    **	Set the class of the widget. 
-    */
+/* Set the class of the widget. */
+widget_class_name = NULL;
 
-    widget_class_name = NULL;
-
-    arg_count = 0;
-    related_arg_count = 0;
-    subtree_control = NULL;
+arg_count = 0;
+related_arg_count = 0;
+subtree_control = NULL;
 
     /*
     ** Special processing 1: User defined widgets have the class as
@@ -3171,7 +3168,6 @@ char			*buffer;
 
 {
     RGMColorTable	    *table;
-    RGMColorTableEntry	    *item;
     RGMResourceDesc	    *desc;
     int			    i;
     MrmCode		    arg_form;
@@ -3195,8 +3191,6 @@ char			*buffer;
     **	Loop thru the colors in the table setting up both the index
     **	of offset for the colors and their resource descriptors.
     */
-
-    item = table->item;
 
     for (i = 0;  i < (int)table_entry->b_table_count;  i++)
     {

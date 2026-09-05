@@ -32,11 +32,7 @@
 #include <Xm/XmP.h>
 #include <Xm/DrawP.h>
 #include <Xm/MultiListP.h>
-#ifdef VMS
-#include <bitmaps/gray.xbm>
-#else
-#include <X11/bitmaps/gray>
-#endif
+#include <bitmaps/gray>
 
 #include <Xm/ScrollBar.h>
 #include <Xm/TraitP.h>

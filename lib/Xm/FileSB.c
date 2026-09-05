@@ -1642,6 +1642,7 @@ ListFix(
                 break ;
               } 
             }
+            /* FALLTHRU */
         case XmGET_ACTUAL_SIZE:
         {
             if(    FS_PathMode( geoSpec->composite) ==  XmPATH_MODE_FULL  )

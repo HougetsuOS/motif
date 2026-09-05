@@ -1847,7 +1847,7 @@ sym_name_entry_type		*control_obj_name;
 if ( list_entry == NULL ) return FALSE;
 if ( cycle_name == NULL ) return FALSE;
 if ( cycle_name->b_flags & sym_m_cycle_checked )
-    return (cycle_name->b_flags&sym_m_has_cycle) == 1;
+    return (cycle_name->b_flags & sym_m_has_cycle) != 0;
 
 for (list_member=(sym_obj_entry_type *)list_entry->obj_header.az_next;
      list_member!=NULL;
@@ -3394,7 +3394,7 @@ sym_value_entry_type *sem_evaluate_value_expr (value_entry)
 		   diag_value_text( value_entry->b_type ) );
 		res_type = error_arg_type;
 	    }
-	    
+	    /* FALLTHRU */
 	  case sym_k_color_value:
 	  case sym_k_xbitmapfile_value:
 	  case sym_k_reason_value:
@@ -4731,7 +4731,8 @@ sym_value_entry_type	    *op2_entry;
 	  (value1_entry, FALSE,
 	   value2_entry, FALSE);
 	target_type  = sym_k_localized_string_value;
-	
+
+	/* FALLTHRU */
     default:   /* some form of error */
 	target_type = sym_k_error_value;
 	*target_entry = (sym_value_entry_type *) sym_az_error_value_entry;

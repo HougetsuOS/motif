@@ -3877,7 +3877,7 @@ PrintableString(XmTextFieldWidget tf,
       cache_ptr = tmp = XmStackAlloc(buf_size, cache);
    
       tmp_str = (wchar_t *)str;
-      // Fixed MZ BZ#1257: by Brad Despres <brad@sd.aonix.com>
+      /* Fixed MZ BZ#1257: by Brad Despres <brad@sd.aonix.com> */
       count = 0;
       do {
 	ret_val = wctomb(tmp, *tmp_str);
@@ -6235,8 +6235,9 @@ ClearSelection(Widget w,
     num_spaces = (int)(right - left);
   else
     num_spaces = (int)(left - right);
+  if (num_spaces < 0) num_spaces = 0; /* selection positions not yet set */
   
-  if (num_spaces) {
+  if (num_spaces > 0) {
     _XmTextFieldDrawInsertionPoint(tf, False);
     if (tf->text.max_char_size == 1) {
       char spaces_cache[100];
@@ -7360,7 +7361,7 @@ InitializeTextStruct(XmTextFieldWidget tf)
   XmTextFieldSetEditable((Widget)tf, TextF_Editable(tf));
   
   if (TextF_Editable(tf)) {
-    XmImRegister((Widget)tf, (unsigned int) NULL);
+    XmImRegister((Widget)tf, 0u);
     GetXYFromPos(tf, TextF_CursorPosition(tf), &xmim_point.x, &xmim_point.y);
     (void)TextFieldGetDisplayRect((Widget)tf, &xmim_area);
     n = 0;
@@ -8232,7 +8233,7 @@ SetValues(Widget old,
       diff_values = True;
       if (TextF_WcValue(new_tf) == NULL) {
 	TextF_WcValue(new_tf) = (wchar_t*) XtMalloc(sizeof(wchar_t));
-	*TextF_WcValue(new_tf) = (wchar_t)NULL;
+	*TextF_WcValue(new_tf) = (wchar_t)0;
       }
       ValidateString(new_tf, (char*)TextF_WcValue(new_tf), True);
     } else if (TextF_Value(new_tf) != TextF_Value(old_tf)) {
@@ -8694,7 +8695,6 @@ _XmTextFieldReplaceTextForPreedit(XmTextFieldWidget tf,
   int replace_length, i;
   char *src, *dst;
   wchar_t *wc_src, *wc_dst;
-  XmAnyCallbackStruct cb;
   int delta = 0;
   XmTextPosition cursorPos, newInsert;
   XmTextPosition old_pos = replace_prev;
@@ -8895,7 +8895,6 @@ PreeditSetRendition(Widget w,
     XIMFeedback fb;
     XmTextPosition prestart = PreStart((XmTextFieldWidget)w)+data->chg_first, left, right;
     XmHighlightMode mode;
-    XmTextFieldWidget tf = (XmTextFieldWidget)w;
 
     if (!text->length) {
         return;
@@ -8995,7 +8994,7 @@ PreeditStart(XIC xic,
              XPointer call_data)
 {
     XmTextPosition cursorPos, nextPos, lastPos;
-    Boolean replace_res, pending_delete = False;
+    Boolean replace_res = False, pending_delete = False;
     wchar_t *wc;
     char *mb;
     Widget w = (Widget) client_data;
@@ -9015,6 +9014,7 @@ PreeditStart(XIC xic,
 
     if (NeedsPendingDeleteDisjoint(tf)){
         _XmTextFieldDrawInsertionPoint(tf, False);
+        cursorPos = nextPos = TextF_CursorPosition(tf);
         if (!XmTextFieldGetSelectionPosition(w, &cursorPos, &nextPos) ||
                                                 cursorPos == nextPos) {
           tf->text.prim_anchor = TextF_CursorPosition(tf);
@@ -9023,8 +9023,6 @@ PreeditStart(XIC xic,
 
         tf->text.prim_anchor = TextF_CursorPosition(tf);
 
-        replace_res = _XmTextFieldReplaceText(tf,
-                        NULL, cursorPos, nextPos, NULL, 0, True);
 
         if (replace_res){
             if (pending_delete)
@@ -9078,7 +9076,6 @@ PreeditDone(XIC xic,
             XPointer client_data,
             XPointer call_data)
 {
-    Boolean replace_res;
     XmTextFieldWidget tf = (XmTextFieldWidget)client_data;
     Widget p = (Widget) tf;
     Boolean need_verify, end_preedit = False;
@@ -9103,7 +9100,6 @@ PreeditDone(XIC xic,
 
     if (tf->text.overstrike){
       if (need_verify) {
-	int cur = PreStart(tf);
  	PreeditVerifyReplace(tf, PreStart(tf), PreStart(tf), 
 				(char*) tf->text.onthespot->over_str,
 				tf->text.onthespot->over_maxlen,	
@@ -9112,7 +9108,7 @@ PreeditDone(XIC xic,
       }
       else {
         _XmTextFieldDrawInsertionPoint(tf, False);
-        replace_res = _XmTextFieldReplaceTextForPreedit(tf, PreStart(tf),
+        (void)_XmTextFieldReplaceTextForPreedit(tf, PreStart(tf),
                         PreStart(tf), (char*) tf->text.onthespot->over_str,
                         tf->text.onthespot->over_maxlen, True);
         TextF_CursorPosition(tf) = PreStart(tf);
@@ -9142,8 +9138,7 @@ PreeditDraw(XIC xic,
     int escapement, insert_length = 0;
     char *mb = NULL, *over_mb = NULL;
     wchar_t *wc = NULL, *over_wc = NULL, *tab_wc = NULL , *recover_wc = NULL;
-    XmTextPosition startPos, endPos, cursorPos, rest_len =0 , tmp_end;
-    Boolean replace_res;
+    XmTextPosition startPos, endPos, rest_len =0 , tmp_end;
     XRectangle overall_ink;
     int i;
     int recover_len=0;
@@ -9184,7 +9179,7 @@ PreeditDraw(XIC xic,
 	  }
 	}
 	else {
-          replace_res = _XmTextFieldReplaceTextForPreedit(tf, startPos,
+          (void)_XmTextFieldReplaceTextForPreedit(tf, startPos,
                                              endPos, NULL, 0, True);
 	}
 	_XmTextFieldDrawInsertionPoint(tf, True);
@@ -9332,7 +9327,7 @@ PreeditDraw(XIC xic,
 	  }
 	}
 	else {  
-          replace_res = _XmTextFieldReplaceTextForPreedit(tf, startPos,
+          (void)_XmTextFieldReplaceTextForPreedit(tf, startPos,
                                              endPos, mb,
                                              strlen(mb), True);
     	  PreeditSetCursorPosition(tf, PreCursor(tf));
@@ -9393,9 +9388,9 @@ PreeditDraw(XIC xic,
 	  }
         }
         else {
-          replace_res = _XmTextFieldReplaceTextForPreedit(tf, startPos,
+          (void)_XmTextFieldReplaceTextForPreedit(tf, startPos,
                                              endPos, (char *)wc,
-                                             wcslen(wc), True);
+                                             (int)wcslen(wc), True);
           PreeditSetCursorPosition(tf, PreCursor(tf));
         }
     }
@@ -10145,7 +10140,7 @@ XmTextFieldSetEditable(Widget w,
    * give the IM the relevent values. */
   
   if (!TextF_Editable(tf) && editable) { 
-    XmImRegister((Widget)tf, (unsigned int) NULL);
+    XmImRegister((Widget)tf, 0u);
     
     GetXYFromPos(tf, TextF_CursorPosition(tf), &xmim_point.x, 
 		 &xmim_point.y);

@@ -1115,8 +1115,8 @@ CancelDrop(Widget w, XtPointer call, XtPointer ignore)
 
 
 void 
-ChangeOperation(Widget widget, 
-		caddr_t client_data,
+ChangeOperation(Widget widget,
+		XtPointer client_data,
 		XmAnyCallbackStruct *call_data)
 {
 
@@ -1192,7 +1192,7 @@ HandleHelp(Widget w, XtPointer call, XtPointer ignore)
       helpStr = XmStringCreateLtoR(HELP_MSG3, XmFONTLIST_DEFAULT_TAG);
       XtManageChild(XmMessageBoxGetChild(helpDialog, XmDIALOG_OK_BUTTON));
     }
-  } else if ((bgFound || (pixFound && ds->operation)) == XmDROP_COPY) {
+  } else if (bgFound || (pixFound && ds->operation == XmDROP_COPY)) {
     XtUnmanageChild(helpMenu);
     rect = RectFind(ds->x, ds->y);
     if (rect) {

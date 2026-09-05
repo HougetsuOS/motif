@@ -1510,7 +1510,7 @@ _XtGetStringValues(Widget w, Arg *warg, int numargs)
     Cardinal num_res;
     XtResource *res = NULL;
     long value;
-    int size, i;
+    int i;
     char *string = "";
     char *buffer;
     Arg args[1];
@@ -1545,7 +1545,6 @@ _XtGetStringValues(Widget w, Arg *warg, int numargs)
 	return;
     }
 
-    size = res->resource_size;
     buffer = *(char **)(warg->value);
 
 
@@ -1608,7 +1607,7 @@ _XtGetStringValues(Widget w, Arg *warg, int numargs)
 	old_handler = XtAppSetWarningMsgHandler(XtWidgetToApplicationContext(w),
 					     EditResCvtWarningHandler);
 	from.size = res->resource_size;
-	from.addr = (caddr_t)&value;
+	from.addr = (XtPointer)&value;
 	to.addr = NULL;
 	to.size = 0;
 	to_color.addr = NULL;

@@ -648,8 +648,6 @@ static void
 Destroy(
         Widget w )
 {
-   XmGadget g = (XmGadget)w;
-
    _XmNavigDestroy(w);
 #ifdef FIX_1388
    _XmToolTipRemove(w);
@@ -910,7 +908,7 @@ FocusChange(
 	{
 	  break ;
 	}
-      /* Drop through. */
+      /* FALLTHRU */
     case XmFOCUS_IN:
       if(    change == XmFOCUS_IN    ) /* Because of drop-though. */
 	{
@@ -928,7 +926,7 @@ FocusChange(
 	{
 	  break ;
 	}
-      /* Drop through. */
+      /* FALLTHRU */
     case XmFOCUS_OUT:
       if(    change == XmFOCUS_OUT    ) /* Because of drop-though. */
 	{

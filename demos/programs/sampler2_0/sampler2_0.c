@@ -595,28 +595,28 @@ InitScaleCombo (Widget w, XtPointer client_data, XtPointer call_data)
     Widget		applyb, cbb, scale, selectb;
     Widget		spinb, sspinb_s, sspinb_n, textual;
     XtCallbackRec	sbModifyVerifyList[] = {
-				{sb_ModifyVerifyCB, (caddr_t) NULL},
-				{(XtCallbackProc) NULL, (caddr_t) NULL}
+				{sb_ModifyVerifyCB, (XtPointer) NULL},
+				{(XtCallbackProc) NULL, (XtPointer) NULL}
 			    };
     XtCallbackRec	sbValueChangedList[] = {
-				{sb_ValueChangedCB, (caddr_t) NULL},
-				{(XtCallbackProc) NULL, (caddr_t) NULL}
+				{sb_ValueChangedCB, (XtPointer) NULL},
+				{(XtCallbackProc) NULL, (XtPointer) NULL}
 			    };
     XtCallbackRec	tfActivateList[] = {
-				{tf_ActivateCB, (caddr_t) NULL},
-				{(XtCallbackProc) NULL, (caddr_t) NULL}
+				{tf_ActivateCB, (XtPointer) NULL},
+				{(XtCallbackProc) NULL, (XtPointer) NULL}
 			    };
     XtCallbackRec	sbApplyList[] = {
-				{sb_ApplyCB, (caddr_t) NULL},
-				{(XtCallbackProc) NULL, (caddr_t) NULL}
+				{sb_ApplyCB, (XtPointer) NULL},
+				{(XtCallbackProc) NULL, (XtPointer) NULL}
 			    };
     XtCallbackRec	sbCancelList[] = {
-				{sb_CancelCB, (caddr_t) NULL},
-				{(XtCallbackProc) NULL, (caddr_t) NULL}
+				{sb_CancelCB, (XtPointer) NULL},
+				{(XtCallbackProc) NULL, (XtPointer) NULL}
 			    };
     XtCallbackRec	sbOkList[] = {
-				{sb_OkCB, (caddr_t) NULL},
-				{(XtCallbackProc) NULL, (caddr_t) NULL}
+				{sb_OkCB, (XtPointer) NULL},
+				{(XtCallbackProc) NULL, (XtPointer) NULL}
 			    };
 
     cbb = XtVaCreateWidget("ComboBox", xmComboBoxWidgetClass, w, NULL);
@@ -671,9 +671,9 @@ InitScaleCombo (Widget w, XtPointer client_data, XtPointer call_data)
     ssb_widgets[SSB_NUMERIC]  = sspinb_n;
     ssb_widgets[SSB_STRING]  = sspinb_s;
 
-    sbApplyList[0].closure = (caddr_t) ssb_widgets;
-    sbCancelList[0].closure = (caddr_t) ssb_widgets;
-    sbOkList[0].closure = (caddr_t) ssb_widgets;
+    sbApplyList[0].closure = (XtPointer) ssb_widgets;
+    sbCancelList[0].closure = (XtPointer) ssb_widgets;
+    sbOkList[0].closure = (XtPointer) ssb_widgets;
 
     selectb = XtVaCreateWidget(
 		"SelectionBoxDebug", xmSelectionBoxWidgetClass, w,

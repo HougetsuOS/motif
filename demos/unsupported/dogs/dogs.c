@@ -61,12 +61,12 @@ static MrmHierarchy mrm_id;
 static char *mrm_vec[]={"dogs.uid"};
 static MrmCode mrm_class;
 static MRMRegisterArg mrm_names[] = {
-        {"create_cb", (caddr_t)create_cb },
-        {"bark_cb", (caddr_t)bark_cb },
-        {"tb_cb", (caddr_t)tb_cb },
-        {"scale_cb", (caddr_t)scale_cb },
-        {"help_cb", (caddr_t)help_cb },
-        {"exit_cb", (caddr_t)exit_cb }
+        {"create_cb", (XtPointer)create_cb },
+        {"bark_cb", (XtPointer)bark_cb },
+        {"tb_cb", (XtPointer)tb_cb },
+        {"scale_cb", (XtPointer)scale_cb },
+        {"help_cb", (XtPointer)help_cb },
+        {"exit_cb", (XtPointer)exit_cb }
 };
 
 static Widget dog1_id;

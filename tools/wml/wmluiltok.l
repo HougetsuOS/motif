@@ -25,6 +25,10 @@
  * HISTORY
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #if defined(__STDC__)
 #include <string.h>
 #include <stdlib.h>
@@ -204,8 +208,19 @@ int yywrap ()
     int i;
 
     for (i=0; i<used; i++)
-	 { 
+	 {
 	 printf ("%s %s %s\n", token[i].name, token[i].id, token[i].class);
 	 }
     return (1);
+}
+
+/* libfl's own main() is not available when LEXLIB is empty (modern flex
+ * does not need -lfl once the scanner defines yywrap); provide one. */
+int
+main (int argc, char **argv)
+{
+    (void) argc;
+    (void) argv;
+    yylex();
+    return (0);
 }

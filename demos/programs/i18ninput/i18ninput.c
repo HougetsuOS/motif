@@ -25,6 +25,10 @@
  * HISTORY
 */ 
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -84,7 +88,7 @@ int main(int argc, char **argv)
   Display     * display;
   char          name[132];
 
-  (void) strncpy(name, base(argv[0]), 132);
+  (void) snprintf(name, sizeof(name), "%s", base(argv[0]));
 
   /* Initialize the X Intrinsics */
   XtToolkitInitialize();

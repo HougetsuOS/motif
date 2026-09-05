@@ -37,6 +37,10 @@
 **                calling strtok()
 */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdio.h>
@@ -51,6 +55,7 @@ FILE *Xpms_popen(char *cmd, const char *type)
   pid_t pid;
   int pfd[2];
   int rpipe = 0, wpipe = 0, i;
+  (void)wpipe;
   char **argv;
   char *ptr;
   char *cmdcpy;
@@ -104,7 +109,7 @@ FILE *Xpms_popen(char *cmd, const char *type)
   if(type[0] == 'r')
     rpipe = 1;
   else
-    wpipe = 1;
+    wpipe = 1;  /* kept for clarity; child branch keys off rpipe */
 
   if (pipe(pfd) < 0)
   {

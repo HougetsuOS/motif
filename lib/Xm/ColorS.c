@@ -341,7 +341,6 @@ WidgetClass xmColorSelectorWidgetClass = (WidgetClass)&xmColorSelectorClassRec;
 static void 
 ClassInitialize(void)
 {
-    XmColorSelectorClassRec *wc = &xmColorSelectorClassRec;
 
     XtSetTypeConverter(XmRString, XmRXmColorMode, 
 		       (XtTypeConverter) CvtStringToColorMode, 
@@ -1211,7 +1210,7 @@ read_rgb_file(XmColorSelectorWidget csw, ArgList cargs, Cardinal cnum_args, Bool
 {
     FILE *file;
     char buf[BUFSIZ];
-    char string_buffer[BUFSIZ];
+    char string_buffer[BUFSIZ + 2*XmColorSelector_COLOR_NAME_SIZE];
     char *color_name;
     ColorInfo * color_info = NULL;
     register int i;
@@ -1295,7 +1294,7 @@ read_rgb_file(XmColorSelectorWidget csw, ArgList cargs, Cardinal cnum_args, Bool
 	    len = strlen(color_name);
 	    if (len > XmColorSelector_COLOR_NAME_SIZE) {
 		color_name[XmColorSelector_COLOR_NAME_SIZE - 1] = '\0';
-		snprintf(string_buffer, BUFSIZ,
+		snprintf(string_buffer, sizeof(string_buffer),
 			 XmNcolorNameTooLongMsg, buf, color_name);
 		XmeWarning((Widget)csw, string_buffer);
 	    }

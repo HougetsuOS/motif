@@ -507,10 +507,10 @@ void	lst_output_listing()
     for (i = 0; i <= src_l_last_source_file_number; i++) {
 
 	uil_fcb_type	*az_fcb;	    /* file control block ptr */
-	char		buffer [132];
+	char		buffer[src_k_max_source_line_length + 132];
 
 	az_fcb = src_az_source_file_table [i];
-	sprintf (buffer,
+	snprintf (buffer, sizeof (buffer),
 		 "     File (%d)   %s",
 		 i, az_fcb->expanded_name );
 	lst_output_line( buffer, FALSE );

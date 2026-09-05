@@ -1845,9 +1845,9 @@ _XmCharsetCanonicalize(
   if (!strcmp(charset, "ASCII"))
     {
       len = strlen(XmSTRING_ISO8859_1);
-      
+
       new_s = XtMalloc(len + 1);
-      strncpy(new_s, XmSTRING_ISO8859_1, len);
+      memcpy(new_s, XmSTRING_ISO8859_1, len);
       new_s[len] = '\0';
     }
   else if (_isISO(charset))
@@ -1863,9 +1863,9 @@ _XmCharsetCanonicalize(
     /* Anything else is copied but not modified. */
     {
       len = strlen(charset);
-      
+
       new_s = XtMalloc(len + 1);
-      strncpy(new_s, charset, len);
+      memcpy(new_s, charset, len);
       new_s[len] = '\0';
     }
   return (new_s);

@@ -404,7 +404,8 @@ MapNotifyHandler(Widget shell, XtPointer client_data,
 #ifdef FIX_1445
 static void MouseWheel (Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
-	XmGrabShellWidget grabshell = (XmGrabShellWidget) w;
+	(void)params;
+	(void)num_params;
 	GSAllowEvents(w, SyncPointer, event -> xbutton.time);
 }
 #endif
@@ -617,6 +618,8 @@ ChangeManaged(Widget wid)
   Widget	    child;
   
   mygeom.request_mode = 0;
+  mygeom.width = 0;
+  mygeom.height = 0;
   if (gs->composite.num_children)
     {
       child = gs->composite.children[0];
@@ -653,7 +656,7 @@ ChangeManaged(Widget wid)
     {
     case XtGeometryAlmost:
       XtMakeGeometryRequest((Widget)shell, &replygeom, NULL);
-      /* fall through. */
+      /* FALLTHRU */
     case XtGeometryYes:
       DoLayout(wid);
       break;

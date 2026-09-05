@@ -41,6 +41,10 @@
  * 
  *********************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <Xm/XmP.h>
 #include <Xm/TraitP.h>
 #include <Xm/NavigatorT.h>

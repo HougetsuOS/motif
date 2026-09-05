@@ -2402,7 +2402,6 @@ FreeRendition(XmRendition rendition)
 void
 XmRenditionFree(XmRendition rendition)
 {
-  XtAppContext app;
 
   if (rendition == NULL) return;
 
@@ -2698,13 +2697,21 @@ XmRenderTableCvtToProp(Widget widget, /* unused */
       _XmTab tab;
       _XmTabList tlist;
       int number;
+      size_t used = 0;
       strcpy(temp, "[ ");
+      used = strlen(temp);
       tlist = (_XmTabList) _XmRendTabs(rendition);
       number = tlist -> count;
       tab = (_XmTab) tlist -> start;
       while(number > 0) {
-	sprintf(temp, "%s %f %d %d %d, ", temp, tab -> value, 
-		tab -> units, tab -> alignment, tab -> offsetModel);
+	int n = snprintf(temp + used, sizeof(temp) - used, "%s %f %d %d %d, ",
+			 (used ? "" : "[ "), tab -> value, tab -> units,
+			 tab -> alignment, tab -> offsetModel);
+	if (used == 0)
+	    used = strlen(temp);
+	if (n < 0 || (size_t)n >= sizeof(temp) - used)
+	    break;
+	used += (size_t)n;
 	tab = (_XmTab) tab -> next;
 	number--;
       }
@@ -2778,12 +2785,8 @@ static TokenRec reusetoken;
 static Token
 ReadToken(char *string, int *position)
 {
-#ifdef XTHREADS
-  TokenRec reusetoken;
+  static TokenRec reusetoken;
   Token new_token = &reusetoken;
-#else
-  Token new_token = &reusetoken;
-#endif
   int pos = *position;
   int count;
 
@@ -2875,6 +2878,7 @@ static struct _XmXftDrawCacheStruct {
 } *_XmXftDrawCache = NULL;
 static int _XmXftDrawCacheSize = 0;
 
+#ifndef FIX_1444
 static XErrorHandler           oldErrorHandler;
 static int xft_error;
 
@@ -2893,14 +2897,13 @@ _XmXftErrorHandler(
 
     return 0 ;
 }
+#endif /* FIX_1444 */
 
 XftDraw *
 _XmXftDrawCreate(Display *display, Window window)
 {
 	XftDraw			*draw;
-	XWindowAttributes	wa;
 	int			i;
-	Status status;
 
 	for (i=0; i<_XmXftDrawCacheSize; i++) {
 		if (_XmXftDrawCache[i].display == display &&

@@ -102,7 +102,7 @@ do { \
 	for (l = 0; l < header_nlines; l++) \
 	    if (header[l]) \
 		XpmFree(header[l]); \
-		XpmFree(header); \
+	XpmFree(header); \
     } \
     return(status); \
 } while(0)

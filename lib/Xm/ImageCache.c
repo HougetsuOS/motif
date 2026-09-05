@@ -405,7 +405,7 @@ SymbolicColorUsed(String color_name,
 		  XpmColor * xpm_colors,
 		  unsigned int ncolors)
 {
-    Cardinal i, j, data_size ;
+    Cardinal i;
 
     /* first look if the color is present as a symbolic in the 
        colorTable */
@@ -1594,6 +1594,7 @@ XmGetScaledPixmap(
     XtAppContext app = XtWidgetToApplicationContext(widget);
 
     _XmAppLock(app);
+    (void)app;
     _XmProcessLock();
     acc_color_rec.foreground = foreground ;
     acc_color_rec.background = background ;
@@ -1634,6 +1635,7 @@ XmGetPixmapByDepth(
 				DisplayOfScreen(screen));
 
     _XmAppLock(app);
+    (void)app;
     _XmProcessLock();
     acc_color_rec.foreground = foreground ;
     acc_color_rec.background = background ;
@@ -1669,6 +1671,7 @@ XmGetPixmap(
     XtAppContext app = XtDisplayToApplicationContext(
 				DisplayOfScreen(screen));
     _XmAppLock(app);
+    (void)app;
     ret_val = XmGetPixmapByDepth(screen, image_name, foreground, background,
 				 DefaultDepthOfScreen(screen));
     _XmAppUnlock(app);
@@ -1694,6 +1697,7 @@ XmeGetMask(
 				DisplayOfScreen(screen));
 
     _XmAppLock(app);
+    (void)app;
     
     _XmProcessLock();
     _XmOSGenerateMaskName(image_name, mask_name);
@@ -1720,6 +1724,7 @@ XmDestroyPixmap(
 {
    PixmapData pix_data, *pix_entry ;
    XtAppContext app;
+   (void)app;
 
    /*  Check for invalid conditions  */
 
@@ -2047,7 +2052,9 @@ void _XmPutScaledImage (
     Pixel pixel;
     double ratio_x, ratio_y;
     Bool fast8;
-    int xp_event, xp_error;
+#ifdef PRINTING_SUPPORTED
+    int xp_event = 0, xp_error = 0;
+#endif
 
     if (dest_width == src_width && dest_height == src_height) {
 	/* same for x and y, just send it out */
@@ -2336,8 +2343,10 @@ static int
 FreeCacheColors(Display *display, Colormap colormap,
 		Pixel *pixels, int n, void *closure)
 {
-    int i, status;
+    int i;
+    int status = XpmSuccess;
+
     for (i = 0; i < n; i++, pixels++)
 	status = FreeCacheColor(display, colormap, *pixels);
-    return 0;
+    return status;
 }

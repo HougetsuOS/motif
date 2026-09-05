@@ -1070,7 +1070,7 @@ StringSetValue(
                                 wcstombs(str, str2, MB_CUR_MAX * (length+1));
 				XtFree((char *) string);
                                 string = str;
-    
+                                /* FALLTHRU */
         case XmFORMAT_MBYTE:    temp = XmStringCreateLocalized(string);
                                 freetemp = True;
                                 break;

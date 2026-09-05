@@ -26,6 +26,10 @@
  * HISTORY
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -452,9 +456,7 @@ static void readIcon(str, icon, mask, fg, bg)
 
     if (strcmp(find_suffix(str), "xpm") == 0) {
       int len = strlen(str);
-      strncpy(msk, str, len - 4);
-      msk[len - 4] = 0;
-      strcat(msk, "_m.xpm");
+      snprintf(msk, sizeof(msk), "%.*s_m.xpm", (int)(len - 4), str);
     } else {
       strcpy(msk, str);
       strcat(msk, "_m");

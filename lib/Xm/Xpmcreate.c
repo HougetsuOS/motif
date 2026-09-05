@@ -127,7 +127,6 @@ LFUNC(PutImagePixels1, void, (XImage *image, unsigned int width,
 
 LFUNC(PutPixel1, int, (XImage *ximage, int x, int y, unsigned long pixel));
 LFUNC(PutPixel, int, (XImage *ximage, int x, int y, unsigned long pixel));
-LFUNC(PutPixel32, int, (XImage *ximage, int x, int y, unsigned long pixel));
 LFUNC(PutPixel32MSB, int, (XImage *ximage, int x, int y, unsigned long pixel));
 LFUNC(PutPixel32LSB, int, (XImage *ximage, int x, int y, unsigned long pixel));
 LFUNC(PutPixel16MSB, int, (XImage *ximage, int x, int y, unsigned long pixel));
@@ -334,10 +333,10 @@ SetCloseColor(display, colormap, visual, col, image_pixel, mask_pixel,
 
 	    closenesses[i].cols_index = i;
 	    closenesses[i].closeness =
-		COLOR_FACTOR * (abs((long) col->red - (long) cols[i].red)
-				+ abs((long) col->green - (long) cols[i].green)
-				+ abs((long) col->blue - (long) cols[i].blue))
-		+ BRIGHTNESS_FACTOR * abs(((long) col->red +
+		COLOR_FACTOR * (labs((long) col->red - (long) cols[i].red)
+				+ labs((long) col->green - (long) cols[i].green)
+				+ labs((long) col->blue - (long) cols[i].blue))
+		+ BRIGHTNESS_FACTOR * labs(((long) col->red +
 					   (long) col->green +
 					   (long) col->blue)
 					   - ((long) cols[i].red +
@@ -752,7 +751,7 @@ XpmCreateImageFromXpmImage(display, image,
     unsigned int depth;
     int bitmap_format;
     XpmFreeColorsFunc freeColors;
-    void *closure;
+
 
     /* variables to return */
     XImage *ximage = NULL;
@@ -799,11 +798,6 @@ XpmCreateImageFromXpmImage(display, image,
 	freeColors = attributes->free_colors;
     else
 	freeColors = FreeColors;
-    if (attributes && (attributes->valuemask & XpmColorClosure))
-	closure = attributes->color_closure;
-    else
-	closure = NULL;
-
     ErrorStatus = XpmSuccess;
 
     if (image->ncolors >= UINT_MAX / sizeof(Pixel)) 
@@ -1675,7 +1669,7 @@ PutPixel1(ximage, x, y, pixel)
     register char *src;
     register char *dst;
     register int i;
-    register char *data;
+
     Pixel px;
     int nbytes;
 
@@ -1711,7 +1705,7 @@ PutPixel(ximage, x, y, pixel)
     register char *src;
     register char *dst;
     register int i;
-    register char *data;
+
     Pixel px;
     unsigned int nbytes, ibpp;
 
@@ -1737,23 +1731,6 @@ PutPixel(ximage, x, y, pixel)
     for (i = nbytes; --i >= 0;)
 	*dst++ = *src++;
 
-    return 1;
-}
-
-static int
-PutPixel32(ximage, x, y, pixel)
-    register XImage *ximage;
-    int x;
-    int y;
-    unsigned long pixel;
-{
-    unsigned char *addr;
-
-    if(x < 0 || y < 0)
-    	return 0;
-
-    addr = &((unsigned char *)ximage->data) [ZINDEX32(x, y, ximage)];
-    *((unsigned long *)addr) = pixel;
     return 1;
 }
 
@@ -1923,7 +1900,7 @@ xpmParseDataAndCreate(display, data, image_return, shapeimage_return,
     unsigned int depth;
     int bitmap_format;
     XpmFreeColorsFunc freeColors;
-    void *closure;
+
 
     /* variables to return */
     XImage *ximage = NULL;
@@ -1981,11 +1958,6 @@ xpmParseDataAndCreate(display, data, image_return, shapeimage_return,
 	freeColors = attributes->free_colors;
     else
 	freeColors = FreeColors;
-    if (attributes && (attributes->valuemask & XpmColorClosure))
-	closure = attributes->color_closure;
-    else
-	closure = NULL;
-
     cmts = info && (info->valuemask & XpmReturnComments);
 
     /*

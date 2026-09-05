@@ -30,7 +30,6 @@ load_jpeg(FILE * infile, unsigned long *pWidth, unsigned long *pHeight,
     CTable *buf;
     struct jpeg_decompress_struct cinfo;
     XmJpegErrorMgrRec jerr;
-    JSAMPROW row_pointer[1];
     int x, y;
     int rc;
 

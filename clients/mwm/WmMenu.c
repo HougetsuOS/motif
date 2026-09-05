@@ -842,8 +842,8 @@ static MenuItem *MakeMenuItemFromTemplate (MenuItem *template, String name,
 static MenuItem *MakeClientCommandMenuItem (String label, String funcArgs)
 {
     return(MakeMenuItem(label, F_InvokeCommand, funcArgs,
-			(KeySym)(unsigned)NULL, (unsigned int)0,
-			(KeyCode)(unsigned)NULL, (String)NULL));
+			(KeySym)0, (unsigned int)0,
+			(KeyCode)0, (String)NULL));
 }
 
 
@@ -2197,7 +2197,7 @@ static void InsertTreeOnClient (WmScreenData *pSD, ClientData *pCD,
 	    if (newMenuSpec == (MenuSpec *) NULL)
 	    {
 		newMenuSpec = MakeMenuSpec(funcarg_buf,
-					   tree == NULL ? (CARD32)NULL
+					   tree == NULL ? (CARD32)0
 					                : tree->commandID);
 		if (duplicate_globals) newMenuSpec->clientLocal = TRUE;
 		else 		       newMenuSpec->clientLocal = FALSE;
@@ -4200,7 +4200,7 @@ void UnpostMenu (MenuSpec *menuSpec)
  * 
  *************************************<->***********************************/
 
-void ActivateCallback (Widget w, caddr_t client_data, caddr_t call_data)
+void ActivateCallback (Widget w, XtPointer client_data, XtPointer call_data)
 {
     WmScreenData *pSD;
 
@@ -4464,7 +4464,7 @@ void FreeCustomMenuSpec (MenuSpec *menuSpec)
      *                   not get called, leaving MWM in a failure state.
      */
      if (wmGD.menuActive == menuSpec)
-       UnmapCallback((Widget)NULL, (caddr_t)NULL, (caddr_t)NULL);
+       UnmapCallback((Widget)NULL, (XtPointer)NULL, (XtPointer)NULL);
     /*
      * End fix for CR 5450
      */

@@ -36,6 +36,10 @@
  *       INCLUDE FILES
  *****************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <Xm/Xm.h>
 #include <Xm/RowColumn.h>
 #include <stdio.h>
@@ -453,7 +457,7 @@ static void copyWcsToMbs
     }
 
     tmp = tbuf[lenToConvert];
-    tbuf[lenToConvert] = (unsigned)NULL;
+    tbuf[lenToConvert] = 0u;
     numCvt = doWcstombs(mbs, tbuf, lenToConvert);
     tbuf[lenToConvert] = tmp;
     
@@ -1435,17 +1439,17 @@ XtPointer CONVERT
 	switch(toVal.size)
 	{
 	case 1:
-	    val = (XTPOINTER)(unsigned)(*(char*)toVal.addr);    /* may be here exists bug ! */
+	    val = (XTPOINTER)(unsigned long)(*(char*)toVal.addr);    /* may be here exists bug ! */
 	    break;
 	case 2:
-	    val = (XTPOINTER)(unsigned)(*(short*)toVal.addr);   /* may be here exists bug ! */
+	    val = (XTPOINTER)(unsigned long)(*(short*)toVal.addr);   /* may be here exists bug ! */
 	    break;
 	case 4:
-	    val = (XTPOINTER)(unsigned)(*(int*)toVal.addr);     /* may be here exists bug ! */
+	    val = (XTPOINTER)(unsigned long)(*(int*)toVal.addr);     /* may be here exists bug ! */
 	    break;
 	case 8:
 	default:
-	    val = (XTPOINTER)(unsigned)(*(long*)toVal.addr);    /* may be here exists bug ! */
+	    val = (XTPOINTER)(unsigned long)(*(long*)toVal.addr);    /* may be here exists bug ! */
 	    break;
 	}
     }
@@ -3683,9 +3687,9 @@ GRA(String *,resourceSpec)
    i = 0;
    while ( resourceSpec[i] != NULL )
    {
-       char buf[1000];
+       char buf[BUFSIZ];
 
-       sprintf(buf, "*%s%s", _name, resourceSpec[i++]);
+       snprintf(buf, sizeof(buf), "*%s%s", _name, resourceSpec[i++]);
        XrmPutLineResource( &rdb, buf );
    }
 
@@ -3774,7 +3778,7 @@ GRA(char*, inst_name)
 {
    Display*		dpy = XtDisplay ( w );	/*  Retrieve the display */
    XrmDatabase		rdb = NULL;		/* A resource data base */
-   char			lineage[1000];
+   char			lineage[BUFSIZ];
    char			buf[1000];
    Widget       	parent;
 
@@ -3798,7 +3802,7 @@ GRA(char*, inst_name)
        if (wclass == applicationShellWidgetClass) break;
 
        strcpy(buf, lineage);
-       sprintf(lineage, "*%s%s", XtName(parent), buf);
+       snprintf(lineage, sizeof(lineage), "*%s%s", XtName(parent), buf);
 
        parent = XtParent(parent);
    }
@@ -3825,24 +3829,24 @@ GRA(char*, inst_name)
 
 	   if (*defs->cInstName != '\0')
 	   {
-	       sprintf(buf, "%s.%s*%s.%s: %s",
+	       snprintf(buf, sizeof(buf), "%s.%s*%s.%s: %s",
 		       lineage, defs->wName, defs->cInstName, defs->wRsc,
 		       defs->value);
 	   }
 	   else
 	   {
-	       sprintf(buf, "%s.%s.%s: %s",
+	       snprintf(buf, sizeof(buf), "%s.%s.%s: %s",
 		       lineage, defs->wName, defs->wRsc, defs->value);
 	   }
        }
        else if (*defs->wName != '\0')
        {
-	   sprintf(buf, "%s*%s.%s: %s",
+	   snprintf(buf, sizeof(buf), "%s*%s.%s: %s",
 		   lineage, defs->wName, defs->wRsc, defs->value);
        }
        else
        {
-	   sprintf(buf, "%s.%s: %s", lineage, defs->wRsc, defs->value);
+	   snprintf(buf, sizeof(buf), "%s.%s: %s", lineage, defs->wRsc, defs->value);
        }
 
        XrmPutLineResource( &rdb, buf );

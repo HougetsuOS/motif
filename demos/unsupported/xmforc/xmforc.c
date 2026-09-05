@@ -30,6 +30,10 @@
 **
 */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <Xm/XmAll.h>
 #include <stdlib.h>
 
@@ -744,7 +748,7 @@ NumChildCB (Widget	w,		/*  widget id		*/
     Arg args[1] ;
     XmScaleCallbackStruct * scb = (XmScaleCallbackStruct *) call_data ;
     Widget * children, new_child ;
-    char name[10] ;
+    char name[16] ;
     int i ;
     Cardinal num_children ;
 
@@ -769,7 +773,7 @@ NumChildCB (Widget	w,		/*  widget id		*/
 
 	/* add buttons at the end of the child list */
 	for (i = rc_data.num_children ; i < scb->value; i++) {
-	    sprintf(name, "push%d", i);
+	    snprintf(name, sizeof(name), "push%d", i);
 	    new_child = XmCreatePushButton (rc_data.rc, name, NULL, 0);
 	    XtManageChild(new_child);
 	}
@@ -997,7 +1001,7 @@ OrientationCB (Widget		w,		/*  widget id		*/
 {
     Arg args[1] ;
 
-    rc_data.orientation = (unsigned char) (int) client_data ;
+    rc_data.orientation = (unsigned char) (unsigned long)(XtPointer) client_data ;
 
     if (rc_data.num_children) {
 	XtSetArg(args[0], XmNorientation, client_data);
@@ -1016,7 +1020,7 @@ EntryAlignmentCB (Widget	w,		/*  widget id		*/
 {
     Arg args[1] ;
 
-    rc_data.entry_alignment = (unsigned char) (int) client_data ;
+    rc_data.entry_alignment = (unsigned char) (unsigned long)(XtPointer) client_data ;
 
     if (rc_data.num_children) {
 	XtSetArg(args[0], XmNentryAlignment, client_data);
@@ -1035,7 +1039,7 @@ PackingCB (Widget	w,		/*  widget id		*/
 {
     Arg args[1] ;
 
-    rc_data.packing = (unsigned char) (int) client_data ;
+    rc_data.packing = (unsigned char) (unsigned long)(XtPointer) client_data ;
 
     if (rc_data.num_children) {
 	XtSetArg(args[0], XmNpacking, client_data);

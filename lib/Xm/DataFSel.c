@@ -560,7 +560,9 @@ _XmDataFieldConvert(
       *targs++ = MULTIPLE; target_count++;
       *targs++ = TIMESTAMP; target_count++;
       if (is_primary || is_destination)
+      {
          *targs++ = INSERT_SELECTION; target_count++;
+      }
       if (is_primary || is_secondary || is_drop) {
          *targs++ = COMPOUND_TEXT; target_count++;
          *targs++ = TEXT; target_count++;

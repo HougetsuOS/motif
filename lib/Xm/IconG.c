@@ -267,8 +267,8 @@ static  Boolean PointIn(Widget widget,
 
 /* those are created in ClassInitialize and filled by the
    IconConverter. */
-static XContext 	largeIconContext = (XContext) NULL;
-static XContext		smallIconContext = (XContext) NULL;
+static XContext 	largeIconContext = 0;
+static XContext		smallIconContext = 0;
 
 static XPointer dummy;
 #define OwnLargeMask(widget) \

@@ -185,8 +185,9 @@ _XmInitializeSyntheticResources(XmSyntheticResource *resources,
   register int i;
   
   for (i = 0; i < num_resources; i++)
-    resources[i].resource_name = 
-      (String) XrmPermStringToQuark (resources[i].resource_name);
+    resources[i].resource_name =
+      (String) (unsigned long) XrmPermStringToQuark
+			       (resources[i].resource_name);
 }
 
 /**********************************************************************
@@ -214,7 +215,9 @@ GetValuesHook(Widget w,
   int i, j;
   XrmQuark quark;
   XtArgVal value;
+#if defined(GETVALUES_BUG)
   XtArgVal orig_value;
+#endif
   Cardinal value_size;
   XtPointer value_ptr;
   Widget value_widget;
@@ -230,7 +233,8 @@ GetValuesHook(Widget w,
       for (j = 0; j < num_resources; j++) 
 	{
 	  if ((resources[j].export_proc) &&
-	      (XrmQuark)(resources[j].resource_name) == quark) 
+	      (XrmQuark) (unsigned long) (XtPointer)
+		  resources[j].resource_name == quark) 
 	    {
 	      value_size = resources[j].resource_size;
 
@@ -261,8 +265,10 @@ GetValuesHook(Widget w,
 	      else 
 		value = *(XtArgVal*)value_ptr;
 	      
+#if defined(GETVALUES_BUG)
 	      orig_value = value;
-	      
+#endif
+
 	      (*(resources[j].export_proc))
 		(value_widget, value_offset, &value);
 	      
@@ -505,7 +511,8 @@ ImportArgs(Widget w,
       for (j = 0; j < num_resources; j++) 
 	{
 	  if ((resources[j].import_proc) &&
-	      (XrmQuark)(resources[j].resource_name) == quark) 
+	      (XrmQuark) (unsigned long) (XtPointer)
+		  resources[j].resource_name == quark) 
 	    {
 	      value = args[i].value;
 	      
