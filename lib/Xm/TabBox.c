@@ -53,6 +53,7 @@
 
 #ifdef USE_XFT
 #include <X11/Xft/Xft.h>
+#include "XmPlat/XmPlatP.h"
 #endif
 
 #define _XiBoolean Boolean
@@ -268,7 +269,9 @@ static void CheckSetRenderTable(Widget wid, int offs, XrmValue *value);
       XGCValues _macro_gc_values; \
       _macro_gc_values.foreground = (p); \
       _macro_gc_values.fill_style = FillSolid; \
-      XChangeGC((d),(g), GCForeground | GCFillStyle, &_macro_gc_values); \
+      { XmPlatDrawCtx _pc = _XmPlatCtx ((d), 0, (g)) ; \
+	_XmPlatSetForeground (_pc, _macro_gc_values.foreground) ; \
+	_XmPlatCtxFree (_pc) ; } \
 }
 
 #define SetTiledGC(d,g,p) \
@@ -276,7 +279,9 @@ static void CheckSetRenderTable(Widget wid, int offs, XrmValue *value);
       XGCValues _macro_gc_values; \
       _macro_gc_values.tile = (p); \
       _macro_gc_values.fill_style = FillTiled; \
-      XChangeGC((d),(g), GCTile | GCFillStyle, &_macro_gc_values); \
+      { XmPlatDrawCtx _pc = _XmPlatCtx ((d), 0, (g)) ; \
+	_XmPlatSetTile (_pc, _XmPlatSurface ((d), _macro_gc_values.tile)) ; \
+	_XmPlatCtxFree (_pc) ; } \
 }
 
 #define SetTiledXYGC(d,g,p,x,y) \
@@ -286,8 +291,9 @@ static void CheckSetRenderTable(Widget wid, int offs, XrmValue *value);
       _macro_gc_values.fill_style = FillTiled; \
       _macro_gc_values.ts_x_origin = (x); \
       _macro_gc_values.ts_y_origin = (y); \
-      XChangeGC((d),(g), GCTile | GCFillStyle | GCTileStipXOrigin | \
-		GCTileStipYOrigin, &_macro_gc_values); \
+      { XmPlatDrawCtx _pc = _XmPlatCtx ((d), 0, (g)) ; \
+	_XmPlatSetTile (_pc, _XmPlatSurface ((d), _macro_gc_values.tile)) ; \
+	_XmPlatCtxFree (_pc) ; } \
 }
 
 #define SetStippledGC(d,g,p) \
@@ -297,8 +303,11 @@ static void CheckSetRenderTable(Widget wid, int offs, XrmValue *value);
       _macro_gc_values.fill_style = FillStippled; \
       _macro_gc_values.ts_x_origin = (x); \
       _macro_gc_values.ts_y_origin = (y); \
-      XChangeGC((d),(g), GCStipple | GCFillStyle | GCTileStipXOrigin | \
-		GCTileStipYOrigin, &_macro_gc_values); \
+      { XmPlatDrawCtx _pc = _XmPlatCtx ((d), 0, (g)) ; \
+	_XmPlatSetStipple (_pc, _XmPlatSurface ((d), _macro_gc_values.stipple), \
+			   _macro_gc_values.ts_x_origin, \
+			   _macro_gc_values.ts_y_origin) ; \
+	_XmPlatCtxFree (_pc) ; } \
 }
 
 #define SetStippledXYGC(d,g,p,x,y) \
@@ -308,8 +317,11 @@ static void CheckSetRenderTable(Widget wid, int offs, XrmValue *value);
       _macro_gc_values.fill_style = FillStippled; \
       _macro_gc_values.ts_x_origin = (x); \
       _macro_gc_values.ts_y_origin = (y); \
-      XChangeGC((d),(g), GCStipple | GCFillStyle | GCTileStipXOrigin | \
-		GCTileStipYOrigin, &_macro_gc_values); \
+      { XmPlatDrawCtx _pc = _XmPlatCtx ((d), 0, (g)) ; \
+	_XmPlatSetStipple (_pc, _XmPlatSurface ((d), _macro_gc_values.stipple), \
+			   _macro_gc_values.ts_x_origin, \
+			   _macro_gc_values.ts_y_origin) ; \
+	_XmPlatCtxFree (_pc) ; } \
 }
 
 #define XiBackgroundSpecified(i) \
@@ -925,7 +937,10 @@ Resize(widget)
 
     if( XtIsRealized(XmTabBox__canvas(tab)) )
     {
-	XClearWindow(XtDisplay(widget), XiCanvas(tab));
+	{ XmPlatSurface _s = _XmPlatSurfaceOfWindow (XtDisplay (widget), XiCanvas(tab)) ;
+	  _XmPlatClearWindow (_s) ;
+	  _XmPlatSurfaceFree (_s) ;
+	}
 	Redisplay(XmTabBox__canvas(tab), NULL, False);
     }
 }
@@ -1050,10 +1065,10 @@ Redisplay(widget, event, region)
     }
     else
     {
-	XSetClipMask(XtDisplay(tab), gc, None);
-	XSetClipMask(XtDisplay(tab), tab->manager.bottom_shadow_GC, None);
-	XSetClipMask(XtDisplay(tab), tab->manager.top_shadow_GC, None);
-	XSetClipMask(XtDisplay(tab), tab->manager.background_GC, None);
+	_XmPlatClrClip (XtDisplay (tab), gc) ;
+	_XmPlatClrClip (XtDisplay (tab), tab->manager.bottom_shadow_GC) ;
+	_XmPlatClrClip (XtDisplay (tab), tab->manager.top_shadow_GC) ;
+	_XmPlatClrClip (XtDisplay (tab), tab->manager.background_GC) ;
     }
     
     if( XmTabBox_tab_mode(tab) != XmTABS_STACKED &&
@@ -1061,14 +1076,11 @@ Redisplay(widget, event, region)
     {
 	if( event == NULL || event->xany.type != Expose )
 	{
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc, 0, 0,
-			   XtWidth(widget), XtHeight(widget));
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, 0, 0, XtWidth(widget), XtHeight(widget)) ;
 	}
 	else
 	{
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc, event->xexpose.x,
-			   event->xexpose.y, event->xexpose.width,
-			   event->xexpose.height);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, event->xexpose.x, event->xexpose.y, event->xexpose.width, event->xexpose.height) ;
 	}
     }
 
@@ -1099,10 +1111,7 @@ Redisplay(widget, event, region)
 		 * edge of our window and a beveled corner on the 
 		 * right side.
 		 */
-		XFillRectangle(XtDisplay(widget), XtWindow(widget),
-			       tab->manager.top_shadow_GC,
-			       0, (int)XtHeight(widget) - shadow,
-			       XtWidth(widget), shadow);
+		_XmPlatFillOneRect (XtDisplay (widget), XtWindow(widget), tab->manager.top_shadow_GC, 0, (int)XtHeight(widget) - shadow, XtWidth(widget), shadow) ;
 		XmDrawBevel(XtDisplay(widget), XtWindow(widget),
 			    tab->manager.top_shadow_GC,
 			    tab->manager.bottom_shadow_GC,
@@ -1116,10 +1125,7 @@ Redisplay(widget, event, region)
 		 * Here we need to draw a shadow along the right side and
 		 * a beveled corner on the bottom.
 		 */
-		XFillRectangle(XtDisplay(widget), XtWindow(widget),
-			       tab->manager.top_shadow_GC,
-			       (int)XtWidth(widget) - shadow, 0,
-			       shadow, XtHeight(widget));
+		_XmPlatFillOneRect (XtDisplay (widget), XtWindow(widget), tab->manager.top_shadow_GC, (int)XtWidth(widget) - shadow, 0, shadow, XtHeight(widget)) ;
 		XmDrawBevel(XtDisplay(widget), XtWindow(widget),
 			    tab->manager.top_shadow_GC,
 			    tab->manager.bottom_shadow_GC,
@@ -1141,9 +1147,7 @@ Redisplay(widget, event, region)
 		 * Here we need to draw a line across the top of our
 		 * window and a corner in the left.
 		 */
-		XFillRectangle(XtDisplay(widget), XtWindow(widget),
-			       tab->manager.bottom_shadow_GC,
-			       0, 0, XtWidth(widget), shadow);
+		_XmPlatFillOneRect (XtDisplay (widget), XtWindow(widget), tab->manager.bottom_shadow_GC, 0, 0, XtWidth(widget), shadow) ;
 		XmDrawBevel(XtDisplay(widget), XtWindow(widget),
 			    tab->manager.top_shadow_GC,
 			    tab->manager.bottom_shadow_GC,
@@ -1155,9 +1159,7 @@ Redisplay(widget, event, region)
 		 * Here we need a shadow along our windows left edge and
 		 * a coner towards the top.
 		 */
-		XFillRectangle(XtDisplay(widget), XtWindow(widget),
-			       tab->manager.bottom_shadow_GC,
-			       0, 0, shadow, XtHeight(widget));
+		_XmPlatFillOneRect (XtDisplay (widget), XtWindow(widget), tab->manager.bottom_shadow_GC, 0, 0, shadow, XtHeight(widget)) ;
 		XmDrawBevel(XtDisplay(widget), XtWindow(widget),
 			    tab->manager.top_shadow_GC,
 			    tab->manager.bottom_shadow_GC,
@@ -1168,10 +1170,10 @@ Redisplay(widget, event, region)
 
 	if( region != False )
 	{
-	    XSetClipMask(XtDisplay(tab), XmTabBox__tab_GC(tab), None);
-	    XSetClipMask(XtDisplay(tab), tab->manager.bottom_shadow_GC, None);
-	    XSetClipMask(XtDisplay(tab), tab->manager.top_shadow_GC, None);
-	    XSetClipMask(XtDisplay(tab), tab->manager.background_GC, None);
+	    _XmPlatClrClip (XtDisplay (tab), XmTabBox__tab_GC(tab)) ;
+	    _XmPlatClrClip (XtDisplay (tab), tab->manager.bottom_shadow_GC) ;
+	    _XmPlatClrClip (XtDisplay (tab), tab->manager.top_shadow_GC) ;
+	    _XmPlatClrClip (XtDisplay (tab), tab->manager.background_GC) ;
 	}
 	return;
     }
@@ -1238,10 +1240,10 @@ Redisplay(widget, event, region)
      */
     if( region != False )
     {
-	XSetClipMask(XtDisplay(tab), XmTabBox__tab_GC(tab), None);
-	XSetClipMask(XtDisplay(tab), tab->manager.bottom_shadow_GC, None);
-	XSetClipMask(XtDisplay(tab), tab->manager.top_shadow_GC, None);
-	XSetClipMask(XtDisplay(tab), tab->manager.background_GC, None);
+	_XmPlatClrClip (XtDisplay (tab), XmTabBox__tab_GC(tab)) ;
+	_XmPlatClrClip (XtDisplay (tab), tab->manager.bottom_shadow_GC) ;
+	_XmPlatClrClip (XtDisplay (tab), tab->manager.top_shadow_GC) ;
+	_XmPlatClrClip (XtDisplay (tab), tab->manager.background_GC) ;
     }
 }
 
@@ -1666,7 +1668,17 @@ DrawBorder(tab, gc, idx)
     rect[3].width = Max((int)draw->width, 1);
     rect[3].height = highlight;
 
-    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, 4);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(4) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, 4) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 }
 
 static void
@@ -2764,10 +2776,7 @@ DrawSegments(tab, info, geometry, edge, corner_size, shadow, selected)
     default:
 	if( XmTabBox_orientation(tab) == XmHORIZONTAL )
 	{
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab), 
-			   tab->manager.top_shadow_GC, geometry->x,
-			   geometry->y,
-			   shadow, (int) geometry->height - size);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, geometry->x, geometry->y, shadow, (int) geometry->height - size) ;
 
 	    rect[0].x = geometry->x + geometry->width - shadow;
 	    rect[0].y = geometry->y;
@@ -2798,16 +2807,21 @@ DrawSegments(tab, info, geometry, edge, corner_size, shadow, selected)
 		cnt = 3;
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab),
-			    tab->manager.bottom_shadow_GC, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 
 	    if( selected )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x + shadow,
-			       geometry->y,
-			       (int)geometry->width - 2*shadow,
-			       shadow);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x + shadow, geometry->y, (int)geometry->width - 2*shadow, shadow) ;
 			       
 		if( geometry->row == 0 &&
 			((geometry->column > 0 && !LayoutIsRtoLP(tab)) ||
@@ -2835,10 +2849,7 @@ DrawSegments(tab, info, geometry, edge, corner_size, shadow, selected)
 	}
 	else
 	{
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			   tab->manager.top_shadow_GC,
-			   geometry->x, geometry->y,
-			   (int)geometry->width - size, shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, geometry->x, geometry->y, (int)geometry->width - size, shadow) ;
 
 	    rect[0].x = geometry->x;
 	    rect[0].y = geometry->y + (int)geometry->height - shadow;
@@ -2867,15 +2878,21 @@ DrawSegments(tab, info, geometry, edge, corner_size, shadow, selected)
 		cnt = 3;
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab),
-			    tab->manager.bottom_shadow_GC, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 
 	    if( selected )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x, geometry->y + shadow,
-			       shadow,
-			       (int)geometry->height - 2*shadow);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x, geometry->y + shadow, shadow, (int)geometry->height - 2*shadow) ;
 		if( geometry->column != 0 )
 		{
 		    XmDrawBevel(XtDisplay(tab), XiCanvas(tab),
@@ -2899,11 +2916,7 @@ DrawSegments(tab, info, geometry, edge, corner_size, shadow, selected)
 
 	if( XmTabBox_orientation(tab) == XmHORIZONTAL )
 	{
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			   tab->manager.bottom_shadow_GC,
-			   geometry->x + (int)geometry->width - shadow,
-			   geometry->y + size, shadow,
-			   (int)geometry->height - size);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, geometry->x + (int)geometry->width - shadow, geometry->y + size, shadow, (int)geometry->height - size) ;
 
 	    rect[0].x = geometry->x;
 	    rect[0].y = geometry->y + size;
@@ -2924,16 +2937,21 @@ DrawSegments(tab, info, geometry, edge, corner_size, shadow, selected)
 		cnt = 3;
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab),
-			    tab->manager.top_shadow_GC, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 
 	    if( selected )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x + shadow,
-			       geometry->y + (int)geometry->height - shadow,
-			       (int)geometry->width - 2*shadow,
-			       shadow);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x + shadow, geometry->y + (int)geometry->height - shadow, (int)geometry->width - 2*shadow, shadow) ;
 
 		if( (!stacked && 
 			(((geometry->column != XmTabBox__num_columns(tab) - 1) &&
@@ -2974,11 +2992,7 @@ DrawSegments(tab, info, geometry, edge, corner_size, shadow, selected)
 	}
 	else
 	{
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			   tab->manager.bottom_shadow_GC,
-			   geometry->x + size,
-			   geometry->y + (int)geometry->height - shadow,
-			   (int)geometry->width - size, shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, geometry->x + size, geometry->y + (int)geometry->height - shadow, (int)geometry->width - size, shadow) ;
 
 	    rect[0].x = geometry->x + size;
 	    rect[0].y = geometry->y;
@@ -2999,16 +3013,21 @@ DrawSegments(tab, info, geometry, edge, corner_size, shadow, selected)
 		cnt = 3;
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab),
-			    tab->manager.top_shadow_GC, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 
 	    if( selected )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x + (int)geometry->width - shadow,
-			       geometry->y + shadow,
-			       shadow,
-			       (int)geometry->height - 2*shadow);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x + (int)geometry->width - shadow, geometry->y + shadow, shadow, (int)geometry->height - 2*shadow) ;
 
 		if( !stacked ||
 		    (stacked && geometry->row == 0 &&
@@ -3095,10 +3114,7 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
     default:
 	if( XmTabBox_orientation(tab) == XmHORIZONTAL )
 	{
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			   tab->manager.top_shadow_GC,
-			   geometry->x, geometry->y,
-			   shadow, (int)geometry->height - shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, geometry->x, geometry->y, shadow, (int)geometry->height - shadow) ;
 	    
 	    rt[0].x = geometry->x + (int)geometry->width - shadow;
 	    rt[0].y = geometry->y;
@@ -3129,8 +3145,17 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
 		cnt = 3;
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab),
-			    tab->manager.bottom_shadow_GC, rt, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rt[_pi].x ; _pr[_pi].y = rt[_pi].y ;
+    _pr[_pi].width = rt[_pi].width ; _pr[_pi].height = rt[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 
 	    XmDrawBevel(XtDisplay(tab), XiCanvas(tab),
 			tab->manager.top_shadow_GC,
@@ -3141,11 +3166,7 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
 
 	    if( selected )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x + shadow,
-			       geometry->y,
-			       (int)geometry->width - 2*shadow,
-			       shadow);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x + shadow, geometry->y, (int)geometry->width - 2*shadow, shadow) ;
 			       
 		if( geometry->column == 0 && geometry->column > 0 )
 		{
@@ -3181,10 +3202,7 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
 	}
 	else
 	{
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			   tab->manager.top_shadow_GC,
-			   geometry->x, geometry->y,
-			   (int)geometry->width - shadow, shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, geometry->x, geometry->y, (int)geometry->width - shadow, shadow) ;
 
 	    rt[0].x = geometry->x + (int)geometry->width - shadow;
 	    rt[0].y = geometry->y + shadow;
@@ -3213,8 +3231,17 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
 		cnt = 3;
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab),
-			    tab->manager.bottom_shadow_GC, rt, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rt[_pi].x ; _pr[_pi].y = rt[_pi].y ;
+    _pr[_pi].width = rt[_pi].width ; _pr[_pi].height = rt[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 
 	    XmDrawBevel(XtDisplay(tab), XiCanvas(tab),
 			tab->manager.top_shadow_GC,
@@ -3224,10 +3251,7 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
 
 	    if( selected )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x, geometry->y + shadow,
-			       shadow,
-			       (int)geometry->height - 2*shadow);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x, geometry->y + shadow, shadow, (int)geometry->height - 2*shadow) ;
 		if( geometry->column != 0 )
 		{
 		    XmDrawBevel(XtDisplay(tab), XiCanvas(tab),
@@ -3251,12 +3275,7 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
     case XmTAB_EDGE_BOTTOM_RIGHT:
 	if( XmTabBox_orientation(tab) == XmHORIZONTAL )
 	{
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			   tab->manager.bottom_shadow_GC, 
-			   geometry->x + (int)geometry->width - shadow,
-			   geometry->y,
-			   shadow,
-			   (int)geometry->height);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, geometry->x + (int)geometry->width - shadow, geometry->y, shadow, (int)geometry->height) ;
 
 	    rt[0].x = geometry->x;
 	    rt[0].y = geometry->y;
@@ -3277,8 +3296,17 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
 		cnt = 3;
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab),
-			    tab->manager.top_shadow_GC, rt, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rt[_pi].x ; _pr[_pi].y = rt[_pi].y ;
+    _pr[_pi].width = rt[_pi].width ; _pr[_pi].height = rt[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 
 	    XmDrawBevel(XtDisplay(tab), XiCanvas(tab),
 			tab->manager.top_shadow_GC,
@@ -3288,11 +3316,7 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
 
 	    if( selected )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x + shadow,
-			       geometry->y + (int)geometry->height - shadow,
-			       (int)geometry->width - 2*shadow,
-			       shadow);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x + shadow, geometry->y + (int)geometry->height - shadow, (int)geometry->width - 2*shadow, shadow) ;
 
 		if (LayoutIsRtoLP(tab))
 		{
@@ -3347,11 +3371,7 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
 	}
 	else
 	{
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			   tab->manager.bottom_shadow_GC, 
-			   geometry->x + shadow,
-			   geometry->y + (int)geometry->height - shadow,
-			   (int)geometry->width - shadow, shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, geometry->x + shadow, geometry->y + (int)geometry->height - shadow, (int)geometry->width - shadow, shadow) ;
 
 	    rt[0].x = geometry->x;
 	    rt[0].y = geometry->y;
@@ -3372,8 +3392,17 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
 		cnt = 3;
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab),
-			    tab->manager.top_shadow_GC, rt, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rt[_pi].x ; _pr[_pi].y = rt[_pi].y ;
+    _pr[_pi].width = rt[_pi].width ; _pr[_pi].height = rt[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 
 	    XmDrawBevel(XtDisplay(tab), XiCanvas(tab),
 			tab->manager.top_shadow_GC,
@@ -3384,11 +3413,7 @@ DrawSquareShadows(tab, info, geometry, selected, edge, shadow)
 
 	    if( selected )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x + (int)geometry->width - shadow,
-			       geometry->y + shadow,
-			       shadow,
-			       (int)geometry->height - 2*shadow);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x + (int)geometry->width - shadow, geometry->y + shadow, shadow, (int)geometry->height - 2*shadow) ;
 
 		if( !stacked ||
 		    (stacked && geometry->row == 0 &&
@@ -3571,9 +3596,16 @@ DrawBeveledShadows(tab, info, geometry, selected, edge, shadow)
 	    pt[2].y = geometry->y + (int)geometry->height - shadow;
 	    pt[3].x = geometry->x + shadow;
 	    pt[3].y = geometry->y + (int)geometry->height - size;
-	    XFillPolygon(XtDisplay(tab), XiCanvas(tab),
-			 tab->manager.top_shadow_GC,
-			 pt, 4, Convex, CoordModeOrigin);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(4) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, 4, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 
 	    pt[0].x = geometry->x + (int)geometry->width;
 	    pt[0].y = geometry->y + (int)geometry->height - size;
@@ -3583,9 +3615,16 @@ DrawBeveledShadows(tab, info, geometry, selected, edge, shadow)
 	    pt[2].y = geometry->y + (int)geometry->height - shadow;
 	    pt[3].x = geometry->x + (int)geometry->width - shadow;
 	    pt[3].y = geometry->y + (int)geometry->height - size;
-	    XFillPolygon(XtDisplay(tab), XiCanvas(tab),
-			 tab->manager.bottom_shadow_GC,
-			 pt, 4, Convex, CoordModeOrigin);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(4) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, 4, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	}
 	else
 	{
@@ -3597,9 +3636,16 @@ DrawBeveledShadows(tab, info, geometry, selected, edge, shadow)
 	    pt[2].y = pt[1].y;
 	    pt[3].x = pt[0].x;
 	    pt[3].y = pt[0].y + shadow;
-	    XFillPolygon(XtDisplay(tab), XiCanvas(tab),
-			 tab->manager.bottom_shadow_GC,
-			 pt, 4, Convex, CoordModeOrigin);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(4) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, 4, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 
 	    pt[0].x = geometry->x + (int)geometry->width - size;
 	    pt[0].y = geometry->y + (int)geometry->height;
@@ -3609,9 +3655,16 @@ DrawBeveledShadows(tab, info, geometry, selected, edge, shadow)
 	    pt[2].y = pt[1].y;
 	    pt[3].x = pt[0].x;
 	    pt[3].y = pt[0].y - shadow;
-	    XFillPolygon(XtDisplay(tab), XiCanvas(tab),
-			 tab->manager.bottom_shadow_GC,
-			 pt, 4, Convex, CoordModeOrigin);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(4) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, 4, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	}
 	break;
     case XmTAB_EDGE_BOTTOM_RIGHT:
@@ -3625,9 +3678,16 @@ DrawBeveledShadows(tab, info, geometry, selected, edge, shadow)
 	    pt[2].y = geometry->y + shadow;
 	    pt[3].x = geometry->x + shadow;
 	    pt[3].y = geometry->y + size;
-	    XFillPolygon(XtDisplay(tab), XiCanvas(tab),
-			 tab->manager.top_shadow_GC,
-			 pt, 4, Convex, CoordModeOrigin);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(4) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, 4, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 
 	    pt[0].x = geometry->x + (int)geometry->width;
 	    pt[0].y = geometry->y + size;
@@ -3637,9 +3697,16 @@ DrawBeveledShadows(tab, info, geometry, selected, edge, shadow)
 	    pt[2].y = geometry->y + shadow;
 	    pt[3].x = geometry->x + (int)geometry->width - shadow;
 	    pt[3].y = geometry->y + size;
-	    XFillPolygon(XtDisplay(tab), XiCanvas(tab),
-			 tab->manager.bottom_shadow_GC,
-			 pt, 4, Convex, CoordModeOrigin);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(4) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, 4, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	}
 	else
 	{
@@ -3651,9 +3718,16 @@ DrawBeveledShadows(tab, info, geometry, selected, edge, shadow)
 	    pt[2].y = pt[1].y;
 	    pt[3].x = pt[0].x;
 	    pt[3].y = pt[0].y + shadow;
-	    XFillPolygon(XtDisplay(tab), XiCanvas(tab),
-			 tab->manager.top_shadow_GC,
-			 pt, 4, Convex, CoordModeOrigin);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(4) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, 4, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 
 	    pt[0].x = geometry->x + size;
 	    pt[0].y = geometry->y + (int)geometry->height;
@@ -3663,9 +3737,16 @@ DrawBeveledShadows(tab, info, geometry, selected, edge, shadow)
 	    pt[2].y = pt[1].y;
 	    pt[3].x = pt[0].x;
 	    pt[3].y = pt[0].y - shadow;
-	    XFillPolygon(XtDisplay(tab), XiCanvas(tab),
-			 tab->manager.top_shadow_GC,
-			 pt, 4, Convex, CoordModeOrigin);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(4) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, 4, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	}
 	break;
     }
@@ -3767,33 +3848,22 @@ DrawTab(tab, info, geometry, selected, keyboard)
 	{
 	    if( XmTabBox_orientation(tab) == XmHORIZONTAL )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x + geometry->width - size,
-			       geometry->y, size, size);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x + geometry->width - size, geometry->y, size, size) ;
 	    }
 	    else
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x,
-			       geometry->y + geometry->height - size,
-			       size, size);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x, geometry->y + geometry->height - size, size, size) ;
 	    }
 	}
 	else
 	{
 	    if( XmTabBox_orientation(tab) == XmHORIZONTAL )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x + geometry->width - size,
-			       geometry->y + geometry->height - size,
-			       size, size);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x + geometry->width - size, geometry->y + geometry->height - size, size, size) ;
 	    }
 	    else
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x + geometry->width - size,
-			       geometry->y + geometry->height - size,
-			       size, size);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x + geometry->width - size, geometry->y + geometry->height - size, size, size) ;
 	    }
 	}
 
@@ -3857,29 +3927,22 @@ DrawTab(tab, info, geometry, selected, keyboard)
 	{
 	    if( XmTabBox_orientation(tab) == XmHORIZONTAL )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x, geometry->y, size, size);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x, geometry->y, size, size) ;
 	    }
 	    else
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x, geometry->y, size, size);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x, geometry->y, size, size) ;
 	    }
 	}
 	else
 	{
 	    if( XmTabBox_orientation(tab) == XmHORIZONTAL )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x,
-			       geometry->y + geometry->height - size,
-			       size, size);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x, geometry->y + geometry->height - size, size, size) ;
 	    }
 	    else
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), gc,
-			       geometry->x + geometry->width - size,
-			       geometry->y, size, size);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, geometry->x + geometry->width - size, geometry->y, size, size) ;
 	    }
 	}
     }
@@ -3927,11 +3990,9 @@ DrawTab(tab, info, geometry, selected, keyboard)
     {
     case XmTABS_SQUARED:
 #ifdef FIX_1503
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab), XmTabBox__tab_GC(tab), geometry->x,
-		       geometry->y, geometry->width, geometry->height);
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), XmTabBox__tab_GC(tab), geometry->x, geometry->y, geometry->width, geometry->height) ;
 #else
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab), tab->manager.background_GC, geometry->x,
-		       geometry->y, geometry->width, geometry->height);
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.background_GC, geometry->x, geometry->y, geometry->width, geometry->height) ;
 #endif
 	break;
     case XmTABS_ROUNDED:
@@ -4041,7 +4102,10 @@ DrawTab(tab, info, geometry, selected, keyboard)
      * cliping area for our drawing GC.
      */
     clip = GetTabRectangle(tab, XmTAB_TEXT_RECT, geometry);
-    XSetClipRectangles(XtDisplay(tab), gc, 0, 0, clip, 1, YXBanded);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), 0, gc) ;
+  _XmPlatSetClipRect (_c, clip->x, clip->y, clip->width, clip->height) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
     switch( XmTabBox_tab_orientation(tab) )
     {
@@ -4080,7 +4144,7 @@ DrawTab(tab, info, geometry, selected, keyboard)
      * Now that our drawing is done lets be sure to zero out the
      * clipping area for our GC.
      */
-    XSetClipMask(XtDisplay(tab), gc, None);
+    _XmPlatClrClip (XtDisplay (tab), gc) ;
 }
 
 #define XiCvtDone(type, value) 				\
@@ -4465,8 +4529,16 @@ XiDrawCorner(dpy, d, top_gc, bottom_gc, x, y, width, height, size, quadrant)
 	    pt[HALF_PTSx2-1-i].x = x + XiCosSinData[i][0] * xrad2 / 1000;
 	    pt[HALF_PTSx2-1-i].y = y - XiCosSinData[i][1] * yrad2 / 1000;
 	}
-	XFillPolygon(dpy, d, bottom_gc, pt, HALF_PTSx2, Nonconvex,
-		     CoordModeOrigin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, d, bottom_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(HALF_PTSx2) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(HALF_PTSx2) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, HALF_PTSx2, 0) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	for( tmp = 0, i = HALF_PTS-1; i < NUM_PTS; ++i, ++tmp )
 	{
 	    pt[tmp].x = x + XiCosSinData[i][0] * xrad1 / 1000;
@@ -4475,8 +4547,16 @@ XiDrawCorner(dpy, d, top_gc, bottom_gc, x, y, width, height, size, quadrant)
 	    pt[HALF_PTSx2-1-tmp].x = x + XiCosSinData[i][0] * xrad2 / 1000;
 	    pt[HALF_PTSx2-1-tmp].y = y - XiCosSinData[i][1] * yrad2 / 1000;
 	}
-	XFillPolygon(dpy, d, top_gc, pt, HALF_PTSx2, Nonconvex,
-		     CoordModeOrigin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, d, top_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(HALF_PTSx2) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(HALF_PTSx2) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, HALF_PTSx2, 0) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	break;
     case XiQUAD_2:
 	x += width;
@@ -4490,8 +4570,16 @@ XiDrawCorner(dpy, d, top_gc, bottom_gc, x, y, width, height, size, quadrant)
 	    pt[NUM_PTSx2-1-i].x = x - (int)XiCosSinData[i][0] * xrad2 / 1000;
 	    pt[NUM_PTSx2-1-i].y =  y - (int)XiCosSinData[i][1] * yrad2 / 1000;
 	}
-	XFillPolygon(dpy, d, top_gc, pt, NUM_PTSx2, Nonconvex,
-		     CoordModeOrigin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, d, top_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(NUM_PTSx2) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(NUM_PTSx2) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, NUM_PTSx2, 0) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	break;
     case XiQUAD_3:
 	x += width;
@@ -4503,8 +4591,16 @@ XiDrawCorner(dpy, d, top_gc, bottom_gc, x, y, width, height, size, quadrant)
 	    pt[HALF_PTSx2-1-i].x = x - XiCosSinData[i][0] * xrad2 / 1000;
 	    pt[HALF_PTSx2-1-i].y = y + XiCosSinData[i][1] * yrad2 / 1000;
 	}
-	XFillPolygon(dpy, d, top_gc, pt, HALF_PTSx2, Nonconvex,
-		     CoordModeOrigin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, d, top_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(HALF_PTSx2) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(HALF_PTSx2) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, HALF_PTSx2, 0) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 
 	for( tmp = 0, i = HALF_PTS-1; i < NUM_PTS; ++i, ++tmp )
 	{
@@ -4514,8 +4610,16 @@ XiDrawCorner(dpy, d, top_gc, bottom_gc, x, y, width, height, size, quadrant)
 	    pt[HALF_PTSx2-1-tmp].x = x - XiCosSinData[i][0] * xrad2 / 1000;
 	    pt[HALF_PTSx2-1-tmp].y = y + XiCosSinData[i][1] * yrad2 / 1000;
 	}
-	XFillPolygon(dpy, d, bottom_gc, pt, HALF_PTSx2, Nonconvex,
-		     CoordModeOrigin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, d, bottom_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(HALF_PTSx2) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(HALF_PTSx2) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, HALF_PTSx2, 0) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	break;
     case XiQUAD_4:
 	for( i = 0; i < NUM_PTS; ++i )
@@ -4526,8 +4630,16 @@ XiDrawCorner(dpy, d, top_gc, bottom_gc, x, y, width, height, size, quadrant)
 	    pt[NUM_PTSx2-1-i].x = x + XiCosSinData[i][0] * xrad2 / 1000;
 	    pt[NUM_PTSx2-1-i].y = y + XiCosSinData[i][1] * yrad2 / 1000;
 	}
-	XFillPolygon(dpy, d, bottom_gc, pt, NUM_PTSx2, Nonconvex,
-		     CoordModeOrigin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, d, bottom_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(NUM_PTSx2) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(NUM_PTSx2) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, NUM_PTSx2, 0) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	break;
     default:
 	break;
@@ -4565,7 +4677,16 @@ XiFillCorner(dpy, d, gc, x, y, width, height, quadrant)
 	}
 	pt[i].x = x;
 	pt[i++].y = y + height;
-	XFillPolygon(dpy, d, gc, pt, i, Nonconvex, CoordModeOrigin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, d, gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(i) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(i) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, i, 0) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	break;
     case XiQUAD_2:
 	x += width;
@@ -4578,7 +4699,16 @@ XiFillCorner(dpy, d, gc, x, y, width, height, quadrant)
 	}
 	pt[i].x = x + width;
 	pt[i++].y = y + height;
-	XFillPolygon(dpy, d, gc, pt, i, Nonconvex, CoordModeOrigin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, d, gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(i) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(i) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, i, 0) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	break;
     case XiQUAD_3:
 	x += width;
@@ -4589,7 +4719,16 @@ XiFillCorner(dpy, d, gc, x, y, width, height, quadrant)
 	}
 	pt[i].x = x + width;
 	pt[i++].y = y;
-	XFillPolygon(dpy, d, gc, pt, i, Nonconvex, CoordModeOrigin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, d, gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(i) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(i) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, i, 0) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	break;
     case XiQUAD_4:
 	for( i = 0; i < NUM_PTS; ++i )
@@ -4599,7 +4738,16 @@ XiFillCorner(dpy, d, gc, x, y, width, height, quadrant)
 	}
 	pt[i].x = x;
 	pt[i++].y = y;
-	XFillPolygon(dpy, d, gc, pt, i, Nonconvex, CoordModeOrigin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, d, gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(i) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(i) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, i, 0) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 	break;
     default:
 	break;
@@ -4763,15 +4911,9 @@ HorizontalBasicRedisplay(tab)
     if( XmTabBox_tab_edge(tab) == XmTAB_EDGE_BOTTOM_RIGHT )
     {
 	if (LayoutIsRtoLP(tab))
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       tab->manager.top_shadow_GC,
-		       0, (int)XtHeight(tab) - shadow,
-		       geom[count-1].x, shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, 0, (int)XtHeight(tab) - shadow, geom[count-1].x, shadow) ;
 	else
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       tab->manager.top_shadow_GC,
-		       x, (int)XtHeight(tab) - shadow,
-		       (int)XtWidth(tab) - x, shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, x, (int)XtHeight(tab) - shadow, (int)XtWidth(tab) - x, shadow) ;
 	XmDrawBevel(XtDisplay(tab), XiCanvas(tab),
 		    tab->manager.top_shadow_GC,
 		    tab->manager.bottom_shadow_GC,
@@ -4782,13 +4924,9 @@ HorizontalBasicRedisplay(tab)
     else
     {
 	if (LayoutIsRtoLP(tab))
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       tab->manager.bottom_shadow_GC,
-		       0, 0, geom[count-1].x, shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, 0, 0, geom[count-1].x, shadow) ;
 	else
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       tab->manager.bottom_shadow_GC,
-		       x, 0, (int)XtWidth(tab) - x, shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, x, 0, (int)XtWidth(tab) - x, shadow) ;
     }
 }
 
@@ -4824,10 +4962,7 @@ VerticalBasicRedisplay(tab)
      */
     if( XmTabBox_tab_edge(tab) == XmTAB_EDGE_BOTTOM_RIGHT )
     {
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       tab->manager.top_shadow_GC,
-		       (int)XtWidth(tab) - shadow, y, shadow,
-		       (int)XtHeight(tab) - y);
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, (int)XtWidth(tab) - shadow, y, shadow, (int)XtHeight(tab) - y) ;
 	XmDrawBevel(XtDisplay(tab), XiCanvas(tab),
 		    tab->manager.top_shadow_GC, tab->manager.bottom_shadow_GC,
 		    (int)XtWidth(tab) - shadow, (int)XtHeight(tab) - shadow,
@@ -4835,9 +4970,7 @@ VerticalBasicRedisplay(tab)
     }
     else
     {
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       tab->manager.bottom_shadow_GC,
-		       0, y, shadow, (int)XtHeight(tab) - y);
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, 0, y, shadow, (int)XtHeight(tab) - y) ;
     }
 }
 
@@ -5526,20 +5659,29 @@ SetRightGC(XmTabBoxWidget tab, GC gc, GC_type gc_type)
           if (last !=normal)
             {
               values.foreground = p;
-                XChangeGC(XtDisplay(tab),gc, valueMask, &values);
+                { XmPlatDrawCtx _pc = _XmPlatCtx (XtDisplay (tab), 0, gc) ;
+                  _XmPlatChangeGCValues (_pc, valueMask, &values) ;
+                  _XmPlatCtxFree (_pc) ;
+                }
             }
           last = normal;
           break;
         case insensitive:
           if (last == normal) p=values.foreground;
             values.foreground = tab->manager.bottom_shadow_color;
-            XChangeGC(XtDisplay(tab),gc, valueMask, &values);
+            { XmPlatDrawCtx _pc = _XmPlatCtx (XtDisplay (tab), 0, gc) ;
+              _XmPlatChangeGCValues (_pc, valueMask, &values) ;
+              _XmPlatCtxFree (_pc) ;
+            }
             last = insensitive;
           break;
         case shadow:
           if (last == normal) p=values.foreground;
             values.foreground = tab->manager.top_shadow_color;
-            XChangeGC(XtDisplay(tab),gc, valueMask, &values);
+            { XmPlatDrawCtx _pc = _XmPlatCtx (XtDisplay (tab), 0, gc) ;
+              _XmPlatChangeGCValues (_pc, valueMask, &values) ;
+              _XmPlatCtxFree (_pc) ;
+            }
             last = shadow;
           break;
         default:
@@ -5715,15 +5857,21 @@ DrawLeftToRightTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
     {
 	if( pix_depth == 1 )
 	{
-	    XCopyPlane(XtDisplay(tab), info->label_pixmap,
-		       XiCanvas(tab), gc, 0, 0, pix_width, pix_height,
-		       x, y, 1);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay (tab), info->label_pixmap) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, x, y, pix_width, pix_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 	else if( pix_depth == XmTabBox__canvas(tab)->core.depth )
 	{
-	    XCopyArea(XtDisplay(tab), info->label_pixmap,
-		      XiCanvas(tab), gc, 0, 0, pix_width, pix_height,
-		      x, y);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay (tab), info->label_pixmap) ;
+  _XmPlatBlit (_c, _src, 0, 0, x, y, pix_width, pix_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
     }
     if( !sensitive )
@@ -5736,9 +5884,7 @@ DrawLeftToRightTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 */
 	SetStippledGC(XtDisplay(tab), tab->manager.background_GC,
 		      XmTabBox__gray_stipple(tab));
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab), 
-		       tab->manager.background_GC, x, y, pix_width,
-		       pix_height);
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.background_GC, x, y, pix_width, pix_height) ;
 	RemoveStipple(XtDisplay(tab), tab->manager.background_GC);
     }
 
@@ -5754,8 +5900,10 @@ DrawLeftToRightTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 */
 	if( have_pixmap )
 	{
-	    XSetClipRectangles(XtDisplay(tab), gc, 0, 0, &draw, 1,
-			       YXBanded);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), 0, gc) ;
+  _XmPlatSetClipRect (_c, draw.x, draw.y, draw.width, draw.height) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 
 	/*
@@ -6016,8 +6164,10 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * Now that we know where the image is supposed to go, lets 
 	 * draw the thing.
 	 */
-	XPutImage(XtDisplay(tab), XiCanvas(tab), gc, dst_ximage, 0, 0,
-		  x, y, pix_width, pix_height);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, pix_width, pix_height) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
 	if( !sensitive )
 	{
@@ -6029,9 +6179,7 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	     */
 	    SetStippledGC(XtDisplay(tab), tab->manager.background_GC,
 			  XmTabBox__gray_stipple(tab));
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab), 
-			   tab->manager.background_GC, x, y, pix_width,
-			   pix_height);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.background_GC, x, y, pix_width, pix_height) ;
 	    RemoveStipple(XtDisplay(tab), tab->manager.background_GC);
 	}
 
@@ -6058,7 +6206,10 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
      */
     if( have_pixmap )
     {
-	XSetClipRectangles(XtDisplay(tab), gc, 0, 0, &draw, 1, YXBanded);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), 0, gc) ;
+  _XmPlatSetClipRect (_c, draw.x, draw.y, draw.width, draw.height) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
 
     /*
@@ -6123,9 +6274,12 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	    gcValues.background = tab->core.background_pixel;
 	    gcValues.foreground = tab->core.background_pixel;
 #endif
-	    XmTabBox__zero_GC(tab) = XCreateGC(XtDisplay(tab), bitmap,
-					      GCForeground | GCBackground,
-					      &gcValues);
+	    { XmPlatSurface _s = _XmPlatSurface (XtDisplay (tab), bitmap) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, GCForeground | GCBackground, &gcValues) ;
+  XmTabBox__zero_GC(tab) = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 	    
 	    XmeRenderTableGetDefaultFont(font_list, &font);
 	    gcValues.foreground = 1;
@@ -6135,8 +6289,12 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	        gcValues.font = font->fid;
 	        gcMask |= GCFont;
 	    }
-	    XmTabBox__one_GC(tab) = XCreateGC(XtDisplay(tab), bitmap, gcMask,
-	                                      &gcValues);
+	    { XmPlatSurface _s = _XmPlatSurface (XtDisplay (tab), bitmap) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, gcMask, &gcValues) ;
+  XmTabBox__one_GC(tab) = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 	}
 
 	/*
@@ -6144,8 +6302,7 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * lets do it.  What we need to do if first zero the pixmap and
 	 * then render the text.
 	 */
-	XFillRectangle(XtDisplay(tab), bitmap, XmTabBox__zero_GC(tab),
-		       0, 0, label_width, label_height);
+	_XmPlatFillOneRect (XtDisplay (tab), bitmap, XmTabBox__zero_GC(tab), 0, 0, label_width, label_height) ;
 	if( !sensitive )
 	{
 #ifndef FIX_1381
@@ -6255,20 +6412,31 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * Left first clear out the clipping mask and then draw the text
 	 * into it.
 	 */
-	XFillRectangle(XtDisplay(tab), pix, XmTabBox__zero_GC(tab), 0, 0,
-		       label_width, label_height);
-	XPutImage(XtDisplay(tab), pix, XmTabBox__one_GC(tab), dst_ximage, 0, 0,
-		  0, 0, label_width, label_height);
+	_XmPlatFillOneRect (XtDisplay (tab), pix, XmTabBox__zero_GC(tab), 0, 0, label_width, label_height) ;
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), pix, XmTabBox__one_GC(tab)) ;
+  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, 0, 0, label_width, label_height) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
 	/*
 	 * Now that we have the clipping mask lets set the mask to the GC
 	 * and then put the image that is the text to the display using this
 	 * clipping mask.
 	 */
-	XSetClipMask(XtDisplay(tab), gc, pix);
-	XSetClipOrigin(XtDisplay(tab), gc, x, y);
-	XPutImage(XtDisplay(tab), XiCanvas(tab), gc, dst_ximage, 0, 0,
-		  x, y, label_width, label_height);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), 0, gc) ;
+  XmPlatSurface _m = _XmPlatSurface (XtDisplay (tab), pix) ;
+  _XmPlatSetClipMaskSurf (_c, _m, 0, 0) ;
+  _XmPlatSurfaceFree (_m) ;
+  _XmPlatCtxFree (_c) ;
+  }
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), 0, gc) ;
+  _XmPlatSetClipOrigin (_c, x, y) ;
+  _XmPlatCtxFree (_c) ;
+  }
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, label_width, label_height) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
 	/*
 	 * We are done with this cliping mask so lets destroy the pixmap.
@@ -6277,8 +6445,10 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
     }
     else
     {
-	XPutImage(XtDisplay(tab), XiCanvas(tab), gc, dst_ximage, 0, 0,
-		  x, y, label_width, label_height);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, label_width, label_height) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
 
     /*
@@ -6621,8 +6791,10 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * Now that we know where the image is supposed to go, lets 
 	 * draw the thing.
 	 */
-	XPutImage(XtDisplay(tab), XiCanvas(tab), gc, dst_ximage, 0, 0,
-		  x, y, pix_width, pix_height);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, pix_width, pix_height) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
 	if( !sensitive )
 	{
@@ -6634,9 +6806,7 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	     */
 	    SetStippledGC(XtDisplay(tab), tab->manager.background_GC,
 			  XmTabBox__gray_stipple(tab));
-	    XFillRectangle(XtDisplay(tab), XiCanvas(tab), 
-			   tab->manager.background_GC, x, y, pix_width,
-			   pix_height);
+	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.background_GC, x, y, pix_width, pix_height) ;
 	    RemoveStipple(XtDisplay(tab), tab->manager.background_GC);
 	}
 
@@ -6663,7 +6833,10 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
      */
     if( have_pixmap )
     {
-	XSetClipRectangles(XtDisplay(tab), gc, 0, 0, &draw, 1, YXBanded);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), 0, gc) ;
+  _XmPlatSetClipRect (_c, draw.x, draw.y, draw.width, draw.height) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
 
     src_ximage = NULL;
@@ -6727,9 +6900,12 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	    gcValues.background = tab->core.background_pixel;
 	    gcValues.foreground = tab->core.background_pixel;
 #endif
-	    XmTabBox__zero_GC(tab) = XCreateGC(XtDisplay(tab), bitmap,
-					      GCForeground | GCBackground,
-					      &gcValues);
+	    { XmPlatSurface _s = _XmPlatSurface (XtDisplay (tab), bitmap) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, GCForeground | GCBackground, &gcValues) ;
+  XmTabBox__zero_GC(tab) = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 	    
 	    XmeRenderTableGetDefaultFont(font_list, &font);
 	    gcValues.foreground = 1;
@@ -6739,8 +6915,12 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	        gcValues.font = font->fid;
 		gcMask |= GCFont;
 	    }
-	    XmTabBox__one_GC(tab) = XCreateGC(XtDisplay(tab), bitmap, gcMask,
-	                                      &gcValues);
+	    { XmPlatSurface _s = _XmPlatSurface (XtDisplay (tab), bitmap) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, gcMask, &gcValues) ;
+  XmTabBox__one_GC(tab) = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 	}
 
 	/*
@@ -6748,8 +6928,7 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * lets do it.  What we need to do if first zero the pixmap and
 	 * then render the text.
 	 */
-	XFillRectangle(XtDisplay(tab), bitmap, XmTabBox__zero_GC(tab),
-		       0, 0, label_width, label_height);
+	_XmPlatFillOneRect (XtDisplay (tab), bitmap, XmTabBox__zero_GC(tab), 0, 0, label_width, label_height) ;
 	if( !sensitive )
 	{
 #ifndef FIX_1381
@@ -6890,20 +7069,31 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * Left first clear out the clipping mask and then draw the text
 	 * into it.
 	 */
-	XFillRectangle(XtDisplay(tab), pix, XmTabBox__zero_GC(tab), 0, 0,
-		       label_width, label_height);
-	XPutImage(XtDisplay(tab), pix, XmTabBox__one_GC(tab), dst_ximage, 0, 0,
-		  0, 0, label_width, label_height);
+	_XmPlatFillOneRect (XtDisplay (tab), pix, XmTabBox__zero_GC(tab), 0, 0, label_width, label_height) ;
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), pix, XmTabBox__one_GC(tab)) ;
+  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, 0, 0, label_width, label_height) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
 	/*
 	 * Now that we have the clipping mask lets set the mask to the GC
 	 * and then put the image that is the text to the display using this
 	 * clipping mask.
 	 */
-	XSetClipMask(XtDisplay(tab), gc, pix);
-	XSetClipOrigin(XtDisplay(tab), gc, x, y);
-	XPutImage(XtDisplay(tab), XiCanvas(tab), gc, dst_ximage, 0, 0,
-		  x, y, label_width, label_height);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), 0, gc) ;
+  XmPlatSurface _m = _XmPlatSurface (XtDisplay (tab), pix) ;
+  _XmPlatSetClipMaskSurf (_c, _m, 0, 0) ;
+  _XmPlatSurfaceFree (_m) ;
+  _XmPlatCtxFree (_c) ;
+  }
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), 0, gc) ;
+  _XmPlatSetClipOrigin (_c, x, y) ;
+  _XmPlatCtxFree (_c) ;
+  }
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, label_width, label_height) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
 	/*
 	 * We are done with this cliping mask so lets destroy the pixmap.
@@ -6913,8 +7103,10 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
     else
     {
         if (dst_ximage)
-            XPutImage(XtDisplay(tab), XiCanvas(tab), gc, dst_ximage, 0, 0,
-		  x, y, label_width, label_height);
+            { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, label_width, label_height) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
 
     /*
@@ -7023,7 +7215,17 @@ FillRoundedTab(XmTabBoxWidget tab, GC gc, XiTabRect *geometry, XmTabEdge edge)
 	break;
     }
 
-    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, 2);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(2) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(2) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, 2) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 }
 
 static void
@@ -7111,8 +7313,16 @@ FillBeveledTab(XmTabBoxWidget tab, GC gc, XiTabRect *geometry, XmTabEdge edge)
 	}
 	break;
     }
-    XFillPolygon(XtDisplay(tab), XiCanvas(tab), gc, pt, 6, Nonconvex,
-		 CoordModeOrigin);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(6) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(6) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, 6, 0) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+  }
 }
 
 int
@@ -7645,13 +7855,8 @@ HorizontalStackedBottomEdgeRedisplay(XmTabBoxWidget tab)
 	}
 
 	x = geom[idx].x + geom[idx].width;
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       tab->manager.top_shadow_GC,
-		       x, (int)XtHeight(tab) - shadow,
-		       (int)XtWidth(tab) - x, shadow);
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       gc, x, 0, (int)XtWidth(tab) - x,
-		       (int)XtHeight(tab) - shadow);
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, x, (int)XtHeight(tab) - shadow, (int)XtWidth(tab) - x, shadow) ;
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, x, 0, (int)XtWidth(tab) - x, (int)XtHeight(tab) - shadow) ;
 	XmDrawBevel(XtDisplay(tab), XiCanvas(tab),
 		    tab->manager.top_shadow_GC,
 		    tab->manager.bottom_shadow_GC,
@@ -7762,31 +7967,33 @@ HorizontalStackedBottomEdgeRedisplay(XmTabBoxWidget tab)
 		}
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	    if( do_bottom )
 	    {
 		if( LayoutIsRtoLP(tab) )
-		    XFillRectangle(XtDisplay(tab), XiCanvas(tab), 
-			       tab->manager.top_shadow_GC, bottom.x,
-			       bottom.y, bottom.width, bottom.height);
+		    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, bottom.x, bottom.y, bottom.width, bottom.height) ;
 		else
-		    XFillRectangle(XtDisplay(tab), XiCanvas(tab), 
-			       tab->manager.bottom_shadow_GC, bottom.x,
-			       bottom.y, bottom.width, bottom.height);
+		    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, bottom.x, bottom.y, bottom.width, bottom.height) ;
 	    }
 	    if( do_top )
 	    {
 	    	if( LayoutIsRtoLP(tab) )
 		{
-		    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			       tab->manager.bottom_shadow_GC, top.x,
-			       top.y, top.width, top.height);
+		    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, top.x, top.y, top.width, top.height) ;
 		}
 		else
 		{
-		    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			       tab->manager.top_shadow_GC, top.x,
-			       top.y, top.width, top.height);
+		    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, top.x, top.y, top.width, top.height) ;
 		}
 	    }
 	}
@@ -7829,7 +8036,17 @@ HorizontalStackedBottomEdgeRedisplay(XmTabBoxWidget tab)
 
 	    if( cnt >= _NUM_RECTS )
 	    {
-		XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 		cnt=0;
 	    }
 	}
@@ -7846,7 +8063,17 @@ HorizontalStackedBottomEdgeRedisplay(XmTabBoxWidget tab)
 
 	    if( cnt >= _NUM_RECTS )
 	    {
-		XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 		cnt=0;
 	    }
 	}
@@ -7882,7 +8109,17 @@ HorizontalStackedBottomEdgeRedisplay(XmTabBoxWidget tab)
 	rect[cnt++].height = XtHeight(tab);
 	if( cnt >= _NUM_RECTS )
 	{
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	    cnt=0;
 	}
     }
@@ -7908,7 +8145,17 @@ HorizontalStackedBottomEdgeRedisplay(XmTabBoxWidget tab)
 
 	    if( cnt >= _NUM_RECTS )
 	    {
-		XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 		cnt=0;
 	    }
 	}
@@ -7916,7 +8163,17 @@ HorizontalStackedBottomEdgeRedisplay(XmTabBoxWidget tab)
 
     if( cnt > 0 )
     {
-	XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	cnt=0;
     }
 
@@ -7974,10 +8231,7 @@ HorizontalStackedBottomEdgeRedisplay(XmTabBoxWidget tab)
      * is draw the line.
      */
 
-    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		   tab->manager.top_shadow_GC,
-		   x1, (int)XtHeight(tab) - shadow,
-		   x2 - x1, shadow);
+    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, x1, (int)XtHeight(tab) - shadow, x2 - x1, shadow) ;
   
     if( !LayoutIsRtoLP(tab) )
     {  
@@ -8032,12 +8286,8 @@ HorizontalStackedTopEdgeRedisplay(XmTabBoxWidget tab)
 	}
 
 	x = geom[idx].x + geom[idx].width;
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       tab->manager.bottom_shadow_GC,
-		       x, 0, (int)XtWidth(tab) - x, shadow);
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       gc, x, shadow, (int)XtWidth(tab) - x,
-		       (int)XtHeight(tab) - shadow);
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, x, 0, (int)XtWidth(tab) - x, shadow) ;
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, x, shadow, (int)XtWidth(tab) - x, (int)XtHeight(tab) - shadow) ;
 	return;
     }
 
@@ -8135,29 +8385,31 @@ HorizontalStackedTopEdgeRedisplay(XmTabBoxWidget tab)
 		}
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 
 	    if( do_bottom )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), 
-			       LayoutIsRtoLP(tab)
-			           ? tab->manager.top_shadow_GC
-				   : tab->manager.bottom_shadow_GC,
-			       bottom.x, bottom.y, bottom.width, bottom.height);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), LayoutIsRtoLP(tab) 			           ? tab->manager.top_shadow_GC 				   : tab->manager.bottom_shadow_GC, bottom.x, bottom.y, bottom.width, bottom.height) ;
 	    }
 	    if( do_top )
 	    {
 		if( LayoutIsRtoLP(tab) )
 		{
-		    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			       tab->manager.bottom_shadow_GC, top.x,
-			       top.y, top.width, top.height);
+		    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, top.x, top.y, top.width, top.height) ;
 		}
 		else
 		{
-		    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			       tab->manager.top_shadow_GC, top.x,
-			       top.y, top.width, top.height);
+		    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, top.x, top.y, top.width, top.height) ;
 		}
 	    }
 	}
@@ -8199,7 +8451,17 @@ HorizontalStackedTopEdgeRedisplay(XmTabBoxWidget tab)
 
 	if( cnt >= _NUM_RECTS )
 	{
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	    cnt=0;
 	}
     }
@@ -8235,7 +8497,17 @@ HorizontalStackedTopEdgeRedisplay(XmTabBoxWidget tab)
 
 	if( cnt >= _NUM_RECTS )
 	{
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	    cnt=0;
 	}
     }
@@ -8266,7 +8538,17 @@ HorizontalStackedTopEdgeRedisplay(XmTabBoxWidget tab)
 
 	    if( cnt >= _NUM_RECTS )
 	    {
-		XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 		cnt=0;
 	    }
 	}
@@ -8274,7 +8556,17 @@ HorizontalStackedTopEdgeRedisplay(XmTabBoxWidget tab)
 
     if( cnt > 0 )
     {
-	XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	cnt=0;
     }
 
@@ -8340,9 +8632,7 @@ HorizontalStackedTopEdgeRedisplay(XmTabBoxWidget tab)
      * is draw the line.
      */
 
-    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		   tab->manager.bottom_shadow_GC,
-		   x1, 0, x2 - x1, shadow);
+    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, x1, 0, x2 - x1, shadow) ;
 }
 
 static void
@@ -8406,13 +8696,8 @@ VerticalStackedRightEdgeRedisplay(XmTabBoxWidget tab)
 	}
 
 	y = geom[idx].y + geom[idx].height;
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       tab->manager.top_shadow_GC,
-		       (int)XtWidth(tab) - shadow, y,
-		       shadow, (int)XtHeight(tab) - y);
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       gc, 0, y, (int)XtWidth(tab) - shadow,
-		       (int)XtHeight(tab) - y);
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, (int)XtWidth(tab) - shadow, y, shadow, (int)XtHeight(tab) - y) ;
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, 0, y, (int)XtWidth(tab) - shadow, (int)XtHeight(tab) - y) ;
 	XmDrawBevel(XtDisplay(tab), XiCanvas(tab),
 		    tab->manager.top_shadow_GC,
 		    tab->manager.bottom_shadow_GC,
@@ -8487,18 +8772,24 @@ VerticalStackedRightEdgeRedisplay(XmTabBoxWidget tab)
 		}
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	    if( do_bottom )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), 
-			       tab->manager.bottom_shadow_GC, bottom.x,
-			       bottom.y, bottom.width, bottom.height);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, bottom.x, bottom.y, bottom.width, bottom.height) ;
 	    }
 	    if( do_top )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			       tab->manager.top_shadow_GC, top.x,
-			       top.y, top.width, top.height);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, top.x, top.y, top.width, top.height) ;
 	    }
 	}
     }
@@ -8539,7 +8830,17 @@ VerticalStackedRightEdgeRedisplay(XmTabBoxWidget tab)
 
 	if( cnt >= _NUM_RECTS )
 	{
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	    cnt=0;
 	}
     }
@@ -8568,7 +8869,17 @@ VerticalStackedRightEdgeRedisplay(XmTabBoxWidget tab)
 
 	if( cnt >= _NUM_RECTS )
 	{
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	    cnt=0;
 	}
     }
@@ -8590,7 +8901,17 @@ VerticalStackedRightEdgeRedisplay(XmTabBoxWidget tab)
 
 	    if( cnt >= _NUM_RECTS )
 	    {
-		XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 		cnt=0;
 	    }
 	}
@@ -8598,7 +8919,17 @@ VerticalStackedRightEdgeRedisplay(XmTabBoxWidget tab)
 
     if( cnt > 0 )
     {
-	XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	cnt=0;
     }
 
@@ -8648,10 +8979,7 @@ VerticalStackedRightEdgeRedisplay(XmTabBoxWidget tab)
      * is draw the line.
      */
 
-    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		   tab->manager.top_shadow_GC,
-		   (int)XtWidth(tab) - shadow, y1,
-		   shadow, y2 - y1);
+    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, (int)XtWidth(tab) - shadow, y1, shadow, y2 - y1) ;
     XmDrawBevel(XtDisplay(tab), XiCanvas(tab),
 		tab->manager.top_shadow_GC,
 		tab->manager.bottom_shadow_GC,
@@ -8698,12 +9026,8 @@ VerticalStackedLeftEdgeRedisplay(XmTabBoxWidget tab)
 	}
 
 	y = geom[idx].y + geom[idx].height;
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       tab->manager.bottom_shadow_GC,
-		       0, y, shadow, (int)XtHeight(tab) - y);
-	XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		       gc, shadow, y, (int)XtWidth(tab) - shadow,
-		       (int)XtHeight(tab) - y);
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, 0, y, shadow, (int)XtHeight(tab) - y) ;
+	_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, shadow, y, (int)XtWidth(tab) - shadow, (int)XtHeight(tab) - y) ;
 	return;
     }
 
@@ -8772,19 +9096,25 @@ VerticalStackedLeftEdgeRedisplay(XmTabBoxWidget tab)
 		}
 	    }
 
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 
 	    if( do_bottom )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab), 
-			       tab->manager.bottom_shadow_GC, bottom.x,
-			       bottom.y, bottom.width, bottom.height);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, bottom.x, bottom.y, bottom.width, bottom.height) ;
 	    }
 	    if( do_top )
 	    {
-		XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-			       tab->manager.top_shadow_GC, top.x,
-			       top.y, top.width, top.height);
+		_XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.top_shadow_GC, top.x, top.y, top.width, top.height) ;
 	    }
 	}
     }
@@ -8824,7 +9154,17 @@ VerticalStackedLeftEdgeRedisplay(XmTabBoxWidget tab)
 
 	if( cnt >= _NUM_RECTS )
 	{
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	    cnt=0;
 	}
     }
@@ -8853,7 +9193,17 @@ VerticalStackedLeftEdgeRedisplay(XmTabBoxWidget tab)
 
 	if( cnt >= _NUM_RECTS )
 	{
-	    XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	    cnt=0;
 	}
     }
@@ -8875,7 +9225,17 @@ VerticalStackedLeftEdgeRedisplay(XmTabBoxWidget tab)
 
 	    if( cnt >= _NUM_RECTS )
 	    {
-		XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 		cnt=0;
 	    }
 	}
@@ -8883,7 +9243,17 @@ VerticalStackedLeftEdgeRedisplay(XmTabBoxWidget tab)
 
     if( cnt > 0 )
     {
-	XFillRectangles(XtDisplay(tab), XiCanvas(tab), gc, rect, cnt);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
+  XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(cnt) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cnt) ; _pi++) {
+    _pr[_pi].x = rect[_pi].x ; _pr[_pi].y = rect[_pi].y ;
+    _pr[_pi].width = rect[_pi].width ; _pr[_pi].height = rect[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, cnt) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
 	cnt=0;
     }
 
@@ -8933,9 +9303,7 @@ VerticalStackedLeftEdgeRedisplay(XmTabBoxWidget tab)
      * is draw the line.
      */
 
-    XFillRectangle(XtDisplay(tab), XiCanvas(tab),
-		   tab->manager.bottom_shadow_GC,
-		   0, y1, shadow, y2 - y1);
+    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), tab->manager.bottom_shadow_GC, 0, y1, shadow, y2 - y1) ;
 }
 
 static void

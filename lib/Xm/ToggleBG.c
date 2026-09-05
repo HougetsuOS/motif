@@ -58,6 +58,7 @@ static char rcsid[] = "$TOG: ToggleBG.c /main/46 1999/12/06 18:10:15 samborn $"
 #include "TravActI.h"
 #include "TraversalI.h"
 #include "UniqueEvnI.h"
+#include "XmPlat/XmPlatP.h"
 
 
 #define XmINVALID_TYPE		255	/* special flag for IndicatorType */
@@ -1108,7 +1109,7 @@ redisplayPixmap(XmToggleButtonGadget tb, XEvent *event, Region region)
 
   /* CR 7041: ... but not when label.fill_bg_box is False! */
   if (!tb->label.fill_bg_box)
-    XClearArea(XtDisplay(tb), XtWindow(tb), x, y, w, h, False);
+    _XmPlatClearOneRect (XtDisplay (tb), XtWindow (tb), x, y, w, h);
 
   todo = tb->label.pixmap;
   
@@ -2500,13 +2501,7 @@ DrawBox(XmToggleButtonGadget w,
   shadow += margin;
 
   if (edge > (shadow * 2))
-    XFillRectangle (XtDisplay ((Widget) w),
-		    XtWindow ((Widget) w),
-		    fillgc,
-		    x + shadow,
-		    y + shadow,
-		    edge - (shadow * 2),
-		    edge - (shadow * 2));
+    _XmPlatFillOneRect (XtDisplay ((Widget) w), XtWindow ((Widget) w), fillgc, x + shadow, y + shadow, edge - (shadow * 2), edge - (shadow * 2)) ;
 }
 
 /*************************************<->*************************************
@@ -2616,7 +2611,7 @@ DrawToggle(
 
 	  /* CR 9791: Label's normal_gc has a dynamic clip_mask. */
 	  if (glyph_gc == LabG_NormalGC(w))
-	    XSetClipMask(dpy, glyph_gc, None);
+	    _XmPlatClrClip (dpy, glyph_gc) ;
 	  break;
 
 	case XmINDETERMINATE:
@@ -2662,9 +2657,9 @@ DrawToggle(
 		if (edge > 0)
 		  {
 		    if (w->label.fill_bg_box || TBG_FillOnSelect(w))
-		      XFillRectangle(dpy, drawable, fill_gc, x, y, edge, edge);
+		      _XmPlatFillOneRect (dpy, drawable, fill_gc, x, y, edge, edge) ;
 		    else
-		      XClearArea(dpy, drawable, x, y, edge, edge, False);
+		      _XmPlatClearOneRect (dpy, drawable, x, y, edge, edge) ;
 		  }
 	      
 		if (DRAW3DBOX(normal_ind_on))
@@ -2681,9 +2676,9 @@ DrawToggle(
 		else if (edge > 0)
 		  {
 		    if (w->label.fill_bg_box || TBG_FillOnSelect(w))
-		      XFillRectangle(dpy, drawable, fill_gc, x, y, edge, edge);
+		      _XmPlatFillOneRect (dpy, drawable, fill_gc, x, y, edge, edge) ;
 		    else
-		      XClearArea(dpy, drawable, x, y, edge, edge, False);
+		      _XmPlatClearOneRect (dpy, drawable, x, y, edge, edge) ;
 		  }
 	      
 		if (!DRAWBOX(normal_ind_on) || 
@@ -2707,8 +2702,10 @@ DrawToggle(
 		    XGetGCValues(dpy, TBG_SelectGC(w), GCForeground, &values);
 		    values.background = values.foreground;
 		    values.foreground = TBG_UnselectColor(w);
-		    XChangeGC(dpy, fill_gc,
-			      GCForeground|GCBackground, &values);
+		    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, fill_gc) ;
+  _XmPlatChangeGCValues (_c, GCForeground|GCBackground, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 		  }
 		else
 		  {
@@ -2721,9 +2718,9 @@ DrawToggle(
 		else if (edge > 0)
 		  {
 		    if (w->label.fill_bg_box || TBG_FillOnSelect(w))
-		      XFillRectangle(dpy, drawable, fill_gc, x, y, edge, edge);
+		      _XmPlatFillOneRect (dpy, drawable, fill_gc, x, y, edge, edge) ;
 		    else
-		      XClearArea(dpy, drawable, x, y, edge, edge, False);
+		      _XmPlatClearOneRect (dpy, drawable, x, y, edge, edge) ;
 		  }
 
 		if (TBG_ReversedSelect(w))
@@ -2742,16 +2739,20 @@ DrawToggle(
 		  {
 		    if (DRAWCHECK(normal_ind_on))
 		      {
-			XChangeGC(dpy, glyph_gc,
-				  GCForeground|GCBackground, &values);
+			{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, glyph_gc) ;
+  _XmPlatChangeGCValues (_c, GCForeground|GCBackground, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 			XmeDrawIndicator(dpy, drawable, glyph_gc, x, y,
 					 edge, edge, box_margin, 
 					 normal_ind_on);
 		      }
 		    else if (DRAWCROSS(normal_ind_on)) 
 		      {
-			XChangeGC(dpy, glyph_gc,
-				  GCForeground|GCBackground, &values);
+			{ XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, glyph_gc) ;
+  _XmPlatChangeGCValues (_c, GCForeground|GCBackground, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 			XmeDrawIndicator(dpy, drawable, glyph_gc, x, y,
 					 edge, edge, box_margin, 
 					 normal_ind_on);
@@ -2790,18 +2791,15 @@ DrawToggle(
 	  if (LabG_IsMenupane(w) && etched_in) {
 	      if (w->toggle.Armed)
 	  /* use the arm GC in a menu if armed and enableEtchedInMenu is set */
-		  XFillRectangle(dpy, drawable, TBG_ArmGC(w), x, y,
-				 edge, edge); 
+		  _XmPlatFillOneRect (dpy, drawable, TBG_ArmGC(w), x, y, edge, edge) ; 
 	      else
-		  XFillRectangle(dpy, drawable, TBG_BackgroundGC(w), x, y,
-				 edge, edge); 
+		  _XmPlatFillOneRect (dpy, drawable, TBG_BackgroundGC(w), x, y, edge, edge) ; 
 	  }
 	  else
 	      if (w->label.fill_bg_box)
-		  XFillRectangle(dpy, drawable, TBG_BackgroundGC(w), x, y,
-				 edge, edge); 
+		  _XmPlatFillOneRect (dpy, drawable, TBG_BackgroundGC(w), x, y, edge, edge) ; 
 	      else
-		  XClearArea(dpy, drawable, x, y, edge, edge, False);
+		  _XmPlatClearOneRect (dpy, drawable, x, y, edge, edge) ;
 	}
     }
 }
@@ -4228,8 +4226,10 @@ DrawToggleLabel(
 	/* Fetch the select_color GetGC() actually used. */
 	XGetGCValues(XtDisplay(tb), TBG_SelectGC(tb), GCForeground, &values);
 	values.background = TBG_UnselectColor(tb);
-	XChangeGC(XtDisplay((Widget)tb), TBG_IndeterminateGC(tb), 
-		  GCForeground|GCBackground, &values);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)tb), 0, TBG_IndeterminateGC(tb)) ;
+  _XmPlatChangeGCValues (_c, GCForeground|GCBackground, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	fill_gc = TBG_IndeterminateGC(tb);
 	break;
       }
@@ -4238,7 +4238,7 @@ DrawToggleLabel(
       return;
     }
 
-  XFillRectangle (XtDisplay(tb), XtWindow(tb), fill_gc, fx, fy, fw, fh);
+  _XmPlatFillOneRect (XtDisplay (tb), XtWindow (tb), fill_gc, fx, fy, fw, fh);
   
   if (LabG_Foreground(tb) == TBG_SelectColor(tb) && (IsOn(tb) == XmSET))
     {
@@ -4258,7 +4258,7 @@ DrawToggleLabel(
   if (restore_gc)
     {
       /* CR 9791: Label's normal_gc has a dynamic clip_mask. */
-      XSetClipMask(XtDisplay(tb), TBG_BackgroundGC(tb), None);
+      _XmPlatClrClip (XtDisplay (tb), TBG_BackgroundGC(tb));
       LabG_NormalGC(tb) = tmp_gc;
     }
 }
@@ -4301,9 +4301,7 @@ DrawEtchedInMenu(
   if (fw < 0 || fh < 0)
     return;
 
-  XFillRectangle (XtDisplay(tb), XtWindow(tb), 
-		  TBG_Armed(tb) ? TBG_ArmGC(tb) : TBG_BackgroundGC(tb),
-		  fx, fy, fw, fh);
+  _XmPlatFillOneRect (XtDisplay (tb), XtWindow (tb), TBG_Armed(tb) ? TBG_ArmGC(tb) : TBG_BackgroundGC(tb), fx, fy, fw, fh);
   
   if (TBG_Armed(tb)) 
     {
@@ -4331,8 +4329,10 @@ DrawEtchedInMenu(
 	    */
 	    if (values.background != select_pix)
 	    {
-		XChangeGC(XtDisplay((Widget)tb), TBG_SelectGC(tb), 
-		  GCBackground, &values);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)tb), 0, TBG_SelectGC(tb)) ;
+  _XmPlatChangeGCValues (_c, GCBackground, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 		tmp_bgc = LabG_BackgroundGC(tb);
 		LabG_BackgroundGC(tb) = TBG_SelectGC(tb);
 		restore_bgc = True;
@@ -4352,7 +4352,7 @@ DrawEtchedInMenu(
   if (restore_gc)
     {
       /* CR 9791: Label's normal_gc has a dynamic clip_mask. */
-      XSetClipMask(XtDisplay(tb), TBG_BackgroundGC(tb), None);
+      _XmPlatClrClip (XtDisplay (tb), TBG_BackgroundGC(tb));
       LabG_NormalGC(tb) = tmp_gc;
     }
 

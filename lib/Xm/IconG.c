@@ -57,6 +57,7 @@
 #include "XmosI.h"
 #include "IconGI.h"
 #include <Xm/XmP.h>
+#include "XmPlat/XmPlatP.h"
 
 
 /* spacing between the line and the detail string.
@@ -2033,12 +2034,10 @@ Redisplay(
        iconlabel only, only clear the iconlabel using cleararea 
        (and we will later clear the label part using background_gc) */
     if (SHOW_DETAIL(wid, &container_data)) { 
-        XSetClipMask(XtDisplay(wid), background_gc, None);
-	XFillRectangle(XtDisplay(wid), XtWindow(wid), background_gc,
-		       ig->rectangle.x, ig->rectangle.y,
-		       ig->rectangle.width, ig->rectangle.height);
+        _XmPlatClrClip (XtDisplay (wid), background_gc);
+	_XmPlatFillOneRect (XtDisplay (wid), XtWindow (wid), background_gc, ig->rectangle.x, ig->rectangle.y, ig->rectangle.width, ig->rectangle.height);
     } else {
-        XSetClipMask(XtDisplay(wid), IG_BackgroundGC(wid), None);
+        _XmPlatClrClip (XtDisplay (wid), IG_BackgroundGC(wid));
     }
 
 
@@ -2080,30 +2079,36 @@ Redisplay(
 	/* clip with the mask if any */
 	if (PIXMAP_VALID(IG_LargeIconMask(wid))) {
 
-	    XSetClipMask(XtDisplay(wid), IG_NormalGC(wid),
-			 IG_LargeIconMask(wid));
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (wid), 0, IG_NormalGC(wid)) ;
+  XmPlatSurface _m = _XmPlatSurface (XtDisplay (wid), IG_LargeIconMask(wid)) ;
+  _XmPlatSetClipMaskSurf (_c, _m, 0, 0) ;
+  _XmPlatSurfaceFree (_m) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
-	    XSetClipOrigin(XtDisplay(wid), IG_NormalGC(wid),
-			   ig->rectangle.x + large_icon_x,
-			   ig->rectangle.y + ht + mh);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (wid), 0, IG_NormalGC(wid)) ;
+  _XmPlatSetClipOrigin (_c, ig->rectangle.x + large_icon_x, ig->rectangle.y + ht + mh) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	} else {
-	    XSetClipMask(XtDisplay(wid), IG_NormalGC(wid),None);
+	    _XmPlatClrClip (XtDisplay (wid), IG_NormalGC(wid));
 	}
 
 	if (depth == XtParent(wid)->core.depth)
-	    XCopyArea(XtDisplay(wid),IG_LargeIconPixmap(wid),
-		      XtWindow(wid), IG_NormalGC(wid), 0,0,
-		      pm_width, pm_height,
-		      ig->rectangle.x + large_icon_x,
-		      ig->rectangle.y + GetLargeIconY(wid));
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(wid), XtWindow(wid), IG_NormalGC(wid)) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(wid), IG_LargeIconPixmap(wid)) ;
+  _XmPlatBlit (_c, _src, 0, 0, ig->rectangle.x + large_icon_x, ig->rectangle.y + GetLargeIconY(wid), pm_width, pm_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	else 
 	    if (depth == 1) 
-		XCopyPlane(XtDisplay(wid),IG_LargeIconPixmap(wid),
-			   XtWindow(wid), IG_NormalGC(wid),
-			   0,0,
-			   pm_width, pm_height,
-			   ig->rectangle.x + large_icon_x,
-			   ig->rectangle.y + GetLargeIconY(wid), 1);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(wid), XtWindow(wid), IG_NormalGC(wid)) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(wid), IG_LargeIconPixmap(wid)) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, ig->rectangle.x + large_icon_x, ig->rectangle.y + GetLargeIconY(wid), pm_width, pm_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
 
     if ((IG_ViewType(wid) == XmSMALL_ICON) &&
@@ -2143,28 +2148,35 @@ Redisplay(
 
 	/* clip with the mask if any */
 	if (PIXMAP_VALID(IG_SmallIconMask(wid))) {
-	    XSetClipMask(XtDisplay(wid), IG_NormalGC(wid),
-			 IG_SmallIconMask(wid));
-	    XSetClipOrigin(XtDisplay(wid), IG_NormalGC(wid),
-			   ig->rectangle.x + small_icon_x,
-			   ig->rectangle.y + small_icon_y);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (wid), 0, IG_NormalGC(wid)) ;
+  XmPlatSurface _m = _XmPlatSurface (XtDisplay (wid), IG_SmallIconMask(wid)) ;
+  _XmPlatSetClipMaskSurf (_c, _m, 0, 0) ;
+  _XmPlatSurfaceFree (_m) ;
+  _XmPlatCtxFree (_c) ;
+  }
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (wid), 0, IG_NormalGC(wid)) ;
+  _XmPlatSetClipOrigin (_c, ig->rectangle.x + small_icon_x, ig->rectangle.y + small_icon_y) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	} else {
-	    XSetClipMask(XtDisplay(wid), IG_NormalGC(wid),None);
+	    _XmPlatClrClip (XtDisplay (wid), IG_NormalGC(wid));
 	}
 
 	if (depth == XtParent(wid)->core.depth)
-	    XCopyArea(XtDisplay(wid),IG_SmallIconPixmap(wid),
-		      XtWindow(wid), IG_NormalGC(wid),0,0,
-		      pm_width,pm_height,
-		      ig->rectangle.x + small_icon_x,
-		      ig->rectangle.y + small_icon_y);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(wid), XtWindow(wid), IG_NormalGC(wid)) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(wid), IG_SmallIconPixmap(wid)) ;
+  _XmPlatBlit (_c, _src, 0, 0, ig->rectangle.x + small_icon_x, ig->rectangle.y + small_icon_y, pm_width, pm_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	else 
 	    if (depth == 1) 
-		XCopyPlane(XtDisplay(wid),IG_SmallIconPixmap(wid),
-			   XtWindow(wid), IG_NormalGC(wid),0,0,
-			   pm_width,pm_height,
-			   ig->rectangle.x + small_icon_x,
-			   ig->rectangle.y + small_icon_y, 1);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(wid), XtWindow(wid), IG_NormalGC(wid)) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(wid), IG_SmallIconPixmap(wid)) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, ig->rectangle.x + small_icon_x, ig->rectangle.y + small_icon_y, pm_width, pm_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
 
     clip_rect.y = ig->rectangle.y + ht + mh;
@@ -2187,11 +2199,7 @@ Redisplay(
     GetLabelXY(wid, &label_x, &label_y) ;
 	
     if (!XmStringEmpty(IG_LabelString(wid))) {
-	XFillRectangle(XtDisplay(wid), XtWindow(wid), background_gc,
-		       ig->rectangle.x + label_x,
-		       ig->rectangle.y + label_y,
-		       IG_LabelRectWidth(wid), 
-		       IG_LabelRectHeight(wid));
+	_XmPlatFillOneRect (XtDisplay (wid), XtWindow(wid), background_gc, ig->rectangle.x + label_x, ig->rectangle.y + label_y, IG_LabelRectWidth(wid), IG_LabelRectHeight(wid)) ;
 
 	/* if we are in the inverse_color case, we need to draw
 	   the string with parent background ink, and
@@ -2221,7 +2229,7 @@ Redisplay(
 		      LayoutG(wid), NULL);
     }
 
-    XSetClipMask(XtDisplay(wid),background_gc,None);
+    _XmPlatClrClip (XtDisplay (wid), background_gc);
 	
     /**** now the polygon shadow around the icon+label, or the
           square shadow around a masked pixmap or a no pixmap icon */
@@ -2628,7 +2636,7 @@ HighlightBorder(
     container_data.valueMask = ContFirstColumnWidth | ContSelectionMode ;
     GetContainerData(w, &container_data);
 
-    XSetClipMask(XtDisplay(w), IG_HighlightGC(w), None);
+    _XmPlatClrClip (XtDisplay (w), IG_HighlightGC(w));
 
     if (SHOW_DETAIL(w, &container_data)) {
         ChangeHighlightGC(w, container_data.selection_mode, ht);
@@ -2721,7 +2729,7 @@ UnhighlightBorder(
 	background_gc = ((XmManagerWidget)XtParent(w))
 	    ->manager.background_GC ;
     } else {
-	XSetClipMask(XtDisplay(w), IG_BackgroundGC(w), None);
+	_XmPlatClrClip (XtDisplay (w), IG_BackgroundGC(w));
 	background_gc = IG_BackgroundGC(w) ;
     }
         
@@ -2988,7 +2996,10 @@ ChangeHighlightGC(
 			    ? LineDoubleDash 
 			    : LineSolid;
 
-    XChangeGC(XtDisplay(wid), IG_HighlightGC(wid), valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(wid), 0, IG_HighlightGC(wid)) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 
 

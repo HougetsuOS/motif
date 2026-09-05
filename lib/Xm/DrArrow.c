@@ -32,6 +32,7 @@
 
 
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 #include <Xm/DrawP.h>
 
 
@@ -269,14 +270,56 @@ void XmeDrawArrow(Display *display, Drawable d,
    if (shadow_thick) {  /* 1 or 2 shadow thickness: always draw 
 			   2 thickness at that point, we'll correct it
 			   later */
-       XFillRectangles (display, d, top_gc, top, t);
-       XFillRectangles (display, d, bot_gc, bot, b);
+       {
+	 XmPlatDrawCtx plat ;
+	 XmPlatRect *pr ;
+	 int pi ;
+
+	 plat = _XmPlatCtx (display, d, top_gc) ;
+	 pr = (XmPlatRect *) XtMalloc ((size_t)t * sizeof (XmPlatRect)) ;
+	 for (pi = 0 ; pi < t ; pi++) {
+	   pr[pi].x = top[pi].x ; pr[pi].y = top[pi].y ;
+	   pr[pi].width = top[pi].width ; pr[pi].height = top[pi].height ;
+	 }
+	 _XmPlatFillRects (plat, pr, t) ;
+	 _XmPlatCtxFree (plat) ;
+	 XtFree ((char *) pr) ;
+	 plat = _XmPlatCtx (display, d, bot_gc) ;
+	 pr = (XmPlatRect *) XtMalloc ((size_t)b * sizeof (XmPlatRect)) ;
+	 for (pi = 0 ; pi < b ; pi++) {
+	   pr[pi].x = bot[pi].x ; pr[pi].y = bot[pi].y ;
+	   pr[pi].width = bot[pi].width ; pr[pi].height = bot[pi].height ;
+	 }
+	 _XmPlatFillRects (plat, pr, b) ;
+	 _XmPlatCtxFree (plat) ;
+	 XtFree ((char *) pr) ;
+       }
    } else {
        /* handle the case where arrow shadow_thickness = 0, which give
           a flat arrow: draw the shadow area with the center color */
        if (cent_gc) {
-           XFillRectangles (display, d, cent_gc, top, t);
-           XFillRectangles (display, d, cent_gc, bot, b);
+           {
+	     XmPlatDrawCtx plat ;
+	     XmPlatRect *pr ;
+	     int pi ;
+
+	     plat = _XmPlatCtx (display, d, cent_gc) ;
+	     pr = (XmPlatRect *) XtMalloc ((size_t)t * sizeof (XmPlatRect)) ;
+	     for (pi = 0 ; pi < t ; pi++) {
+	       pr[pi].x = top[pi].x ; pr[pi].y = top[pi].y ;
+	       pr[pi].width = top[pi].width ; pr[pi].height = top[pi].height ;
+	     }
+	     _XmPlatFillRects (plat, pr, t) ;
+	     XtFree ((char *) pr) ;
+	     pr = (XmPlatRect *) XtMalloc ((size_t)b * sizeof (XmPlatRect)) ;
+	     for (pi = 0 ; pi < b ; pi++) {
+	       pr[pi].x = bot[pi].x ; pr[pi].y = bot[pi].y ;
+	       pr[pi].width = bot[pi].width ; pr[pi].height = bot[pi].height ;
+	     }
+	     _XmPlatFillRects (plat, pr, b) ;
+	     _XmPlatCtxFree (plat) ;
+	     XtFree ((char *) pr) ;
+           }
        }
    } 
 
@@ -287,7 +330,18 @@ void XmeDrawArrow(Display *display, Drawable d,
        XmeDrawArrow(display, d, top_gc, bot_gc, cent_gc, 
 		    x+1, y+1, width-2, height-2, 0, direction) ;
    } else
-   if (cent_gc) XFillRectangles (display, d, cent_gc, cent, c);
+   if (cent_gc) {
+     XmPlatDrawCtx plat = _XmPlatCtx (display, d, cent_gc) ;
+     XmPlatRect *pr = (XmPlatRect *) XtMalloc ((size_t)c * sizeof (XmPlatRect)) ;
+     int pi ;
+     for (pi = 0 ; pi < c ; pi++) {
+       pr[pi].x = cent[pi].x ; pr[pi].y = cent[pi].y ;
+       pr[pi].width = cent[pi].width ; pr[pi].height = cent[pi].height ;
+     }
+     _XmPlatFillRects (plat, pr, c) ;
+     _XmPlatCtxFree (plat) ;
+     XtFree ((char *) pr) ;
+   }
    _XmProcessUnlock();
    _XmAppUnlock(app);
 }

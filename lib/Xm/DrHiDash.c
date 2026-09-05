@@ -33,11 +33,12 @@
 
 #include "XmI.h"
 #include "DrawI.h"
+#include "XmPlat/XmPlatP.h"
 
 /****************************_XmDrawHighlight***************************
  *
  * This function modifies the given gc, which therefore needs to be created
- *   using XCreateGC or XtAllocateGC.
+ *   using XtAllocateGC.
  *
  ***************************************************************************/
 
@@ -57,8 +58,6 @@ void _XmDrawHighlight(Display *display, Drawable d,
    XSegment seg[4];
    register Dimension half_hl = highlight_thickness/2 ;
    register Dimension cor = highlight_thickness % 2 ;
-   XGCValues gcvalues;
-
    if (!d || !highlight_thickness || !width || !height) return ;
 
    /* the XmList dash case relies on this particular order of X segments */
@@ -75,19 +74,40 @@ void _XmDrawHighlight(Display *display, Drawable d,
    seg[1].y2 = y + height ;
 
    /* first save the current values we want to change */
-   XGetGCValues(display, gc,
-		GCLineWidth|GCLineStyle|GCCapStyle|GCJoinStyle,
-		&gcvalues);
-   /* change them and draw the lines */
-   XSetLineAttributes(display, gc,  highlight_thickness, line_style, 
-		      CapButt, JoinMiter);
-   XDrawSegments (display, d, gc, seg, 4);
+   {
+     XmPlatDrawCtx plat = _XmPlatCtx (display, d, gc) ;
+     XmPlatLineAttr saved = _XmPlatGetLineAttr (plat) ;
+     XmPlatLineAttr dash ;
+     XmPlatSegment psegs[4] ;
+     int psi ;
+
+     dash.width = (unsigned) highlight_thickness ;
+     dash.style = line_style ;
+     dash.cap = 0 ;
+     dash.join = 0 ;
+     _XmPlatSetLineAttr (plat, &dash) ;
+     for (psi = 0 ; psi < 4 ; psi++) {
+       psegs[psi].x1 = seg[psi].x1 ; psegs[psi].y1 = seg[psi].y1 ;
+       psegs[psi].x2 = seg[psi].x2 ; psegs[psi].y2 = seg[psi].y2 ;
+     }
+     _XmPlatDrawSegments (plat, psegs, 4) ;
+     _XmPlatSetLineAttr (plat, &saved) ;
+     _XmPlatCtxFree (plat) ;
+   }
+   {
+     XmPlatDrawCtx plat = _XmPlatCtx (display, d, gc) ;
+     XmPlatSegment psegs[4] ;
+     int psi ;
+
+     for (psi = 0 ; psi < 4 ; psi++) {
+       psegs[psi].x1 = seg[psi].x1 ; psegs[psi].y1 = seg[psi].y1 ;
+       psegs[psi].x2 = seg[psi].x2 ; psegs[psi].y2 = seg[psi].y2 ;
+     }
+     _XmPlatDrawSegments (plat, psegs, 4) ;
+     _XmPlatCtxFree (plat) ;
+   }
 
    /* put them back */
-   XSetLineAttributes(display, gc,  
-		      gcvalues.line_width, gcvalues.line_style, 
-		      gcvalues.cap_style, gcvalues.join_style);
-  
-   /** note that the above is a hack, a read-only GC shoudl not 
-     be modified, period */
+   /** note that the line attributes are restored via _XmPlatSetLineAttr
+     above; a read-only GC should not be modified, period */
 }

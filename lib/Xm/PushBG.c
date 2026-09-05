@@ -59,6 +59,7 @@ static char rcsid[] = "$TOG: PushBG.c /main/29 1999/05/27 14:18:33 mgreess $"
 #include "TraversalI.h"
 #include "UniqueEvnI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define DELAY_DEFAULT		100
 #define XmINVALID_MULTICLICK	255
@@ -2716,9 +2717,12 @@ DrawDefaultGlyphPixmap(
   height = MIN(def_pixmap_height, 
 	       MAX(LabG_TextRect(pb).height, LabG_AccTextRect(pb).height));
 
-  XCopyPlane (XtDisplay (pb), def_pixmap, 
-	      XtWindow (XtParent(pb)),
-	      LabG_NormalGC(pb), 0, 0, width, height, dx, dy, 1);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (pb), XtWindow (XtParent(pb)), LabG_NormalGC(pb)) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay (pb), def_pixmap) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, dx, dy, width, height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 #endif /* DEFAULT_GLYPH_PIXMAP */
 
@@ -2743,8 +2747,7 @@ EraseDefaultGlyphPixmap(
   width = LabG_MarginRight(pb);
   height = MAX(LabG_TextRect(pb).height, LabG_AccTextRect(pb).height);
 
-  XClearArea (XtDisplay (pb), XtWindow (XtParent(pb)),
-	      dx, dy, width, height, False);
+  _XmPlatClearOneRect (XtDisplay (pb), XtWindow (XtParent(pb)), dx, dy, width, height);
 }
 #endif /* DEFAULT_GLYPH_PIXMAP */
 

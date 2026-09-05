@@ -71,6 +71,7 @@
 
 
 #include "MessagesI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define FIX_1531
 /*
@@ -1981,7 +1982,10 @@ _XmDataFToggleCursorGC(
 #ifdef FIX_1501
     }
 #endif
-    XChangeGC(XtDisplay(widget), XmTextF_image_gc(tf), valuemask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(widget), 0, XmTextF_image_gc(tf)) ;
+  _XmPlatChangeGCValues (_c, valuemask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 
 /*
@@ -2221,12 +2225,14 @@ df_PaintCursor(
 
     if (XmTextF_refresh_ibeam_off(tf) == True){ /* get area under IBeam first */
       /* Fill is needed to realign clip rectangle with gc */
-       XFillRectangle(XtDisplay((Widget)tf), XtWindow((Widget)tf),
-                         XmTextF_save_gc(tf), 0, 0, 0, 0);
+       _XmPlatFillOneRect (XtDisplay ((Widget)tf), XtWindow ((Widget)tf), XmTextF_save_gc(tf), 0, 0, 0, 0);
 
-       XCopyArea(XtDisplay(tf), XtWindow(tf), XmTextF_ibeam_off(tf), 
-		 XmTextF_save_gc(tf), x, y, XmTextF_cursor_width(tf), 
-		 XmTextF_cursor_height(tf), 0, 0);
+       { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), XmTextF_ibeam_off(tf), XmTextF_save_gc(tf)) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(tf), XtWindow(tf)) ;
+  _XmPlatBlit (_c, _src, x, y, 0, 0, XmTextF_cursor_width(tf), XmTextF_cursor_height(tf)) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
        XmTextF_refresh_ibeam_off(tf) = False;
     }
 
@@ -2234,17 +2240,18 @@ df_PaintCursor(
 #ifdef FIX_1501
        if (!XtIsSensitive((Widget) tf)) {
           df_XmSetShadowGC(tf, XmTextF_image_gc(tf));
-          XFillRectangle(XtDisplay(tf), XtWindow(tf), XmTextF_image_gc(tf), x + 1, y + 1,
-                         XmTextF_cursor_width(tf), XmTextF_cursor_height(tf));
+          _XmPlatFillOneRect (XtDisplay (tf), XtWindow(tf), XmTextF_image_gc(tf), x + 1, y + 1, XmTextF_cursor_width(tf), XmTextF_cursor_height(tf)) ;
        }
        _XmDataFToggleCursorGC((Widget) tf);
 #endif
-       XFillRectangle(XtDisplay(tf), XtWindow(tf), XmTextF_image_gc(tf), x, y,
-		      XmTextF_cursor_width(tf), XmTextF_cursor_height(tf));
+       _XmPlatFillOneRect (XtDisplay (tf), XtWindow(tf), XmTextF_image_gc(tf), x, y, XmTextF_cursor_width(tf), XmTextF_cursor_height(tf)) ;
     } else {
-       XCopyArea(XtDisplay(tf), XmTextF_ibeam_off(tf), XtWindow(tf), 
-		 XmTextF_save_gc(tf), 0, 0, XmTextF_cursor_width(tf), 
-		 XmTextF_cursor_height(tf), x, y);
+       { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), XtWindow(tf), XmTextF_save_gc(tf)) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(tf), XmTextF_ibeam_off(tf)) ;
+  _XmPlatBlit (_c, _src, 0, 0, x, y, XmTextF_cursor_width(tf), XmTextF_cursor_height(tf)) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
 }
 
@@ -2484,7 +2491,7 @@ df_XmResetSaveGC(
         GC gc )
 #endif /* _NO_PROTO */
 {
-  XSetClipMask(XtDisplay(tf), gc, None);
+  _XmPlatClrClip (XtDisplay (tf), gc);
 }
 
 /*
@@ -2523,7 +2530,10 @@ _XmDataFieldSetClipRect(
      values.function = GXcopy;
      values.foreground = tf->primitive.foreground ;
      values.background = tf->core.background_pixel;
-     XChangeGC(XtDisplay(tf), XmTextF_save_gc(tf), valuemask, &values);
+     { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, XmTextF_save_gc(tf)) ;
+  _XmPlatChangeGCValues (_c, valuemask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
   }
 
  /* Restore cached text gc to state correct for this instantiation */
@@ -2542,7 +2552,10 @@ _XmDataFieldSetClipRect(
      values.graphics_exposures = (Bool) True;
      values.foreground = tf->primitive.foreground ^ tf->core.background_pixel;
      values.background = 0;
-     XChangeGC(XtDisplay(tf), XmTextF_gc(tf), valuemask, &values);
+     { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, XmTextF_gc(tf)) ;
+  _XmPlatChangeGCValues (_c, valuemask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
   }
 
  /* Restore cached image gc to state correct for this instantiation */
@@ -2558,7 +2571,10 @@ _XmDataFieldSetClipRect(
        values.foreground = tf->primitive.foreground;
        values.background = tf->core.background_pixel;
      }
-     XChangeGC(XtDisplay(tf), XmTextF_image_gc(tf), valuemask, &values);
+     { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, XmTextF_image_gc(tf)) ;
+  _XmPlatChangeGCValues (_c, valuemask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
   }
 
   _XmDataFToggleCursorGC((Widget)tf);
@@ -2606,7 +2622,10 @@ df_XmSetNormGC(
 #endif
     }
 
-    XChangeGC(XtDisplay(tf), gc, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 
 #ifdef FIX_1381
@@ -2627,7 +2646,10 @@ df_XmSetShadowGC(
     values.foreground = tf->primitive.top_shadow_color;
     values.background = tf->core.background_pixel;
 
-    XChangeGC(XtDisplay(tf), gc, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 #endif
 
@@ -2649,7 +2671,10 @@ df_XmSetInvGC(
     values.foreground = tf->core.background_pixel;
     values.background = tf->primitive.foreground;
 
-    XChangeGC(XtDisplay(tf), gc, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 
 static void
@@ -2721,16 +2746,23 @@ df_DrawText(
 	   if (_XmIsISO10646(XtDisplay(tf), XmTextF_font(tf))) {
              size_t str_len = 0;
 	     XChar2b *str = _XmUtf8ToUcs2(tmp, num_bytes, &str_len);
-	     XDrawString16(XtDisplay(tf), XtWindow(tf), gc, x, y,
-			     str, str_len);
+	     { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tf), XtWindow(tf), gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tf), gc), XmPlatText16, str, str_len, x, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	     XFree(str);
 	   } else
-             XDrawString(XtDisplay(tf), XtWindow(tf), gc, x, y,
-			     tmp, num_bytes);
+             { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tf), XtWindow(tf), gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tf), gc), XmPlatText8, tmp, num_bytes, x, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+}
 	 }
 	 XmStackFree((char *)tmp, stack_cache);
       } else /* one byte chars */
-         XDrawString (XtDisplay(tf), XtWindow(tf), gc, x, y, string, length);
+         { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tf), XtWindow(tf), gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tf), gc), XmPlatText8, string, length, x, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+}
    }
 }
 
@@ -2869,15 +2901,12 @@ df_DrawTextSegment(
     if (mode == XmHIGHLIGHT_SELECTED) {
       /* Draw the selected text using an inverse gc */
        df_XmSetNormGC(tf, XmTextF_gc(tf), False, False);
-       XFillRectangle(XtDisplay(tf), XtWindow(tf), XmTextF_gc(tf), *x, 
-		      y - XmTextF_font_ascent(tf), x_seg_len,
-		      XmTextF_font_ascent(tf) + XmTextF_font_descent(tf));
+       _XmPlatFillOneRect (XtDisplay (tf), XtWindow(tf), XmTextF_gc(tf), *x, y - XmTextF_font_ascent(tf), x_seg_len, XmTextF_font_ascent(tf) + XmTextF_font_descent(tf)) ;
        df_XmSetInvGC(tf, XmTextF_gc(tf));
     } else {
        df_XmSetInvGC(tf, XmTextF_gc(tf));
-       XFillRectangle(XtDisplay(tf), XtWindow(tf), XmTextF_gc(tf), *x, 
-		      y - XmTextF_font_ascent(tf), x_seg_len,
-		      XmTextF_font_ascent(tf) + XmTextF_font_descent(tf));
+       _XmPlatFillOneRect (XtDisplay (tf), XtWindow (tf), XmTextF_gc(tf), *x, 
+		      y - XmTextF_font_ascent(tf), x_seg_len, XmTextF_font_ascent(tf) + XmTextF_font_descent(tf));
        df_XmSetNormGC(tf, XmTextF_gc(tf), True, stipple);
     }
 
@@ -2906,8 +2935,7 @@ df_DrawTextSegment(
     if (stipple) df_XmSetNormGC(tf, XmTextF_gc(tf), True, !stipple);
    
     if (mode == XmHIGHLIGHT_SECONDARY_SELECTED)
-       XDrawLine(XtDisplay(tf), XtWindow(tf), XmTextF_gc(tf), *x, y,
-                              *x + x_seg_len - 1, y);
+       _XmPlatDrawOneLine (XtDisplay (tf), XtWindow (tf), XmTextF_gc(tf), *x, y, *x + x_seg_len - 1, y);
 
    /* update x position up to the next highlight position */
     if (XmTextF_max_char_size(tf) != 1)
@@ -3053,13 +3081,11 @@ df_RedisplayText(
   if (x < (int)(rect.x + rect.width)
       && XmDataField_alignment(tf) == XmALIGNMENT_BEGINNING) {
     df_XmSetInvGC(tf, XmTextF_gc(tf));
-    XFillRectangle(XtDisplay(tf), XtWindow(tf), XmTextF_gc(tf), x, rect.y,
-                    rect.x + rect.width - x, rect.height);
+    _XmPlatFillOneRect (XtDisplay (tf), XtWindow (tf), XmTextF_gc(tf), x, rect.y, rect.x + rect.width - x, rect.height);
   } else if (XmTextF_h_offset(tf) < startx
         && XmDataField_alignment(tf) == XmALIGNMENT_END) {
     df_XmSetInvGC(tf, XmTextF_gc(tf));
-    XFillRectangle(XtDisplay(tf), XtWindow(tf), XmTextF_gc(tf), XmTextF_h_offset(tf), rect.y,
-                    startx - XmTextF_h_offset(tf), rect.height);
+    _XmPlatFillOneRect (XtDisplay (tf), XtWindow (tf), XmTextF_gc(tf), XmTextF_h_offset(tf), rect.y, startx - XmTextF_h_offset(tf), rect.height);
   }
 
   XmTextF_refresh_ibeam_off(tf) = True;
@@ -3245,13 +3271,9 @@ df_AdjustText(
        temp = 0;
      else
        temp = tf->core.height - thickness;
-     XFillRectangle(XtDisplay(tf), XtWindow(tf), XmTextF_gc(tf),
-		    tf->primitive.shadow_thickness +
-                    tf->primitive.highlight_thickness,
-		    tf->primitive.shadow_thickness +
-                    tf->primitive.highlight_thickness,
-                    XmTextF_margin_width(tf),
-                    temp);
+     _XmPlatFillOneRect (XtDisplay (tf), XtWindow (tf), XmTextF_gc(tf), tf->primitive.shadow_thickness +
+                    tf->primitive.highlight_thickness, tf->primitive.shadow_thickness +
+                    tf->primitive.highlight_thickness, XmTextF_margin_width(tf), temp);
      df_XmSetMarginGC(tf, XmTextF_gc(tf));
      df_RedisplayText(tf, 0, XmTextF_string_length(tf)); 
      _XmDataFieldDrawInsertionPoint(tf, True);
@@ -3271,12 +3293,8 @@ df_AdjustText(
 	      temp = 0;
 	    else
 	      temp = tf->core.width - thickness;
-            XFillRectangle(XtDisplay(tf), XtWindow(tf), XmTextF_gc(tf),
-                           tf->core.width - margin_width,
-		           tf->primitive.shadow_thickness +
-                           tf->primitive.highlight_thickness,
-                           XmTextF_margin_width(tf),
-			   temp);
+            _XmPlatFillOneRect (XtDisplay (tf), XtWindow (tf), XmTextF_gc(tf), tf->core.width - margin_width, tf->primitive.shadow_thickness +
+                           tf->primitive.highlight_thickness, XmTextF_margin_width(tf), temp);
              df_XmSetMarginGC(tf, XmTextF_gc(tf));
              df_RedisplayText(tf, 0, XmTextF_string_length(tf)); 
              _XmDataFieldDrawInsertionPoint(tf, True);
@@ -3666,7 +3684,10 @@ df_ResetClipOrigin(
       values.ts_y_origin = y;
       values.clip_x_origin = clip_mask_x;
       values.clip_y_origin = clip_mask_y;
-      XChangeGC(XtDisplay(tf), XmTextF_image_gc(tf), valuemask, &values);
+      { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, XmTextF_image_gc(tf)) ;
+  _XmPlatChangeGCValues (_c, valuemask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
    }
    else 
       XSetTSOrigin(XtDisplay(tf), XmTextF_image_gc(tf), x, y);
@@ -3693,7 +3714,10 @@ df_InvertImageGC (
      values.background = tf->primitive.foreground;
      values.foreground = tf->core.background_pixel;
      
-     XChangeGC(dpy, XmTextF_image_gc(tf), valuemask, &values);
+     { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, XmTextF_image_gc(tf)) ;
+  _XmPlatChangeGCValues (_c, valuemask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
    }
 
    XmTextF_have_inverted_image_gc(tf) = True;
@@ -3724,7 +3748,10 @@ df_ResetImageGC (
        values.foreground = tf->primitive.foreground;
        values.background = tf->core.background_pixel;
      
-       XChangeGC(dpy, XmTextF_image_gc(tf), valuemask, &values);
+       { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, XmTextF_image_gc(tf)) ;
+  _XmPlatChangeGCValues (_c, valuemask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
    }
 
    XmTextF_have_inverted_image_gc(tf) = False;
@@ -4178,8 +4205,7 @@ _XmDataFieldReplaceText(
 
           /* PWC - Erase leading space (delta of old & new first position) */
           df_XmSetInvGC(tf, XmTextF_gc(tf));
-          XFillRectangle(XtDisplay(tf), XtWindow(tf), XmTextF_gc(tf),
-	                 x1, y2, x2, y1);
+          _XmPlatFillOneRect (XtDisplay (tf), XtWindow (tf), XmTextF_gc(tf), x1, y2, x2, y1);
 #if PWC_DEBUG
           printf("Fill Rectangle :: x1(%d), y1(%d) - x2(%d), y2(%d)\n",
                  x1, y2, x2, y1);
@@ -9260,10 +9286,14 @@ df_GetClipMask(
 
    values.foreground = 1;
    values.background = 0;
-   fillGC = XCreateGC(dpy, clip_mask, GCForeground | GCBackground, &values);
+{ XmPlatSurface _s = _XmPlatSurface (dpy, clip_mask) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, GCForeground | GCBackground, &values) ;
+  fillGC = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 
-   XFillRectangle(dpy, clip_mask, fillGC, 0, 0, XmTextF_cursor_width(tf),
-		  XmTextF_cursor_height(tf));
+   _XmPlatFillOneRect (dpy, clip_mask, fillGC, 0, 0, XmTextF_cursor_width(tf), XmTextF_cursor_height(tf)) ;
 
   /* Install the clipmask for pixmap caching */
    (void) _XmCachePixmap(clip_mask, screen, pixmap_name, 1, 0, 0, 0, 0);
@@ -9428,10 +9458,15 @@ df_MakeIBeamOffArea(
 				      height, tf->core.depth);
 
   /* Create a GC for drawing 0's into the pixmap */
-   fillGC = XCreateGC(dpy, XmTextF_ibeam_off(tf), 0, (XGCValues *) NULL);
+{ XmPlatSurface _s = _XmPlatSurface (dpy, XmTextF_ibeam_off(tf)) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, 0, (XGCValues *) NULL) ;
+  fillGC = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 
   /* df_Initialize the pixmap to 0's */
-   XFillRectangle(dpy, XmTextF_ibeam_off(tf), fillGC, 0, 0, width, height);
+   _XmPlatFillOneRect (dpy, XmTextF_ibeam_off(tf), fillGC, 0, 0, width, height) ;
 
   /* Free the GC */
    XFreeGC(XtDisplay(tf), fillGC);
@@ -9470,18 +9505,25 @@ df_MakeIBeamStencil(
      /* Create a GC for "cutting out" the I-Beam shape from the pixmap in
       * order to create the stencil.
       */
-      fillGC = XCreateGC(dpy, XmTextF_cursor(tf), 0, (XGCValues *)NULL);
+{ XmPlatSurface _s = _XmPlatSurface (dpy, XmTextF_cursor(tf)) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, 0, (XGCValues *)NULL) ;
+  fillGC = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 
      /* Fill in the stencil with a solid in preparation
       * to "cut out" the I-Beam
       */
-      XFillRectangle(dpy, XmTextF_cursor(tf), fillGC, 0, 0, XmTextF_cursor_width(tf),
-		     XmTextF_cursor_height(tf));
+      _XmPlatFillOneRect (dpy, XmTextF_cursor(tf), fillGC, 0, 0, XmTextF_cursor_width(tf), XmTextF_cursor_height(tf)) ;
 
      /* Change the GC for use in "cutting out" the I-Beam shape */
       values.foreground = 1;
       values.line_width = line_width;
-      XChangeGC(dpy, fillGC, GCForeground | GCLineWidth, &values);
+      { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, fillGC) ;
+  _XmPlatChangeGCValues (_c, GCForeground | GCLineWidth, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
      /* Draw the segments of the I-Beam */
      /* 1st segment is the top horizontal line of the 'I' */
@@ -9511,7 +9553,17 @@ df_MakeIBeamStencil(
       XSetClipRectangles(XtDisplay(tf), fillGC, 0, 0, &ClipRect, 1, Unsorted);
 
      /* Draw the segments onto the cursor */
-      XDrawSegments(dpy, XmTextF_cursor(tf), fillGC, segments, 3);
+      { XmPlatDrawCtx _c = _XmPlatCtx (dpy, XmTextF_cursor(tf), fillGC) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(3) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(3) ; _pi++) {
+    _ps[_pi].x1 = segments[_pi].x1 ; _ps[_pi].y1 = segments[_pi].y1 ;
+    _ps[_pi].x2 = segments[_pi].x2 ; _ps[_pi].y2 = segments[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, 3) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+  }
 
     /* Install the cursor for pixmap caching */
       (void) _XmCachePixmap(XmTextF_cursor(tf), XtScreen(tf), pixmap_name, 1, 0, 0, 0, 0);
@@ -9539,7 +9591,10 @@ df_MakeIBeamStencil(
     values.clip_mask = XmTextF_image_clip(tf);
     values.stipple = XmTextF_cursor(tf);
     values.fill_style = FillStippled;
-    XChangeGC(XtDisplay(tf), XmTextF_image_gc(tf), valuemask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, XmTextF_image_gc(tf)) ;
+  _XmPlatChangeGCValues (_c, valuemask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
 }
 
@@ -9601,15 +9656,24 @@ df_MakeAddModeCursor(
 			                             XmTextF_cursor_height(tf), 
 						     1);
 
-        fillGC = XCreateGC(dpy, XmTextF_add_mode_cursor(tf), 0, 
-			   (XGCValues *)NULL);
+{ XmPlatSurface _s = _XmPlatSurface (dpy, XmTextF_add_mode_cursor(tf)) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, 0, (XGCValues *)NULL) ;
+  fillGC = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 
-        XPutImage(dpy, stipple, fillGC, image, 0, 0, 0, 0, image->width, 
-	   	  image->height);
+        { XmPlatDrawCtx _c = _XmPlatCtx (dpy, stipple, fillGC) ;
+  _XmPlatPutImage (_c, _XmPlatImageOf (image), 0, 0, 0, 0, image->width, image->height) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
-        XCopyArea(dpy, XmTextF_cursor(tf), XmTextF_add_mode_cursor(tf), 
-	          fillGC, 0, 0, XmTextF_cursor_width(tf), 
-                  XmTextF_cursor_height(tf), 0, 0);
+        { XmPlatDrawCtx _c = _XmPlatCtx (dpy, XmTextF_add_mode_cursor(tf), fillGC) ;
+  XmPlatSurface _src = _XmPlatSurface (dpy, XmTextF_cursor(tf)) ;
+  _XmPlatBlit (_c, _src, 0, 0, 0, 0, XmTextF_cursor_width(tf), XmTextF_cursor_height(tf)) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
         valueMask = (GCTile | GCFillStyle | GCForeground |
 		     GCBackground | GCFunction);
@@ -9619,11 +9683,12 @@ df_MakeAddModeCursor(
         values.foreground = tf->primitive.foreground; 
         values.background = tf->core.background_pixel;
 
-        XChangeGC(XtDisplay(tf), fillGC, valueMask, &values);
+        { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, fillGC) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
-        XFillRectangle(dpy, XmTextF_add_mode_cursor(tf), fillGC,
-		       0, 0, XmTextF_cursor_width(tf), 
-                       XmTextF_cursor_height(tf));
+        _XmPlatFillOneRect (dpy, XmTextF_add_mode_cursor(tf), fillGC, 0, 0, XmTextF_cursor_width(tf), XmTextF_cursor_height(tf)) ;
 
         /* Install the pixmap for pixmap caching */
         _XmCachePixmap(XmTextF_add_mode_cursor(tf),
@@ -10448,11 +10513,16 @@ DataFieldExpose(
 
   XmTextF_refresh_ibeam_off(tf) = False;
   values.foreground = tf->core.background_pixel;
-  XChangeGC(XtDisplay(w), XmTextF_save_gc(tf), GCForeground, &values);
-  XFillRectangle(XtDisplay(w), XmTextF_ibeam_off(tf), XmTextF_save_gc(tf), 0, 0,
-		    XmTextF_cursor_width(tf), XmTextF_cursor_height(tf));
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(w), 0, XmTextF_save_gc(tf)) ;
+  _XmPlatChangeGCValues (_c, GCForeground, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
+  _XmPlatFillOneRect (XtDisplay (w), XmTextF_ibeam_off(tf), XmTextF_save_gc(tf), 0, 0, XmTextF_cursor_width(tf), XmTextF_cursor_height(tf)) ;
   values.foreground = tf->primitive.foreground;
-  XChangeGC(XtDisplay(w), XmTextF_save_gc(tf), GCForeground, &values);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(w), 0, XmTextF_save_gc(tf)) ;
+  _XmPlatChangeGCValues (_c, GCForeground, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
   _XmDataFieldDrawInsertionPoint(tf, False);
 

@@ -38,6 +38,7 @@
 #include "XmStrDefsI.h"
 #include "xmlist.h"
 #include "RepTypeI.h"
+#include "XmPlat/XmPlatP.h"
 
 /************************************************************
 *	TYPEDEFS AND DEFINES
@@ -622,9 +623,7 @@ Redisplay(Widget w, XEvent * event, Region region)
 	    fill_height = 0;
 
 	if ((fill_width != 0) && (fill_height != 0))
-	    XFillRectangle(XtDisplay(w), XtWindow(w), XmIconButton_fill_gc(iw),
-			   FILL_SPACE(iw), FILL_SPACE(iw),
-			   fill_width, fill_height);
+	    _XmPlatFillOneRect (XtDisplay (w), XtWindow (w), XmIconButton_fill_gc(iw), FILL_SPACE(iw), FILL_SPACE(iw), fill_width, fill_height);
 
 	icon_gc = XmIconButton_pixmap_fill_gc(iw);
 	icon_stippled_gc = XmIconButton_stippled_set_gc(iw);
@@ -1700,15 +1699,21 @@ static void
     {
 	if (XmIconButton_pix_depth(iw) == 1)
 	{
-	    XCopyPlane(XtDisplay(w), XmIconButton_pixmap(iw), XtWindow(w), icon_gc,
-		       0, 0, XmIconButton_pix_width(iw), XmIconButton_pix_height(iw),
-		       XmIconButton_pix_x(iw), XmIconButton_pix_y(iw), 1L);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(w), XtWindow(w), icon_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(w), XmIconButton_pixmap(iw)) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, XmIconButton_pix_x(iw), XmIconButton_pix_y(iw), XmIconButton_pix_width(iw), XmIconButton_pix_height(iw)) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 	else
 	{
-	    XCopyArea(XtDisplay(w), XmIconButton_pixmap(iw), XtWindow(w), icon_gc,
-		      0, 0, XmIconButton_pix_width(iw), XmIconButton_pix_height(iw),
-		      XmIconButton_pix_x(iw), XmIconButton_pix_y(iw));
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(w), XtWindow(w), icon_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(w), XmIconButton_pixmap(iw)) ;
+  _XmPlatBlit (_c, _src, 0, 0, XmIconButton_pix_x(iw), XmIconButton_pix_y(iw), XmIconButton_pix_width(iw), XmIconButton_pix_height(iw)) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 
 	/*
@@ -1718,9 +1723,7 @@ static void
 
 	if( icon_stippled_gc != None )
 	{
-	    XFillRectangle(XtDisplay(w), XtWindow(w), icon_stippled_gc,
-			   XmIconButton_pix_x(iw), XmIconButton_pix_y(iw),
-			   XmIconButton_pix_width(iw), XmIconButton_pix_height(iw));
+	    _XmPlatFillOneRect (XtDisplay (w), XtWindow(w), icon_stippled_gc, XmIconButton_pix_x(iw), XmIconButton_pix_y(iw), XmIconButton_pix_width(iw), XmIconButton_pix_height(iw)) ;
 	}
     }
 
@@ -1776,7 +1779,7 @@ static void
 			 XmIconButton_text_x(iw), XmIconButton_text_y(iw),
 			 XmIconButton_max_text_width(iw), XmIconButton_alignment(iw),
 			 XmPrim_layout_direction(iw), NULL);
-	    XSetClipMask(XtDisplay(w), text_gc, None);
+	    _XmPlatClrClip (XtDisplay (w), text_gc);
 	}
     }
 }

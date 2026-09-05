@@ -34,6 +34,7 @@ static char rcsid[] = "$XConsortium: Draw.c /main/12 1995/10/25 20:02:15 cde-sun
 
 #include "XmI.h"
 #include <Xm/DrawP.h>
+#include "XmPlat/XmPlatP.h"
 
 
 /*********************************************************************
@@ -115,8 +116,26 @@ DrawSimpleShadow (Display *display,
     segms[i + size3].y2 = y + height - 1 ;
   }
   
-  XDrawSegments (display, d, top_gc, &segms[0], size2);
-  XDrawSegments (display, d, bottom_gc, &segms[size2], size2);
+  {
+    XmPlatDrawCtx plat = _XmPlatCtx (display, d, top_gc) ;
+    XmPlatSegment *psegs ;
+    int i ;
+
+    psegs = (XmPlatSegment *) XtMalloc ((size_t) (size2 << 1) *
+					sizeof (XmPlatSegment)) ;
+    for (i = 0 ; i < (size2 << 1) ; i++) {
+	psegs[i].x1 = segms[i].x1 ;
+	psegs[i].y1 = segms[i].y1 ;
+	psegs[i].x2 = segms[i].x2 ;
+	psegs[i].y2 = segms[i].y2 ;
+    }
+    _XmPlatDrawSegments (plat, psegs, size2) ;
+    _XmPlatCtxFree (plat) ;
+    plat = _XmPlatCtx (display, d, bottom_gc) ;
+    _XmPlatDrawSegments (plat, psegs + size2, size2) ;
+    _XmPlatCtxFree (plat) ;
+    XtFree ((char *) psegs) ;
+  }
   _XmProcessUnlock();
 }
 
@@ -183,12 +202,17 @@ void XmeClearBorder (Display *display, Window w,
     app = XtDisplayToApplicationContext(display);
     _XmAppLock(app);
 
-    XClearArea (display, w, x, y, width, shadow_thick, FALSE);
-    XClearArea (display, w, x, y + height - shadow_thick, width, 
-                shadow_thick, FALSE);
-    XClearArea (display, w, x, y, shadow_thick, height, FALSE);
-    XClearArea (display, w, x + width - shadow_thick, y, shadow_thick, 
-                height, FALSE);
+    {
+      XmPlatSurface surf = _XmPlatSurface (display, w) ;
+      surf->window = w ;
+      _XmPlatClearArea (surf, x, y, width, shadow_thick) ;
+      _XmPlatClearArea (surf, x, y + height - shadow_thick, width,
+			shadow_thick) ;
+      _XmPlatClearArea (surf, x, y, shadow_thick, height) ;
+      _XmPlatClearArea (surf, x + width - shadow_thick, y, shadow_thick,
+			height) ;
+      _XmPlatSurfaceFree (surf) ;
+    }
     _XmAppUnlock(app);
 }
 
@@ -227,7 +251,20 @@ void XmeDrawHighlight(Display *display, Drawable d,
     rect[0].height = rect[1].height = highlight_thickness ;
     rect[2].height = rect[3].height = height ;
     
-    XFillRectangles (display, d, gc, rect, 4);
+    {
+      XmPlatDrawCtx plat = _XmPlatCtx (display, d, gc) ;
+      XmPlatRect prects[4] ;
+      int pi ;
+
+      for (pi = 0 ; pi < 4 ; pi++) {
+	prects[pi].x = rect[pi].x ;
+	prects[pi].y = rect[pi].y ;
+	prects[pi].width = rect[pi].width ;
+	prects[pi].height = rect[pi].height ;
+      }
+      _XmPlatFillRects (plat, prects, 4) ;
+      _XmPlatCtxFree (plat) ;
+    }
 
     _XmAppUnlock(app);
 
@@ -281,7 +318,15 @@ void XmeDrawSeparator(Display *display, Drawable d,
            segs[0].x1 = segs[0].x2 = center;
            segs[0].y2 = y + height - margin - 1;
        }
-       XDrawSegments (display, d, separator_gc, segs, 1);
+       {
+	 XmPlatDrawCtx plat = _XmPlatCtx (display, d, separator_gc) ;
+	 XmPlatSegment pseg ;
+
+	 pseg.x1 = segs[0].x1 ; pseg.y1 = segs[0].y1 ;
+	 pseg.x2 = segs[0].x2 ; pseg.y2 = segs[0].y2 ;
+	 _XmPlatDrawSegments (plat, &pseg, 1) ;
+	 _XmPlatCtxFree (plat) ;
+       }
        _XmAppUnlock(app);
        return;
    }
@@ -299,7 +344,20 @@ void XmeDrawSeparator(Display *display, Drawable d,
            segs[0].x1 = segs[0].x2 = center - 1;
            segs[1].x1 = segs[1].x2 = center + 1;
        }
-       XDrawSegments (display, d, separator_gc, segs, 2);
+       {
+	 XmPlatDrawCtx plat = _XmPlatCtx (display, d, separator_gc) ;
+	 XmPlatSegment pseg[2] ;
+	 int pseg_i ;
+
+	 for (pseg_i = 0 ; pseg_i < 2 ; pseg_i++) {
+	   pseg[pseg_i].x1 = segs[pseg_i].x1 ;
+	   pseg[pseg_i].y1 = segs[pseg_i].y1 ;
+	   pseg[pseg_i].x2 = segs[pseg_i].x2 ;
+	   pseg[pseg_i].y2 = segs[pseg_i].y2 ;
+	 }
+	 _XmPlatDrawSegments (plat, pseg, 2) ;
+	 _XmPlatCtxFree (plat) ;
+       }
        _XmAppUnlock(app);
        return;
    }
@@ -350,17 +408,24 @@ void XmeDrawSeparator(Display *display, Drawable d,
        ndash = ((width - 2*margin)/shadow_dash_size + 1)/2 ;       
        for (i=0; i<ndash; i++)
            if (shadow_thick < 4) {
-	       XDrawLine(display, d, top_gc, 
-			 x + margin + 2*i*shadow_dash_size, 
-			 center - shadow_thick/2, 
-			 x + margin + (2*i + 1)*shadow_dash_size -1, 
-			 center - shadow_thick/2); 
-	       if (shadow_thick > 1)
-		   XDrawLine(display, d, bottom_gc, 
-			 x + margin + 2*i*shadow_dash_size, 
-			 center, 
-			 x + margin + (2*i + 1)*shadow_dash_size -1, 
-			 center); 
+	       {
+		 XmPlatDrawCtx plat = _XmPlatCtx (display, d, top_gc) ;
+		 _XmPlatDrawLine (plat,
+				  x + margin + 2*i*shadow_dash_size,
+				  center - shadow_thick/2,
+				  x + margin + (2*i + 1)*shadow_dash_size -1,
+				  center - shadow_thick/2) ;
+		 _XmPlatCtxFree (plat) ;
+		 if (shadow_thick > 1) {
+		   plat = _XmPlatCtx (display, d, bottom_gc) ;
+		   _XmPlatDrawLine (plat,
+				    x + margin + 2*i*shadow_dash_size,
+				    center,
+				    x + margin + (2*i + 1)*shadow_dash_size -1,
+				    center) ;
+		   _XmPlatCtxFree (plat) ;
+		 }
+	       }
 	   } else {
 	       DrawSimpleShadow(display, d, top_gc, bottom_gc, 
 				  x + margin + i*2*shadow_dash_size, 
@@ -373,19 +438,24 @@ void XmeDrawSeparator(Display *display, Drawable d,
        {
            if (shadow_thick < 4) 
            {
-	       XDrawLine(display, d, top_gc, 
-			 x + margin + 2*i*shadow_dash_size, 
-			 center - shadow_thick/2, 
-			 x + (width - 2*margin), 
-			 center - shadow_thick/2); 
-	       if (shadow_thick > 1)
-               {
-		   XDrawLine(display, d, bottom_gc, 
-			 x + margin + 2*i*shadow_dash_size, 
-			 center, 
-			 x + (width - 2*margin), 
-			 center); 
-               }
+	       {
+		 XmPlatDrawCtx plat = _XmPlatCtx (display, d, top_gc) ;
+		 _XmPlatDrawLine (plat,
+				  x + margin + 2*i*shadow_dash_size,
+				  center - shadow_thick/2,
+				  x + (width - 2*margin),
+				  center - shadow_thick/2) ;
+		 _XmPlatCtxFree (plat) ;
+		 if (shadow_thick > 1) {
+		   plat = _XmPlatCtx (display, d, bottom_gc) ;
+		   _XmPlatDrawLine (plat,
+				    x + margin + 2*i*shadow_dash_size,
+				    center,
+				    x + (width - 2*margin),
+				    center) ;
+		   _XmPlatCtxFree (plat) ;
+		 }
+	       }
 	   } else {
 	       DrawSimpleShadow(display, d, top_gc, bottom_gc, 
 				  x + margin + i*2*shadow_dash_size, 
@@ -399,17 +469,24 @@ void XmeDrawSeparator(Display *display, Drawable d,
        ndash = ((height - 2*margin)/shadow_dash_size + 1)/2 ;
        for (i=0; i<ndash; i++)
            if (shadow_thick < 4) {
-	       XDrawLine(display, d, top_gc, 
-			 center - shadow_thick/2, 
-			 y + margin + 2*i*shadow_dash_size, 
-			 center - shadow_thick/2,
-			 y + margin + (2*i + 1)*shadow_dash_size -1); 
-	       if (shadow_thick > 1)
-		   XDrawLine(display, d, bottom_gc, 
-			 center, 
-			 y + margin + 2*i*shadow_dash_size, 
-			 center, 
-			 y + margin + (2*i + 1)*shadow_dash_size -1); 
+	       {
+		 XmPlatDrawCtx plat = _XmPlatCtx (display, d, top_gc) ;
+		 _XmPlatDrawLine (plat,
+				  center - shadow_thick/2,
+				  y + margin + 2*i*shadow_dash_size,
+				  center - shadow_thick/2,
+				  y + margin + (2*i + 1)*shadow_dash_size -1) ;
+		 _XmPlatCtxFree (plat) ;
+		 if (shadow_thick > 1) {
+		   plat = _XmPlatCtx (display, d, bottom_gc) ;
+		   _XmPlatDrawLine (plat,
+				    center,
+				    y + margin + 2*i*shadow_dash_size,
+				    center,
+				    y + margin + (2*i + 1)*shadow_dash_size -1) ;
+		   _XmPlatCtxFree (plat) ;
+		 }
+	       }
 	   } else {
 	       DrawSimpleShadow(display, d, top_gc, bottom_gc, 
 				  center - shadow_thick/2, 
@@ -421,17 +498,24 @@ void XmeDrawSeparator(Display *display, Drawable d,
        {
            if (shadow_thick < 4) 
            {
-	       XDrawLine(display, d, top_gc, 
-			 center - shadow_thick/2, 
-			 y + margin + 2*i*shadow_dash_size, 
-			 center - shadow_thick/2,
-			 y + (height - 2*margin)); 
-	       if (shadow_thick > 1)
-		   XDrawLine(display, d, bottom_gc, 
-			 center, 
-			 y + margin + 2*i*shadow_dash_size, 
-			 center, 
-			 y + (height - 2*margin)); 
+	       {
+		 XmPlatDrawCtx plat = _XmPlatCtx (display, d, top_gc) ;
+		 _XmPlatDrawLine (plat,
+				  center - shadow_thick/2,
+				  y + margin + 2*i*shadow_dash_size,
+				  center - shadow_thick/2,
+				  y + (height - 2*margin)) ;
+		 _XmPlatCtxFree (plat) ;
+		 if (shadow_thick > 1) {
+		   plat = _XmPlatCtx (display, d, bottom_gc) ;
+		   _XmPlatDrawLine (plat,
+				    center,
+				    y + margin + 2*i*shadow_dash_size,
+				    center,
+				    y + (height - 2*margin)) ;
+		   _XmPlatCtxFree (plat) ;
+		 }
+	       }
 	   } else {
 	       DrawSimpleShadow(display, d, top_gc, bottom_gc, 
 				  center - shadow_thick/2, 

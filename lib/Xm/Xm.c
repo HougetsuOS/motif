@@ -39,6 +39,7 @@
 #include <Xm/LabelGP.h>
 #ifdef FIX_345
 #include <X11/keysym.h>
+#include "XmPlat/XmPlatP.h"
 #endif
 
 
@@ -239,20 +240,13 @@ _XmClearShadowType(
 
     if (XtIsRealized(w)) {
       if (old_width <= w->core.width)
-	  XClearArea (XtDisplay (w), XtWindow (w),
-		      old_width - old_shadow_thickness - 
-		      old_highlight_thickness, 0,
-		      old_shadow_thickness, old_height - 
-		      old_highlight_thickness, 
-		      False);
+	  _XmPlatClearOneRect (XtDisplay (w), XtWindow (w), old_width - old_shadow_thickness - 
+		      old_highlight_thickness, 0, old_shadow_thickness, old_height - 
+		      old_highlight_thickness);
 
       if (old_height <= w->core.height)
-	  XClearArea (XtDisplay (w), XtWindow (w),
-		      0, old_height - old_shadow_thickness - 
-		      old_highlight_thickness, 
-		      old_width - old_highlight_thickness, 
-		      old_shadow_thickness, 
-		      False);
+	  _XmPlatClearOneRect (XtDisplay (w), XtWindow (w), 0, old_height - old_shadow_thickness - 
+		      old_highlight_thickness, old_width - old_highlight_thickness, old_shadow_thickness);
    }
 }
 

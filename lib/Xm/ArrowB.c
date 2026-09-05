@@ -44,6 +44,7 @@ static char rcsid[] = "$XConsortium: ArrowB.c /main/16 1995/10/25 19:50:57 cde-s
 #include "TravActI.h"
 #include "TraversalI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define DELAY_DEFAULT	100
 
@@ -905,7 +906,7 @@ DrawArrow(XmArrowButtonWidget aw,
       center_gc = aw->arrowbutton.arrow_GC ;
 
   if (center_gc)
-    XSetClipMask(XtDisplay((Widget)aw), center_gc, None);
+    _XmPlatClrClip (XtDisplay ((Widget)aw), center_gc);
 
   XmeDrawArrow (XtDisplay ((Widget) aw), XtWindow ((Widget) aw),
 		top_gc, bottom_gc, center_gc,

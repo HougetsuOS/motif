@@ -176,6 +176,7 @@ am__libXm_la_SOURCES_DIST = XmStrDefs.c ArrowB.c ArrowBG.c BulletinB.c \
 	Picture.c DataFSel.c DataF.c MultiList.c I18List.c Paned.c \
 	FontS.c IconBox.c IconButton.c xmlist.c Hierarchy.c Outline.c \
 	TabBox.c TabList.c TabStack.c DrawUtils.c Tree.c DropDown.c \
+	XmPlat/XmPlat.c XmPlat/XmPlatDraw.c \
 	XmStrDefs.ht XmStrDefs22.ht XmStrDefs23.ht XmStrDefsI.ht \
 	Jpeg.c Png.c
 am__objects_1 = XmStrDefs.lo ArrowB.lo ArrowBG.lo BulletinB.lo \
@@ -230,10 +231,12 @@ am__objects_10 = XmExtUtil.lo Column.lo ButtonBox.lo ColorS.lo \
 	DrawUtils.lo Tree.lo DropDown.lo
 @OM_LIBJPEG_TRUE@am__objects_11 = Jpeg.lo
 @OM_LIBPNG_TRUE@am__objects_12 = Png.lo
+am__objects_13 = XmPlat/XmPlat.lo XmPlat/XmPlatDraw.lo
 am_libXm_la_OBJECTS = $(am__objects_1) $(am__objects_3) \
 	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
 	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
-	$(am__objects_10) $(am__objects_11) $(am__objects_12)
+	$(am__objects_10) $(am__objects_11) $(am__objects_12) \
+	$(am__objects_13)
 libXm_la_OBJECTS = $(am_libXm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -1065,8 +1068,18 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
+# XmPlat: explicit pattern rule for the subdirectory (no automake regen)
+XmPlat/%.lo : XmPlat/%.c XmPlat/XmPlatP.h XmPlat/XmPlat.h XmPlat/XmPlatTypes.h
+@am__fastdepCC_TRUE@	$(MKDIR_P) XmPlat/$(DEPDIR)
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT XmPlat/$* -MD -MP -MF XmPlat/.deps/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) XmPlat/.deps/$*.Tpo XmPlat/.deps/$*.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
 mostlyclean-libtool:
 	-rm -f *.lo
+	-rm -f XmPlat/*.lo
+	-rm -rf XmPlat/.libs XmPlat/.deps
 
 clean-libtool:
 	-rm -rf .libs _libs

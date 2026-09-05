@@ -60,6 +60,7 @@ static char rcsid[] = "$TOG: CascadeB.c /main/27 1999/08/11 14:26:35 mgreess $"
 #include "TearOffI.h"
 #include "TraversalI.h"
 #include "UniqueEvnI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define FIX_1509
 
@@ -564,20 +565,20 @@ DrawCascade(
 		       NULL, NULL); 
 
       if (depth == cb->core.depth)
-	  XCopyArea (XtDisplay(cb), 
-		     pixmap, 
-		     XtWindow(cb),
-		     cb->label.normal_GC, 0, 0, 
-		     CB_Cascade_width(cb), CB_Cascade_height(cb),
-		     CB_Cascade_x(cb), CB_Cascade_y(cb));
+	  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(cb), XtWindow(cb), cb->label.normal_GC) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(cb), pixmap) ;
+  _XmPlatBlit (_c, _src, 0, 0, CB_Cascade_x(cb), CB_Cascade_y(cb), CB_Cascade_width(cb), CB_Cascade_height(cb)) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
       else 
       if (depth == 1) 
-	  XCopyPlane (XtDisplay(cb), 
-		      pixmap, 
-		      XtWindow(cb),
-		      cb->label.normal_GC, 0, 0, 
-		      CB_Cascade_width(cb), CB_Cascade_height(cb),
-		      CB_Cascade_x(cb), CB_Cascade_y(cb), 1);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(cb), XtWindow(cb), cb->label.normal_GC) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(cb), pixmap) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, CB_Cascade_x(cb), CB_Cascade_y(cb), CB_Cascade_width(cb), CB_Cascade_height(cb)) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
   
   }
 }
@@ -604,20 +605,15 @@ Redisplay(
 	if (etched_in) {
 #ifdef FIX_1509
 		if (CB_IsArmed(cb))
-		    XFillRectangle(XtDisplay(cb), XtWindow(cb), CB_ArmGC(cb),
-				   0, 0, cb->core.width, cb->core.height);
+		    _XmPlatFillOneRect (XtDisplay (cb), XtWindow (cb), CB_ArmGC(cb), 0, 0, cb->core.width, cb->core.height);
 		else
-	        XClearArea(XtDisplay(cb), XtWindow(cb),
-				0, 0, cb->core.width, cb->core.height, False);
+	        _XmPlatClearOneRect (XtDisplay (cb), XtWindow (cb), 0, 0, cb->core.width, cb->core.height);
 #else
-	    XFillRectangle(XtDisplay(cb), XtWindow(cb),
-		           CB_IsArmed(cb) ? CB_ArmGC(cb) : CB_BackgroundGC(cb),
-			   0, 0, cb->core.width, cb->core.height);
+	    _XmPlatFillOneRect (XtDisplay (cb), XtWindow (cb), CB_IsArmed(cb) ? CB_ArmGC(cb) : CB_BackgroundGC(cb), 0, 0, cb->core.width, cb->core.height);
 #endif
 #ifdef USE_XFT
 	} else if (Lab_MenuType(cb) != XmWORK_AREA) { /* adeed with XFT support */
-        XClearArea(XtDisplay(cb), XtWindow(cb),
-			0, 0, cb->core.width, cb->core.height, False);
+        _XmPlatClearOneRect (XtDisplay (cb), XtWindow (cb), 0, 0, cb->core.width, cb->core.height);
 #endif
 	}
 	if (etched_in && CB_IsArmed(cb)) {

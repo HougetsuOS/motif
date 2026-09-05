@@ -40,6 +40,7 @@ static char rcsid[] = "$TOG: PanedW.c /main/24 1999/07/13 07:46:01 mgreess $"
 #include <Xm/VaSimpleP.h>
 #include "MessagesI.h"
 #include "RepTypeI.h"
+#include "XmPlat/XmPlatP.h"
 
 typedef enum {FirstPane='U', LastPane='L'} Direction;
 
@@ -1228,18 +1229,10 @@ DrawTrackLines(
 	if (PaneOldDPos(*childP) != PaneDPos(*childP)) {
 	    offset =  PaneOldDPos(*childP) - (pw->paned_window.spacing +
                       sep_size) / 2;
-            XDrawLine(XtDisplay(pw), XtWindow(pw), pw->paned_window.flipgc, 
-		      Major(pw, offset, 0), 
-		      Major(pw, 0, offset),
-		      Major(pw, offset, pw->core.width),
-		      Major(pw, pw->core.height, offset));
+            _XmPlatDrawOneLine (XtDisplay(pw), XtWindow(pw), pw->paned_window.flipgc, Major(pw, offset, 0), Major(pw, 0, offset), Major(pw, offset, pw->core.width), Major(pw, pw->core.height, offset)) ;
 	    offset = PaneDPos(*childP) - (pw->paned_window.spacing +
                       sep_size) / 2;
-            XDrawLine(XtDisplay(pw), XtWindow(pw), pw->paned_window.flipgc,
-		      Major(pw, offset, 0), 
-		      Major(pw, 0, offset),
-		      Major(pw, offset, pw->core.width),
-		      Major(pw, pw->core.height, offset));
+            _XmPlatDrawOneLine (XtDisplay(pw), XtWindow(pw), pw->paned_window.flipgc, Major(pw, offset, 0), Major(pw, 0, offset), Major(pw, offset, pw->core.width), Major(pw, pw->core.height, offset)) ;
 	    PaneOldDPos(*childP) = PaneDPos(*childP);
 	}
     }
@@ -1272,10 +1265,7 @@ EraseTrackLines(
         sep_size = pane->separator ? MajorChildSize(pw, pane->separator): 2;
 	offset = PaneOldDPos(*childP) - (pw->paned_window.spacing +
                   sep_size) / 2;
-	XDrawLine(XtDisplay(pw), XtWindow(pw), pw->paned_window.flipgc, 
-		  Major(pw, offset, 0), Major(pw, 0, offset),
-		  Major(pw, offset, pw->core.width),
-		  Major(pw, pw->core.height, offset));
+	_XmPlatDrawOneLine (XtDisplay(pw), XtWindow(pw), pw->paned_window.flipgc, Major(pw, offset, 0), Major(pw, 0, offset), Major(pw, offset, pw->core.width), Major(pw, pw->core.height, offset)) ;
     }
 }
 

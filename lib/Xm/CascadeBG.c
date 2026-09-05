@@ -64,6 +64,7 @@ static char rcsid[] = "$TOG: CascadeBG.c /main/28 1999/02/01 18:47:11 mgreess $"
 #include "TravActI.h"
 #include "TraversalI.h"
 #include "UniqueEvnI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define CASCADE_PIX_SPACE     4	/* pixels between label and bit map */
 #define MAP_DELAY_DEFAULT   180
@@ -899,11 +900,7 @@ DrawCascade(
 	 if (LayoutIsRtoLG(cb))
 	   {
 	     offset_x = (CBG_Cascade_width(cb) - width - G_ShadowThickness(cb));
-	     XFillRectangle(XtDisplay(cb), XtWindow(XtParent(cb)),
-			    LabG_BackgroundGC(cb),
-			    cb->rectangle.x + CBG_Cascade_x(cb) + offset_x,
-			    cb->rectangle.y + CBG_Cascade_y(cb) + offset_y,
-			    width, height);
+	     _XmPlatFillOneRect (XtDisplay (cb), XtWindow (XtParent(cb)), LabG_BackgroundGC(cb), cb->rectangle.x + CBG_Cascade_x(cb) + offset_x, cb->rectangle.y + CBG_Cascade_y(cb) + offset_y, width, height);
 	     
 	     XmeDrawShadows(XtDisplay(cb), XtWindow(XtParent(cb)),
 			    LabG_TopShadowGC(cb), LabG_BottomShadowGC(cb),
@@ -918,12 +915,8 @@ DrawCascade(
 	   }
 	 else
 	   {
-	     XFillRectangle(XtDisplay(cb), XtWindow(XtParent(cb)),
-			    LabG_BackgroundGC(cb),
-			    cb->rectangle.x + CBG_Cascade_x(cb) + 
-			    G_ShadowThickness(cb),
-			    cb->rectangle.y + CBG_Cascade_y(cb) + offset_y,
-			    width, height);
+	     _XmPlatFillOneRect (XtDisplay (cb), XtWindow (XtParent(cb)), LabG_BackgroundGC(cb), cb->rectangle.x + CBG_Cascade_x(cb) + 
+			    G_ShadowThickness(cb), cb->rectangle.y + CBG_Cascade_y(cb) + offset_y, width, height);
 	    
 	     XmeDrawShadows(XtDisplay(cb), XtWindow(XtParent(cb)),
 			    LabG_TopShadowGC(cb), LabG_BottomShadowGC(cb),
@@ -952,20 +945,20 @@ DrawCascade(
 			   NULL, NULL); 
 
 	  if (depth == XtParent(cb)->core.depth)
-	      XCopyArea (XtDisplay(cb), pixmap, 
-			 XtWindow(XtParent(cb)),
-			 LabG_NormalGC(cb), 0, 0, 
-			 CBG_Cascade_width(cb), CBG_Cascade_height(cb),
-			 cb->rectangle.x + CBG_Cascade_x(cb), 
-			 cb->rectangle.y + CBG_Cascade_y(cb));
+	      { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(cb), XtWindow(XtParent(cb)), LabG_NormalGC(cb)) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(cb), pixmap) ;
+  _XmPlatBlit (_c, _src, 0, 0, cb->rectangle.x + CBG_Cascade_x(cb), cb->rectangle.y + CBG_Cascade_y(cb), CBG_Cascade_width(cb), CBG_Cascade_height(cb)) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	 else 
 	 if (depth == 1) 
-	     XCopyPlane (XtDisplay(cb), pixmap, 
-			 XtWindow(XtParent(cb)),
-			 LabG_NormalGC(cb), 0, 0, 
-			 CBG_Cascade_width(cb), CBG_Cascade_height(cb),
-			 cb->rectangle.x + CBG_Cascade_x(cb), 
-			 cb->rectangle.y + CBG_Cascade_y(cb), 1);
+	     { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(cb), XtWindow(XtParent(cb)), LabG_NormalGC(cb)) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(cb), pixmap) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, cb->rectangle.x + CBG_Cascade_x(cb), cb->rectangle.y + CBG_Cascade_y(cb), CBG_Cascade_width(cb), CBG_Cascade_height(cb)) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
       }
    }
 }
@@ -1042,10 +1035,7 @@ Redisplay(
           position_cascade(cb);
 
 	if (etched_in) {
-	    XFillRectangle (XtDisplay(cb), XtWindow(XtParent(cb)),
-	                CBG_IsArmed(cb) ? CBG_ArmGC(cb) : CBG_BackgroundGC(cb),
-			    cb->rectangle.x, cb->rectangle.y,
-			    cb->rectangle.width, cb->rectangle.height);
+	    _XmPlatFillOneRect (XtDisplay (cb), XtWindow (XtParent(cb)), CBG_IsArmed(cb) ? CBG_ArmGC(cb) : CBG_BackgroundGC(cb), cb->rectangle.x, cb->rectangle.y, cb->rectangle.width, cb->rectangle.height);
 	}
 
 	if (etched_in && CBG_IsArmed(cb)) {
@@ -1073,7 +1063,10 @@ Redisplay(
 	    if (values.background != select_pix)
 	    {
 			values.background = select_pix;
-			XChangeGC(XtDisplay((Widget)cb), LabG_BackgroundGC(cb), GCBackground, &values);
+			{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)cb), 0, LabG_BackgroundGC(cb)) ;
+  _XmPlatChangeGCValues (_c, GCBackground, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 		}
 	    tmp_bgc = LabG_BackgroundGC(cb);
 	    LabG_BackgroundGC(cb) = CBG_ArmGC(cb);
@@ -2084,8 +2077,7 @@ _XmCreateArrowPixmaps(
 
          armed_arrow->pixmap = pixmap;
 
-         XFillRectangle(XtDisplay(cb), pixmap, etched_in? armGC : gc, 
-			0, 0, side, side);
+         _XmPlatFillOneRect (XtDisplay (cb), pixmap, etched_in? armGC : gc, 0, 0, side, side) ;
 	 XmeDrawArrow(XtDisplay((Widget)cb), pixmap,
 		bsGC, tsGC, gc,
 		ht + st - 1,
@@ -2103,7 +2095,7 @@ _XmCreateArrowPixmaps(
 
          unarmed_arrow->pixmap = pixmap;
 
-         XFillRectangle(XtDisplay(cb), pixmap, gc, 0, 0, side, side);
+         _XmPlatFillOneRect (XtDisplay (cb), pixmap, gc, 0, 0, side, side) ;
 	 XmeDrawArrow(XtDisplay((Widget)cb), pixmap,
 	 tsGC, bsGC, gc, 
 	 	ht + st - 1, 

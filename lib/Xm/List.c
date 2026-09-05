@@ -70,6 +70,7 @@ static char rcsid[] = "$TOG: List.c /main/47 1999/10/12 16:58:17 mgreess $"
 #include "XmStringI.h"
 #include "ToolTipI.h"
 #include <Xm/XmP.h>
+#include "XmPlat/XmPlatP.h"
 
 #define FIX_1390	1
 #define FIX_1365	1
@@ -2379,8 +2380,7 @@ DrawList(XmListWidget lw,
 	  available_height = lw->core.height - lw->list.BaseY;
 
 	if (y < available_height)
-	  XClearArea (XtDisplay (lw), XtWindow (lw), lw->list.BaseX, y,
-		      CalcVizWidth(lw), (available_height - y), False);
+	  _XmPlatClearOneRect (XtDisplay (lw), XtWindow (lw), lw->list.BaseX, y, CalcVizWidth(lw), (available_height - y));
       }
 
       if (lw->list.Traversing)
@@ -2465,15 +2465,18 @@ DrawItems(XmListWidget lw,
 	lw->list.InternalList[pos]->selected;
 
       /* Need to pad dimensions by one because of X fill semantics. */
-      XFillRectangle(XtDisplay(lw), XtWindow(lw),
-		     ((lw->list.InternalList[pos]->selected) ?
-		      lw->list.NormalGC : lw->list.InverseGC),
 #ifdef FIX_1365
-			  lw->list.BaseX, y - 1,
-			  width + 1, lw->list.MaxItemHeight + 1);
+      _XmPlatFillOneRect (XtDisplay (lw), XtWindow (lw),
+			  ((lw->list.InternalList[pos]->selected) ?
+			   lw->list.NormalGC : lw->list.InverseGC),
+			  lw->list.BaseX, y - 1, width + 1,
+			  lw->list.MaxItemHeight + 1);
 #else
-		     lw->list.BaseX, y,
-		     width + 1, lw->list.MaxItemHeight);
+      _XmPlatFillOneRect (XtDisplay (lw), XtWindow (lw),
+			  ((lw->list.InternalList[pos]->selected) ?
+			   lw->list.NormalGC : lw->list.InverseGC),
+			  lw->list.BaseX, y,
+			  width + 1, lw->list.MaxItemHeight);
 #endif
 
       if (XtIsSensitive((Widget)lw))
@@ -2898,7 +2901,10 @@ ChangeHighlightGC(XmListWidget lw,
   values.line_style = (AddMode) ? LineDoubleDash : LineSolid;
 
   if (lw->list.HighlightGC)
-    XChangeGC (XtDisplay(lw), lw->list.HighlightGC, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(lw), 0, lw->list.HighlightGC) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 
 /************************************************************************
@@ -8086,12 +8092,7 @@ CleanUpList(XmListWidget lw,
       VertMargin = lw->list.margin_height + lw->primitive.shadow_thickness;
 
       if (XtIsRealized((Widget)lw))
-	XClearArea(XtDisplay (lw), XtWindow (lw),
-		   HorzMargin,
-		   VertMargin,
-		   lw->core.width - (2 * HorzMargin),
-		   lw->core.height - (2 * VertMargin),
-		   False);
+	_XmPlatClearOneRect (XtDisplay (lw), XtWindow (lw), HorzMargin, VertMargin, lw->core.width - (2 * HorzMargin), lw->core.height - (2 * VertMargin));
     }
 }
 

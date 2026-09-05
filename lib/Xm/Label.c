@@ -76,6 +76,7 @@ static char rcsid[] = "$TOG: Label.c /main/26 1997/06/18 17:40:00 samborn $"
 #ifdef USE_XFT
 #include "XmRenderTI.h"
 #include <X11/Xft/Xft.h>
+#include "XmPlat/XmPlatP.h"
 #endif
 #endif
 
@@ -1457,7 +1458,7 @@ Redisplay(
 #endif
     } else
     {
-      XSetClipMask (XtDisplay (lw), clipgc, None);
+      _XmPlatClrClip (XtDisplay (lw), clipgc);
 #ifdef FIX_1521
 #ifdef USE_XFT
       XftDraw* draw = _XmXftDrawCreate(XtDisplay(lw), XtWindow(lw));
@@ -1471,11 +1472,7 @@ Redisplay(
     if ((Lab_IsText (lw) || Lab_IsPixmapAndText(lw)) && (lp->_label != NULL)
 		&& lp->TextRect.width > 0 && lp->TextRect.height > 0)
       {
-        XClearArea(XtDisplay(lw), XtWindow(lw),
-			lp->TextRect.x,
-			lp->TextRect.y,
- 			lp->TextRect.width,
-			lp->TextRect.height, False);
+        _XmPlatClearOneRect (XtDisplay (lw), XtWindow (lw), lp->TextRect.x, lp->TextRect.y, lp->TextRect.width, lp->TextRect.height);
      }
 #endif
   
@@ -1491,19 +1488,19 @@ Redisplay(
 			       NULL, NULL, NULL, NULL, NULL, NULL);   
 	      
 	      if (depth == lw->core.depth)
-		XCopyArea (XtDisplay(lw), Pix(lw), XtWindow(lw), gc, 0, 0, 
-			   lp->PixmapRect.width,
-			   lp->PixmapRect.height,
-			   lp->TextRect.x + lp->PixmapRect.x,
-			   lp->TextRect.y + lp->PixmapRect.y); 
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(lw), XtWindow(lw), gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(lw), Pix(lw)) ;
+  _XmPlatBlit (_c, _src, 0, 0, lp->TextRect.x + lp->PixmapRect.x, lp->TextRect.y + lp->PixmapRect.y, lp->PixmapRect.width, lp->PixmapRect.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  } 
 	      else if (depth == 1)
-		XCopyPlane (XtDisplay(lw), Pix(lw), XtWindow(lw), 
-			    gc, 0, 0, 
-			    lp->PixmapRect.width,
-			    lp->PixmapRect.height,
-			    lp->TextRect.x + lp->PixmapRect.x,
-			    lp->TextRect.y + lp->PixmapRect.y,
-			    1); 
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(lw), XtWindow(lw), gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(lw), Pix(lw)) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, lp->TextRect.x + lp->PixmapRect.x, lp->TextRect.y + lp->PixmapRect.y, lp->PixmapRect.width, lp->PixmapRect.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  } 
 	    }
 	}
       else 
@@ -1524,20 +1521,19 @@ Redisplay(
 			       NULL, NULL, NULL, NULL, NULL, NULL);   
 	      
 	      if (depth == lw->core.depth)
-		XCopyArea (XtDisplay(lw), pix_use, XtWindow(lw), 
-			   gc, 0, 0, 
-			   lp->PixmapRect.width,
-			   lp->PixmapRect.height,
-			   lp->TextRect.x + lp->PixmapRect.x,
-			   lp->TextRect.y + lp->PixmapRect.y);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(lw), XtWindow(lw), gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(lw), pix_use) ;
+  _XmPlatBlit (_c, _src, 0, 0, lp->TextRect.x + lp->PixmapRect.x, lp->TextRect.y + lp->PixmapRect.y, lp->PixmapRect.width, lp->PixmapRect.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	      else if (depth == 1)
-		XCopyPlane (XtDisplay(lw), pix_use, XtWindow(lw), 
-			    gc, 0, 0, 
-			    lp->PixmapRect.width,
-			    lp->PixmapRect.height,
-			    lp->TextRect.x + lp->PixmapRect.x,
-			    lp->TextRect.y + lp->PixmapRect.y,
-			    1); 
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(lw), XtWindow(lw), gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(lw), pix_use) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, lp->TextRect.x + lp->PixmapRect.x, lp->TextRect.y + lp->PixmapRect.y, lp->PixmapRect.width, lp->PixmapRect.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  } 
 
 #ifndef FIX_1381
 	      /* if no insensitive pixmap but a regular one, we need
@@ -1545,11 +1541,7 @@ Redisplay(
  	      if (pix_use == Pix(lw)) {
  		  /* need fill stipple, not opaque */
  		  XSetFillStyle(XtDisplay(lw), gc, FillStippled);
- 		  XFillRectangle(XtDisplay(lw), XtWindow(lw), gc,
-			lp->TextRect.x + lp->PixmapRect.x,
-			lp->TextRect.y + lp->PixmapRect.y,
- 			lp->PixmapRect.width,
-			lp->PixmapRect.height);
+ 		  _XmPlatFillOneRect (XtDisplay (lw), XtWindow (lw), gc, lp->TextRect.x + lp->PixmapRect.x, lp->TextRect.y + lp->PixmapRect.y, lp->PixmapRect.width, lp->PixmapRect.height);
  		  XSetFillStyle(XtDisplay(lw), gc, FillOpaqueStippled);
 
  	      }
@@ -1558,11 +1550,7 @@ Redisplay(
 	      if (pix_use == Pix(lw)) {
 		  XSetFillStyle(XtDisplay(lw), gc, FillStippled);
 		  XSetStipple(XtDisplay(lw), gc, _XmGetInsensitiveStippleBitmap((Widget)lw));
-		  XFillRectangle(XtDisplay(lw), XtWindow(lw), gc,
-			lp->TextRect.x + lp->PixmapRect.x,
-			lp->TextRect.y + lp->PixmapRect.y,
-			lp->PixmapRect.width,
-			lp->PixmapRect.height);
+		  _XmPlatFillOneRect (XtDisplay (lw), XtWindow (lw), gc, lp->TextRect.x + lp->PixmapRect.x, lp->TextRect.y + lp->PixmapRect.y, lp->PixmapRect.width, lp->PixmapRect.height);
 		  XSetFillStyle(XtDisplay(lw), gc, FillSolid);
 
 	      }
@@ -1688,11 +1676,7 @@ Redisplay(
       if (!XtIsSensitive(wid))
         {
           XSetFillStyle(XtDisplay(lw), lp->insensitive_GC, FillStippled);
-          XFillRectangle(XtDisplay(lw), XtWindow(lw), lp->insensitive_GC,
-			lp->TextRect.x + lp->StringRect.x,
-			lp->TextRect.y + lp->StringRect.y,
- 			lp->StringRect.width,
-			lp->StringRect.height);
+          _XmPlatFillOneRect (XtDisplay (lw), XtWindow (lw), lp->insensitive_GC, lp->TextRect.x + lp->StringRect.x, lp->TextRect.y + lp->StringRect.y, lp->StringRect.width, lp->StringRect.height);
           XSetFillStyle(XtDisplay(lw), lp->insensitive_GC, FillOpaqueStippled);
         }
 #endif

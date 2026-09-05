@@ -49,6 +49,7 @@ static char rcsid[] = "$TOG: ScrollBar.c /main/20 1997/03/10 14:52:28 dbl $"
 #include "RepTypeI.h"
 #include "ScreenI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 /* see comments in ScrollBarP.h */
 #define slider_visual	etched_slider
@@ -1181,20 +1182,14 @@ DrawSliderPixmap(
 	   /* The trough area itself has been set, as the window background,
 	      to either the trough color (not in that case) or the background
 	      pixel */ 
-	   XSetClipMask(XtDisplay((Widget) sbw), 
-			sbw->scrollBar.flat_slider_GC, 
-			None);
-	   XFillRectangle (XtDisplay ((Widget) sbw), slider,
-			   sbw->scrollBar.flat_slider_GC,
-			   0, 0, slider_width, slider_height);
+	   _XmPlatClrClip (XtDisplay ((Widget) sbw), sbw->scrollBar.flat_slider_GC);
+	   _XmPlatFillOneRect (XtDisplay ((Widget) sbw), slider, sbw->scrollBar.flat_slider_GC, 0, 0, slider_width, slider_height) ;
    } else 
    if ((sbw->scrollBar.slider_visual == XmBACKGROUND_COLOR) ||
        (sbw->scrollBar.slider_visual == XmSHADOWED_BACKGROUND)) {
    
        /* in all other case, draw the shadow */
-       XFillRectangle (XtDisplay ((Widget) sbw), slider,
-		       sbw->scrollBar.foreground_GC,
-		       0, 0, slider_width, slider_height);
+       _XmPlatFillOneRect (XtDisplay ((Widget) sbw), slider, sbw->scrollBar.foreground_GC, 0, 0, slider_width, slider_height) ;
    
        if (sbw->scrollBar.slider_visual == XmSHADOWED_BACKGROUND)
 	   XmeDrawShadows (XtDisplay (sbw), slider,
@@ -1229,23 +1224,11 @@ DrawSliderPixmap(
    if (sbw->scrollBar.slider_mark == XmETCHED_LINE) {
 
       if (sbw->scrollBar.orientation == XmHORIZONTAL) {
-         XDrawLine (XtDisplay (sbw), slider,
-                    sbw->primitive.bottom_shadow_GC,
-                    slider_width / 2 - 1, 1, 
-                    slider_width / 2 - 1, slider_height - 2);
-         XDrawLine (XtDisplay (sbw), slider,
-                    sbw->primitive.top_shadow_GC,
-                    slider_width / 2, 1, 
-                    slider_width / 2, slider_height - 2);
+         _XmPlatDrawOneLine (XtDisplay (sbw), slider, sbw->primitive.bottom_shadow_GC, slider_width / 2 - 1, 1, slider_width / 2 - 1, slider_height - 2) ;
+         _XmPlatDrawOneLine (XtDisplay (sbw), slider, sbw->primitive.top_shadow_GC, slider_width / 2, 1, slider_width / 2, slider_height - 2) ;
       } else {
-         XDrawLine (XtDisplay (sbw), slider,
-                    sbw->primitive.bottom_shadow_GC,
-                    1, slider_height / 2 - 1,
-                    slider_width - 2, slider_height / 2 - 1);
-         XDrawLine (XtDisplay (sbw), slider,
-                    sbw->primitive.top_shadow_GC,
-                    1, slider_height / 2,
-                    slider_width - 2, slider_height / 2);
+         _XmPlatDrawOneLine (XtDisplay (sbw), slider, sbw->primitive.bottom_shadow_GC, 1, slider_height / 2 - 1, slider_width - 2, slider_height / 2 - 1) ;
+         _XmPlatDrawOneLine (XtDisplay (sbw), slider, sbw->primitive.top_shadow_GC, 1, slider_height / 2, slider_width - 2, slider_height / 2) ;
       }
    } else
 
@@ -1323,12 +1306,12 @@ CopySliderInWindow(
 {
     /* use the pixmap that contains the slider graphics */
     if (XtIsRealized((Widget)sbw) && sbw->scrollBar.pixmap) {
-	XCopyArea (XtDisplay ((Widget) sbw),
-		   sbw->scrollBar.pixmap, XtWindow ((Widget) sbw),
-		   sbw->scrollBar.foreground_GC,
-		   0, 0,
-		   sbw->scrollBar.slider_width, sbw->scrollBar.slider_height,
-		   sbw->scrollBar.slider_x, sbw->scrollBar.slider_y);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay ((Widget) sbw), XtWindow ((Widget) sbw), sbw->scrollBar.foreground_GC) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay ((Widget) sbw), sbw->scrollBar.pixmap) ;
+  _XmPlatBlit (_c, _src, 0, 0, sbw->scrollBar.slider_x, sbw->scrollBar.slider_y, sbw->scrollBar.slider_width, sbw->scrollBar.slider_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
 }
 
@@ -1348,12 +1331,7 @@ RedrawSliderWindow(
     short old_slider_height = sbw->scrollBar.slider_height ;
     
     if (XtIsRealized((Widget)sbw))
-	XClearArea(XtDisplay ((Widget) sbw), XtWindow ((Widget) sbw),
-		   (int) sbw->scrollBar.slider_area_x,
-		   (int) sbw->scrollBar.slider_area_y,
-		   (unsigned int) sbw->scrollBar.slider_area_width,
-		   (unsigned int) sbw->scrollBar.slider_area_height,
-		   (Bool) FALSE);
+	_XmPlatClearOneRect (XtDisplay ((Widget) sbw), XtWindow ((Widget) sbw), (int) sbw->scrollBar.slider_area_x, (int) sbw->scrollBar.slider_area_y, (unsigned int) sbw->scrollBar.slider_area_width, (unsigned int) sbw->scrollBar.slider_area_height);
 
     CalcSliderRect(sbw,
 		   &(sbw->scrollBar.slider_x),
@@ -1587,39 +1565,20 @@ Redisplay(
   }
 
     if (!(XtIsSensitive(wid))) {
-        XSetClipMask(XtDisplay(sbw), sbw->scrollBar.unavailable_GC, None);
-	XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-		       sbw->scrollBar.unavailable_GC,
-		       sbw->primitive.highlight_thickness
-		       + sbw->primitive.shadow_thickness,
-		       sbw->primitive.highlight_thickness
-		       + sbw->primitive.shadow_thickness,
-		       XtWidth(sbw) - (2 * (sbw->primitive.highlight_thickness
-				+ sbw->primitive.shadow_thickness)),
-		       XtHeight(sbw) - (2 * (sbw->primitive.highlight_thickness
-				+ sbw->primitive.shadow_thickness)));
+        _XmPlatClrClip (XtDisplay (sbw), sbw->scrollBar.unavailable_GC);
+	_XmPlatFillOneRect (XtDisplay (sbw), XtWindow(sbw), sbw->scrollBar.unavailable_GC, sbw->primitive.highlight_thickness 		       + sbw->primitive.shadow_thickness, sbw->primitive.highlight_thickness 		       + sbw->primitive.shadow_thickness, XtWidth(sbw) - (2 * (sbw->primitive.highlight_thickness 				+ sbw->primitive.shadow_thickness)), XtHeight(sbw) - (2 * (sbw->primitive.highlight_thickness 				+ sbw->primitive.shadow_thickness))) ;
     }
 #ifdef FUNKY_INSENSITIVE_VISUAL
     else if (sbw->scrollBar.show_arrows)
     {
-        XSetClipMask(XtDisplay(sbw), sbw->scrollBar.unavailable_GC, None);
+        _XmPlatClrClip (XtDisplay (sbw), sbw->scrollBar.unavailable_GC);
         if (!(sbw->scrollBar.flags & ARROW1_AVAILABLE))
         {
-			XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-				sbw->scrollBar.unavailable_GC,
-				sbw->scrollBar.arrow1_x,
-				sbw->scrollBar.arrow1_y,
-				sbw->scrollBar.arrow_width,
-				sbw->scrollBar.arrow_height);
+			_XmPlatFillOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.unavailable_GC, sbw->scrollBar.arrow1_x, sbw->scrollBar.arrow1_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
         }
         if (!(sbw->scrollBar.flags & ARROW2_AVAILABLE))
         {
-			XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-				sbw->scrollBar.unavailable_GC,
-				sbw->scrollBar.arrow2_x,
-				sbw->scrollBar.arrow2_y,
-				sbw->scrollBar.arrow_width,
-				sbw->scrollBar.arrow_height);
+			_XmPlatFillOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.unavailable_GC, sbw->scrollBar.arrow2_x, sbw->scrollBar.arrow2_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
         }
     }
 #endif
@@ -2325,12 +2284,7 @@ SetValues(
 	/* have to clear the current slider before setting the
 	   new slider position and size */
 	if (XtIsRealized(nw))
-	    XClearArea(XtDisplay((Widget)new_w), 
-		       XtWindow((Widget)new_w),
-		       new_w->scrollBar.slider_x, 
-		       new_w->scrollBar.slider_y,
-		       new_w->scrollBar.slider_width,
-		       new_w->scrollBar.slider_height, False);
+	    _XmPlatClearOneRect (XtDisplay ((Widget)new_w), XtWindow ((Widget)new_w), new_w->scrollBar.slider_x, new_w->scrollBar.slider_y, new_w->scrollBar.slider_width, new_w->scrollBar.slider_height);
 	    
 	/* recompute the slider size and draw in the pixmap */
 	CalcSliderRect(new_w,
@@ -2384,17 +2338,8 @@ SetValues(
 	*/
 	    if (!(XtIsSensitive((Widget)new_w))) {
 		XmScrollBarWidget sbw = (XmScrollBarWidget) new_w;
-		XSetClipMask(XtDisplay(sbw), sbw->scrollBar.unavailable_GC, None);
-		XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-			       sbw->scrollBar.unavailable_GC,
-			       sbw->primitive.highlight_thickness
-			       + sbw->primitive.shadow_thickness,
-			       sbw->primitive.highlight_thickness
-			       + sbw->primitive.shadow_thickness,
-			       XtWidth(sbw) - (2 * (sbw->primitive.highlight_thickness
-					+ sbw->primitive.shadow_thickness)),
-			       XtHeight(sbw) - (2 * (sbw->primitive.highlight_thickness
-					+ sbw->primitive.shadow_thickness)));
+		_XmPlatClrClip (XtDisplay (sbw), sbw->scrollBar.unavailable_GC);
+		_XmPlatFillOneRect (XtDisplay (sbw), XtWindow(sbw), sbw->scrollBar.unavailable_GC, sbw->primitive.highlight_thickness 			       + sbw->primitive.shadow_thickness, sbw->primitive.highlight_thickness 			       + sbw->primitive.shadow_thickness, XtWidth(sbw) - (2 * (sbw->primitive.highlight_thickness 					+ sbw->primitive.shadow_thickness)), XtHeight(sbw) - (2 * (sbw->primitive.highlight_thickness 					+ sbw->primitive.shadow_thickness))) ;
 	    }
 	}
     }
@@ -2791,12 +2736,7 @@ Release(
     if ( (!(sbw->scrollBar.flags & ARROW1_AVAILABLE)) &&
 	(sbw->scrollBar.value > sbw->scrollBar.minimum))
 	{
-	    XClearArea(XtDisplay(sbw), XtWindow(sbw),
-		       sbw->scrollBar.arrow1_x,
-		       sbw->scrollBar.arrow1_y,
-		       sbw->scrollBar.arrow_width,
-		       sbw->scrollBar.arrow_height,
-		       FALSE);
+	    _XmPlatClearOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.arrow1_x, sbw->scrollBar.arrow1_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 	    
 	    DRAWARROW (sbw, sbw -> primitive.top_shadow_GC,
 		       sbw->primitive.bottom_shadow_GC,
@@ -2813,12 +2753,7 @@ Release(
 	(sbw->scrollBar.value < (sbw->scrollBar.maximum
 				 - sbw->scrollBar.slider_size)))
 	{
-	    XClearArea(XtDisplay(sbw), XtWindow(sbw),
-		       sbw->scrollBar.arrow2_x,
-		       sbw->scrollBar.arrow2_y,
-		       sbw->scrollBar.arrow_width,
-		       sbw->scrollBar.arrow_height,
-		       FALSE);
+	    _XmPlatClearOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.arrow2_x, sbw->scrollBar.arrow2_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 	    
 	    DRAWARROW (sbw, sbw->primitive.top_shadow_GC,
 		       sbw -> primitive.bottom_shadow_GC,
@@ -2870,24 +2805,14 @@ Release(
 	}
     
 #ifdef FUNKY_INSENSITIVE_VISUAL
-    XSetClipMask(XtDisplay(sbw), sbw->scrollBar.unavailable_GC, None);
+    _XmPlatClrClip (XtDisplay (sbw), sbw->scrollBar.unavailable_GC);
     if (! (sbw->scrollBar.flags & ARROW1_AVAILABLE))
 	{
-	    XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-			   sbw->scrollBar.unavailable_GC,
-			   sbw->scrollBar.arrow1_x,
-			   sbw->scrollBar.arrow1_y,
-			   sbw->scrollBar.arrow_width,
-			   sbw->scrollBar.arrow_height);
+	    _XmPlatFillOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.unavailable_GC, sbw->scrollBar.arrow1_x, sbw->scrollBar.arrow1_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 	}
     else if (! (sbw->scrollBar.flags & ARROW2_AVAILABLE))
 	{
-	    XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-			   sbw->scrollBar.unavailable_GC,
-			   sbw->scrollBar.arrow2_x,
-			   sbw->scrollBar.arrow2_y,
-			   sbw->scrollBar.arrow_width,
-			   sbw->scrollBar.arrow_height);
+	    _XmPlatFillOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.unavailable_GC, sbw->scrollBar.arrow2_x, sbw->scrollBar.arrow2_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 	}
 #endif
 }
@@ -3330,24 +3255,14 @@ TopOrBottom(
 		
     }
 #ifdef FUNKY_INSENSITIVE_VISUAL
-    XSetClipMask(XtDisplay(sbw), sbw->scrollBar.unavailable_GC, None);
+    _XmPlatClrClip (XtDisplay (sbw), sbw->scrollBar.unavailable_GC);
     if (sbp->value == sbp->minimum) {
-	XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-		       sbw->scrollBar.unavailable_GC,
-		       sbw->scrollBar.arrow1_x,
-		       sbw->scrollBar.arrow1_y,
-		       sbw->scrollBar.arrow_width,
-		       sbw->scrollBar.arrow_height);
+	_XmPlatFillOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.unavailable_GC, sbw->scrollBar.arrow1_x, sbw->scrollBar.arrow1_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 	
 	sbw->scrollBar.flags &= ~ARROW1_AVAILABLE;
 	
 	if (! (sbw->scrollBar.flags & ARROW2_AVAILABLE)) {
-	    XClearArea(XtDisplay(sbw), XtWindow(sbw),
-		       sbw->scrollBar.arrow2_x,
-		       sbw->scrollBar.arrow2_y,
-		       sbw->scrollBar.arrow_width,
-		       sbw->scrollBar.arrow_height,
-		       FALSE);
+	    _XmPlatClearOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.arrow2_x, sbw->scrollBar.arrow2_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 	    
 	    DRAWARROW (sbw, sbw -> primitive.top_shadow_GC,
 		       sbw->primitive.bottom_shadow_GC,
@@ -3360,22 +3275,12 @@ TopOrBottom(
     }
     else /* sbp->value == (sbp->maximum - sbp->slider_size) */
 	{
-	    /*		XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-			sbw->scrollBar.unavailable_GC,
-			sbw->scrollBar.arrow2_x,
-			sbw->scrollBar.arrow2_y,
-			sbw->scrollBar.arrow_width,
-			sbw->scrollBar.arrow_height);
+	    /*		_XmPlatFillOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.unavailable_GC, sbw->scrollBar.arrow2_x, sbw->scrollBar.arrow2_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 			*/
 	    sbw->scrollBar.flags &= ~ARROW2_AVAILABLE;
 	    
 	    if (! (sbw->scrollBar.flags & ARROW1_AVAILABLE)) {
-		XClearArea(XtDisplay(sbw), XtWindow(sbw),
-			   sbw->scrollBar.arrow1_x,
-			   sbw->scrollBar.arrow1_y,
-			   sbw->scrollBar.arrow_width,
-			   sbw->scrollBar.arrow_height,
-			   FALSE);
+		_XmPlatClearOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.arrow1_x, sbw->scrollBar.arrow1_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 		
 		DRAWARROW (sbw, sbw -> primitive.top_shadow_GC,
 			   sbw->primitive.bottom_shadow_GC,
@@ -3461,14 +3366,8 @@ IncrementUpOrLeft(
 		if ((sbw->scrollBar.value = new_value)
 			== sbw->scrollBar.minimum)
 		{
-		        XSetClipMask(XtDisplay(sbw), 
-				     sbw->scrollBar.unavailable_GC, None);
-			XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-				sbw->scrollBar.unavailable_GC,
-				sbw->scrollBar.arrow1_x,
-				sbw->scrollBar.arrow1_y,
-				sbw->scrollBar.arrow_width,
-				sbw->scrollBar.arrow_height);
+		        _XmPlatClrClip (XtDisplay (sbw), sbw->scrollBar.unavailable_GC);
+			_XmPlatFillOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.unavailable_GC, sbw->scrollBar.arrow1_x, sbw->scrollBar.arrow1_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 
             sbw->scrollBar.flags &= ~ARROW1_AVAILABLE;
 		}
@@ -3476,12 +3375,7 @@ IncrementUpOrLeft(
 		if ((sbw->scrollBar.show_arrows) &&
 		    (! (sbw->scrollBar.flags & ARROW2_AVAILABLE)))
 		{
-			XClearArea(XtDisplay(sbw), XtWindow(sbw),
-				sbw->scrollBar.arrow2_x,
-				sbw->scrollBar.arrow2_y,
-				sbw->scrollBar.arrow_width,
-				sbw->scrollBar.arrow_height,
-				FALSE);
+			_XmPlatClearOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.arrow2_x, sbw->scrollBar.arrow2_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 			
 			DRAWARROW (sbw, sbw -> primitive.top_shadow_GC,
 				sbw->primitive.bottom_shadow_GC,
@@ -3569,14 +3463,8 @@ IncrementDownOrRight(
 		if ((sbw->scrollBar.value = new_value)
 			== (sbw->scrollBar.maximum - sbw->scrollBar.slider_size))
 		{
-		        XSetClipMask(XtDisplay(sbw), 
-				     sbw->scrollBar.unavailable_GC, None);
-			XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-				sbw->scrollBar.unavailable_GC,
-				sbw->scrollBar.arrow2_x,
-				sbw->scrollBar.arrow2_y,
-				sbw->scrollBar.arrow_width,
-				sbw->scrollBar.arrow_height);
+		        _XmPlatClrClip (XtDisplay (sbw), sbw->scrollBar.unavailable_GC);
+			_XmPlatFillOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.unavailable_GC, sbw->scrollBar.arrow2_x, sbw->scrollBar.arrow2_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 
             sbw->scrollBar.flags &= ~ARROW2_AVAILABLE;
 		}
@@ -3585,12 +3473,7 @@ IncrementDownOrRight(
 		    (! (sbw->scrollBar.flags & ARROW1_AVAILABLE)))
 
 		{
-			XClearArea(XtDisplay(sbw), XtWindow(sbw),
-				sbw->scrollBar.arrow1_x,
-				sbw->scrollBar.arrow1_y,
-				sbw->scrollBar.arrow_width,
-				sbw->scrollBar.arrow_height,
-				FALSE);
+			_XmPlatClearOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.arrow1_x, sbw->scrollBar.arrow1_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 			
 			DRAWARROW (sbw, sbw -> primitive.top_shadow_GC,
 				sbw->primitive.bottom_shadow_GC,
@@ -3677,14 +3560,8 @@ PageUpOrLeft(
 		if ((sbw->scrollBar.value = new_value)
 			== sbw->scrollBar.minimum)
 		{
-		        XSetClipMask(XtDisplay(sbw), 
-				     sbw->scrollBar.unavailable_GC, None);
-			XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-				sbw->scrollBar.unavailable_GC,
-				sbw->scrollBar.arrow1_x,
-				sbw->scrollBar.arrow1_y,
-				sbw->scrollBar.arrow_width,
-				sbw->scrollBar.arrow_height);
+		        _XmPlatClrClip (XtDisplay (sbw), sbw->scrollBar.unavailable_GC);
+			_XmPlatFillOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.unavailable_GC, sbw->scrollBar.arrow1_x, sbw->scrollBar.arrow1_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 
             sbw->scrollBar.flags &= ~ARROW1_AVAILABLE;
 		}
@@ -3692,12 +3569,7 @@ PageUpOrLeft(
                if ((sbw->scrollBar.show_arrows) &&
                    (! (sbw->scrollBar.flags & ARROW2_AVAILABLE)))
 		{
-			XClearArea(XtDisplay(sbw), XtWindow(sbw),
-				sbw->scrollBar.arrow2_x,
-				sbw->scrollBar.arrow2_y,
-				sbw->scrollBar.arrow_width,
-				sbw->scrollBar.arrow_height,
-				FALSE);
+			_XmPlatClearOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.arrow2_x, sbw->scrollBar.arrow2_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 			
 			DRAWARROW (sbw, sbw -> primitive.top_shadow_GC,
 				sbw->primitive.bottom_shadow_GC,
@@ -3786,14 +3658,8 @@ PageDownOrRight(
 		if ((sbw->scrollBar.value = new_value)
 			== (sbw->scrollBar.maximum - sbw->scrollBar.slider_size))
 		{
-		        XSetClipMask(XtDisplay(sbw), 
-				     sbw->scrollBar.unavailable_GC, None);
-			XFillRectangle(XtDisplay(sbw), XtWindow(sbw),
-				sbw->scrollBar.unavailable_GC,
-				sbw->scrollBar.arrow2_x,
-				sbw->scrollBar.arrow2_y,
-				sbw->scrollBar.arrow_width,
-				sbw->scrollBar.arrow_height);
+		        _XmPlatClrClip (XtDisplay (sbw), sbw->scrollBar.unavailable_GC);
+			_XmPlatFillOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.unavailable_GC, sbw->scrollBar.arrow2_x, sbw->scrollBar.arrow2_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 
             sbw->scrollBar.flags &= ~ARROW2_AVAILABLE;
 		}
@@ -3801,12 +3667,7 @@ PageDownOrRight(
                if ((sbw->scrollBar.show_arrows) &&
                    (! (sbw->scrollBar.flags & ARROW1_AVAILABLE)))
 		{
-			XClearArea(XtDisplay(sbw), XtWindow(sbw),
-				sbw->scrollBar.arrow1_x,
-				sbw->scrollBar.arrow1_y,
-				sbw->scrollBar.arrow_width,
-				sbw->scrollBar.arrow_height,
-				FALSE);
+			_XmPlatClearOneRect (XtDisplay (sbw), XtWindow (sbw), sbw->scrollBar.arrow1_x, sbw->scrollBar.arrow1_y, sbw->scrollBar.arrow_width, sbw->scrollBar.arrow_height);
 			
 			DRAWARROW (sbw, sbw -> primitive.top_shadow_GC,
 				sbw->primitive.bottom_shadow_GC,
@@ -3929,11 +3790,7 @@ MoveSlider(
 	    if (sbw->scrollBar.pixmap != 0)
 		{
 		    CopySliderInWindow(sbw);
-		    XClearArea (XtDisplay((Widget)sbw), 
-				XtWindow((Widget)sbw),
-				seg[0].x1, oldY, 
-				seg[0].x2 - seg[0].x1 + 1, 
-				height, False);
+		    _XmPlatClearOneRect (XtDisplay ((Widget)sbw), XtWindow ((Widget)sbw), seg[0].x1, oldY, seg[0].x2 - seg[0].x1 + 1, height);
 		}
 	} 
     else /* sbw->scrollBar.orientation == XmVERTICAL */
@@ -3957,10 +3814,7 @@ MoveSlider(
 	    if (sbw->scrollBar.pixmap != 0)
 		{
 		    CopySliderInWindow(sbw);
-		    XClearArea (XtDisplay((Widget)sbw), 
-				XtWindow((Widget)sbw),
-				oldX, seg[0].y1, width,
-				seg[0].y2 - seg[0].y1 + 1, False);
+		    _XmPlatClearOneRect (XtDisplay ((Widget)sbw), XtWindow ((Widget)sbw), oldX, seg[0].y1, width, seg[0].y2 - seg[0].y1 + 1);
 		}
 	}
 }

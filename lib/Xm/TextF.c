@@ -138,6 +138,7 @@ static wchar_t* _Xmwcsncat(wchar_t *ws1, const wchar_t *ws2, size_t n)
 
 #else  /* !__FreeBSD__ */
 #include <wchar.h>
+#include "XmPlat/XmPlatP.h"
 #endif /* __FreeBSD__ */
 
 #define MSG1		_XmMMsgTextF_0000
@@ -1539,8 +1540,11 @@ _XmTextFToggleCursorGC(Widget widget)
 #ifdef FIX_1501
   }
 #endif
-  XSetClipMask(XtDisplay(widget), tf->text.save_gc, None);
-  XChangeGC(XtDisplay(widget), tf->text.image_gc, valueMask, &values);
+  _XmPlatClrClip (XtDisplay (widget), tf->text.save_gc);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(widget), 0, tf->text.image_gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 
 /*
@@ -1702,11 +1706,13 @@ PaintCursor(XmTextFieldWidget tf)
   
   if (tf->text.refresh_ibeam_off == True) { /* get area under IBeam first */
     /* Fill is needed to realign clip rectangle with gc */
-    XFillRectangle(XtDisplay((Widget)tf), XtWindow((Widget)tf),
-		   tf->text.save_gc, 0, 0, 0, 0);
-    XCopyArea(XtDisplay(tf), XtWindow(tf), tf->text.ibeam_off, 
-	      tf->text.save_gc, x, y, tf->text.cursor_width, 
-	      tf->text.cursor_height, 0, 0);
+    _XmPlatFillOneRect (XtDisplay ((Widget)tf), XtWindow ((Widget)tf), tf->text.save_gc, 0, 0, 0, 0);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), tf->text.ibeam_off, tf->text.save_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(tf), XtWindow(tf)) ;
+  _XmPlatBlit (_c, _src, x, y, 0, 0, tf->text.cursor_width, tf->text.cursor_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     tf->text.refresh_ibeam_off = False;
   }
   
@@ -1727,15 +1733,13 @@ PaintCursor(XmTextFieldWidget tf)
         if (cursor_width > 0 && cursor_height > 0) {
           if (!XtIsSensitive((Widget) tf)) {
             SetShadowGC(tf, tf->text.image_gc);
-            XFillRectangle(XtDisplay(tf), XtWindow(tf), tf->text.image_gc, x + 1, y + 1,
-                           (unsigned int) cursor_width, (unsigned int) cursor_height);
+            _XmPlatFillOneRect (XtDisplay (tf), XtWindow(tf), tf->text.image_gc, x + 1, y + 1, (unsigned int) cursor_width, (unsigned int) cursor_height) ;
           }
           _XmTextFToggleCursorGC((Widget) tf);
 #else
            if ( cursor_width > 0 && cursor_height > 0 )
 #endif
-    		XFillRectangle(XtDisplay(tf), XtWindow(tf), tf->text.image_gc, x, y,
-		   cursor_width, cursor_height);
+    		_XmPlatFillOneRect (XtDisplay (tf), XtWindow (tf), tf->text.image_gc, x, y, cursor_width, cursor_height);
 #ifdef FIX_1501
 	    }
 #endif
@@ -1767,9 +1771,12 @@ PaintCursor(XmTextFieldWidget tf)
                                  tf->primitive.shadow_thickness)));          
         }
            if (cursor_width > 0 && cursor_height > 0)
-  	  	XCopyArea(XtDisplay(tf), tf->text.ibeam_off, XtWindow(tf), 
-          tf->text.save_gc, src_x, 0, cursor_width, 
-          cursor_height, x, y);
+  	  	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), XtWindow(tf), tf->text.save_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(tf), tf->text.ibeam_off) ;
+  _XmPlatBlit (_c, _src, src_x, 0, x, y, cursor_width, cursor_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
   	}
   }
 }
@@ -1960,7 +1967,10 @@ _XmTextFieldSetClipRect(XmTextFieldWidget tf)
     }
     values.foreground = tf->primitive.foreground ^ tf->core.background_pixel;
     values.background = 0;
-    XChangeGC(XtDisplay(tf), tf->text.gc, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, tf->text.gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
   }
 }
 
@@ -1998,7 +2008,10 @@ SetNormGC(XmTextFieldWidget tf,
       values.fill_style = FillSolid;
   }
   
-  XChangeGC(XtDisplay(tf), gc, valueMask, &values);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 
 #ifdef FIX_1381
@@ -2011,7 +2024,10 @@ SetShadowGC(XmTextFieldWidget tf, GC gc)
   values.foreground = tf->primitive.top_shadow_color;
   values.background = tf->core.background_pixel;
 
-  XChangeGC(XtDisplay(tf), gc, valueMask, &values);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 #endif
 
@@ -2026,7 +2042,10 @@ SetInvGC(XmTextFieldWidget tf,
   values.foreground = tf->core.background_pixel;
   values.background = tf->primitive.foreground;
   
-  XChangeGC(XtDisplay(tf), gc, valueMask, &values);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 
 static void
@@ -2087,15 +2106,24 @@ DrawText(XmTextFieldWidget tf,
         { if (_XmIsISO10646(XtDisplay(tf), TextF_Font(tf))) {
             size_t str_len = 0;
             XChar2b *str = _XmUtf8ToUcs2(tmp, num_bytes, &str_len);
-            XDrawString16(XtDisplay(tf), XtWindow(tf), gc, x, y, str, str_len);
+            { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tf), XtWindow(tf), gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tf), gc), XmPlatText16, str, str_len, x, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
             XFree(str);
             } 
           else
-            XDrawString (XtDisplay(tf), XtWindow(tf), gc, x, y, tmp, num_bytes);
+            { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tf), XtWindow(tf), gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tf), gc), XmPlatText8, tmp, num_bytes, x, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+}
         }
       XmStackFree(tmp, stack_cache);
     } else /* one byte chars */
-      XDrawString (XtDisplay(tf), XtWindow(tf), gc, x, y, string, length);
+      { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tf), XtWindow(tf), gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tf), gc), XmPlatText8, string, length, x, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+}
   }
 }
 
@@ -2197,15 +2225,12 @@ DrawTextSegment(XmTextFieldWidget tf,
   if (mode == XmHIGHLIGHT_SELECTED) {
     /* Draw the selected text using an inverse gc */
     SetNormGC(tf, tf->text.gc, False, False);
-    XFillRectangle(XtDisplay(tf), XtWindow(tf), tf->text.gc, *x, 
-		   y - TextF_FontAscent(tf), x_seg_len,
-		   TextF_FontAscent(tf) + TextF_FontDescent(tf));
+    _XmPlatFillOneRect (XtDisplay (tf), XtWindow(tf), tf->text.gc, *x, y - TextF_FontAscent(tf), x_seg_len, TextF_FontAscent(tf) + TextF_FontDescent(tf)) ;
     SetInvGC(tf, tf->text.gc);
   } else {
     SetInvGC(tf, tf->text.gc);
-    XFillRectangle(XtDisplay(tf), XtWindow(tf), tf->text.gc, *x, 
-		   y - TextF_FontAscent(tf), x_seg_len,
-		   TextF_FontAscent(tf) + TextF_FontDescent(tf));
+    _XmPlatFillOneRect (XtDisplay (tf), XtWindow (tf), tf->text.gc, *x, 
+		   y - TextF_FontAscent(tf), x_seg_len, TextF_FontAscent(tf) + TextF_FontDescent(tf));
     SetNormGC(tf, tf->text.gc, True, stipple);
   }
 #ifdef FIX_1381
@@ -2234,8 +2259,7 @@ if (stipple){
   if (stipple) SetNormGC(tf, tf->text.gc, True, !stipple);
   
   if (mode == XmHIGHLIGHT_SECONDARY_SELECTED)
-    XDrawLine(XtDisplay(tf), XtWindow(tf), tf->text.gc, *x, y,
-	      *x + x_seg_len - 1, y);
+    _XmPlatDrawOneLine (XtDisplay (tf), XtWindow (tf), tf->text.gc, *x, y, *x + x_seg_len - 1, y);
   
   /* update x position up to the next highlight position */
   if (tf->text.max_char_size != 1)
@@ -2344,8 +2368,7 @@ RedisplayText(XmTextFieldWidget tf,
   
   if (x < (Position)(rect.x + rect.width)) {
     SetInvGC(tf, tf->text.gc);
-    XFillRectangle(XtDisplay(tf), XtWindow(tf), tf->text.gc, x, rect.y,
-		   rect.x + rect.width - x, rect.height);
+    _XmPlatFillOneRect (XtDisplay (tf), XtWindow (tf), tf->text.gc, x, rect.y, rect.x + rect.width - x, rect.height);
   }
   tf->text.refresh_ibeam_off = True;
   _XmTextFieldDrawInsertionPoint(tf, True);
@@ -2492,13 +2515,9 @@ AdjustText(XmTextFieldWidget tf,
       temp = 0;
     else
       temp = tf->core.height - thickness;
-    XFillRectangle(XtDisplay(tf), XtWindow(tf), tf->text.gc,
-		   tf->primitive.shadow_thickness +
-		   tf->primitive.highlight_thickness,
-		   tf->primitive.shadow_thickness +
-		   tf->primitive.highlight_thickness,
-		   TextF_MarginWidth(tf),
-		   temp);
+    _XmPlatFillOneRect (XtDisplay (tf), XtWindow (tf), tf->text.gc, tf->primitive.shadow_thickness +
+		   tf->primitive.highlight_thickness, tf->primitive.shadow_thickness +
+		   tf->primitive.highlight_thickness, TextF_MarginWidth(tf), temp);
     SetMarginGC(tf, tf->text.gc);
     RedisplayText(tf, 0, tf->text.string_length); 
     _XmTextFieldDrawInsertionPoint(tf, True);
@@ -2518,12 +2537,8 @@ AdjustText(XmTextFieldWidget tf,
       temp = 0;
     else
       temp = tf->core.width - thickness;
-    XFillRectangle(XtDisplay(tf), XtWindow(tf), tf->text.gc,
-		   tf->core.width - margin_width,
-		   tf->primitive.shadow_thickness +
-		   tf->primitive.highlight_thickness,
-		   TextF_MarginWidth(tf),
-		   temp);
+    _XmPlatFillOneRect (XtDisplay (tf), XtWindow (tf), tf->text.gc, tf->core.width - margin_width, tf->primitive.shadow_thickness +
+		   tf->primitive.highlight_thickness, TextF_MarginWidth(tf), temp);
     SetMarginGC(tf, tf->text.gc);
     RedisplayText(tf, 0, tf->text.string_length); 
     _XmTextFieldDrawInsertionPoint(tf, True);
@@ -7535,15 +7550,20 @@ MakeIBeamStencil(XmTextFieldWidget tf,
     values.fill_style = FillSolid;
     values.function = GXcopy;
     valueMask = GCForeground | GCLineWidth | GCFillStyle | GCFunction;
-    XChangeGC(dpy, tf->text.cursor_gc, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, tf->text.cursor_gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
-    XFillRectangle(dpy, tf->text.cursor, tf->text.cursor_gc, 0, 0, 
-		   tf->text.cursor_width, tf->text.cursor_height);
+    _XmPlatFillOneRect (dpy, tf->text.cursor, tf->text.cursor_gc, 0, 0, tf->text.cursor_width, tf->text.cursor_height) ;
     
     /* Change the GC for use in "cutting out" the I-Beam shape */
     values.foreground = 1;
     values.line_width = line_width;
-    XChangeGC(dpy, tf->text.cursor_gc, GCForeground | GCLineWidth, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, tf->text.cursor_gc) ;
+  _XmPlatChangeGCValues (_c, GCForeground | GCLineWidth, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
     
     /* Draw the segments of the I-Beam */
     /* 1st segment is the top horizontal line of the 'I' */
@@ -7565,7 +7585,17 @@ MakeIBeamStencil(XmTextFieldWidget tf,
     segments[2].y2 = tf->text.cursor_height - 1;
     
     /* Draw the segments onto the cursor */
-    XDrawSegments(dpy, tf->text.cursor, tf->text.cursor_gc, segments, 3);
+    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, tf->text.cursor, tf->text.cursor_gc) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(3) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(3) ; _pi++) {
+    _ps[_pi].x1 = segments[_pi].x1 ; _ps[_pi].y1 = segments[_pi].y1 ;
+    _ps[_pi].x2 = segments[_pi].x2 ; _ps[_pi].y2 = segments[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, 3) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+  }
     
     /* Install the cursor for pixmap caching */
     (void) _XmCachePixmap(tf->text.cursor, XtScreen(tf), pixmap_name, 1, 0,
@@ -7583,7 +7613,10 @@ MakeIBeamStencil(XmTextFieldWidget tf,
       tf->core.background_pixel ^ tf->primitive.foreground;
   values.stipple = tf->text.cursor;
   values.fill_style = FillStippled;
-  XChangeGC(XtDisplay(tf), tf->text.image_gc, valueMask, &values);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, tf->text.image_gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
   
 }
 
@@ -7615,11 +7648,17 @@ MakeAddModeCursor(XmTextFieldWidget tf,
     
     values.function = GXcopy;
     valueMask = GCFunction;
-    XChangeGC(dpy, tf->text.cursor_gc, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, tf->text.cursor_gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
-    XCopyArea(dpy, tf->text.cursor, tf->text.add_mode_cursor, 
-	      tf->text.cursor_gc, 0, 0, 
-	      tf->text.cursor_width, tf->text.cursor_height, 0, 0);
+    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, tf->text.add_mode_cursor, tf->text.cursor_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (dpy, tf->text.cursor) ;
+  _XmPlatBlit (_c, _src, 0, 0, 0, 0, tf->text.cursor_width, tf->text.cursor_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     
     valueMask = (GCForeground | GCBackground | GCTile | GCFillStyle | 
 		 GCFunction | GCTileStipXOrigin);
@@ -7631,10 +7670,12 @@ MakeAddModeCursor(XmTextFieldWidget tf,
     values.foreground = tf->primitive.foreground; 
     values.background = tf->core.background_pixel;
     
-    XChangeGC(dpy, tf->text.cursor_gc, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, tf->text.cursor_gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
     
-    XFillRectangle(dpy, tf->text.add_mode_cursor, tf->text.cursor_gc,
-		   0, 0, tf->text.cursor_width, tf->text.cursor_height);
+    _XmPlatFillOneRect (dpy, tf->text.add_mode_cursor, tf->text.cursor_gc, 0, 0, tf->text.cursor_width, tf->text.cursor_height) ;
     
     /* Install the pixmap for pixmap caching */
     _XmCachePixmap(tf->text.add_mode_cursor,
@@ -8027,11 +8068,16 @@ TextFieldExpose(Widget w,
   tf->text.refresh_ibeam_off = False;
   values.clip_mask = None;
   values.foreground = tf->core.background_pixel;
-  XChangeGC(XtDisplay(w), tf->text.save_gc, GCForeground|GCClipMask, &values);
-  XFillRectangle(XtDisplay(w), tf->text.ibeam_off, tf->text.save_gc, 0, 0,
-		 tf->text.cursor_width, tf->text.cursor_height);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(w), 0, tf->text.save_gc) ;
+  _XmPlatChangeGCValues (_c, GCForeground|GCClipMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
+  _XmPlatFillOneRect (XtDisplay (w), tf->text.ibeam_off, tf->text.save_gc, 0, 0, tf->text.cursor_width, tf->text.cursor_height) ;
   values.foreground = tf->primitive.foreground;
-  XChangeGC(XtDisplay(w), tf->text.save_gc, GCForeground, &values);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(w), 0, tf->text.save_gc) ;
+  _XmPlatChangeGCValues (_c, GCForeground, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
   
   _XmTextFieldDrawInsertionPoint(tf, False);
   

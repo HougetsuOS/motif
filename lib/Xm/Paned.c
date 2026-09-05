@@ -36,6 +36,7 @@
 #include <Xm/Separator.h>
 
 #include <Xm/ExtP.h>
+#include "XmPlat/XmPlatP.h"
 
 typedef enum {UpLeftPane = 'U',	/* Adjust panes above or to the left.*/
 	      LowRightPane = 'L',/* Adjust panes below or the the right. */
@@ -1334,11 +1335,9 @@ _DrawRect(XmPanedWidget pw, GC gc, int on_loc, int off_loc,
 	  unsigned int on_size, unsigned int off_size)
 {
     if (IsVert(pw)) 
-	XFillRectangle(XtDisplay(pw), XtWindow(pw), gc, 
-		       off_loc, on_loc, off_size, on_size);
+	_XmPlatFillOneRect (XtDisplay (pw), XtWindow (pw), gc, off_loc, on_loc, off_size, on_size);
     else
-	XFillRectangle(XtDisplay(pw), XtWindow(pw), gc,
-		       on_loc, off_loc, on_size, off_size);
+	_XmPlatFillOneRect (XtDisplay (pw), XtWindow (pw), gc, on_loc, off_loc, on_size, off_size);
 }
 
 /*	Function Name: _DrawTrackLines

@@ -62,6 +62,7 @@
 #include "SyntheticI.h"
 #include "TraversalI.h"
 #include "XmStringI.h"		/* for _XmStringGetTextConcat() */
+#include "XmPlat/XmPlatP.h"
 
 
 typedef struct {
@@ -301,8 +302,33 @@ void _XmDrawShadow (Display *display, Drawable d,
       rects[i + size3].height = height - i - 1;
    }
 
-   XFillRectangles (display, d, top_GC, &rects[0], size2);
-   XFillRectangles (display, d, bottom_GC, &rects[size2], size2);
+   {
+     XmPlatDrawCtx _c = _XmPlatCtx (display, d, top_GC) ;
+     XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(size2) * sizeof (XmPlatRect)) ;
+     int _pi ;
+     for (_pi = 0 ; _pi < (int)(size2) ; _pi++) {
+       _pr[_pi].x = rects[0 + _pi].x ; _pr[_pi].y = rects[0 + _pi].y ;
+       _pr[_pi].width = rects[0 + _pi].width ;
+       _pr[_pi].height = rects[0 + _pi].height ;
+     }
+     _XmPlatFillRects (_c, _pr, size2) ;
+     _XmPlatCtxFree (_c) ;
+     XtFree ((char *) _pr) ;
+   }
+   {
+     XmPlatDrawCtx _c = _XmPlatCtx (display, d, bottom_GC) ;
+     XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(size2) * sizeof (XmPlatRect)) ;
+     int _pi ;
+     for (_pi = 0 ; _pi < (int)(size2) ; _pi++) {
+       _pr[_pi].x = rects[(size2) + _pi].x ;
+       _pr[_pi].y = rects[(size2) + _pi].y ;
+       _pr[_pi].width = rects[(size2) + _pi].width ;
+       _pr[_pi].height = rects[(size2) + _pi].height ;
+     }
+     _XmPlatFillRects (_c, _pr, size2) ;
+     _XmPlatCtxFree (_c) ;
+     XtFree ((char *) _pr) ;
+   }
 }
 
 /************************************************************************
@@ -319,15 +345,14 @@ void _XmEraseShadow (Display *display, Drawable d, int size,
 {
    if (width > 0 && size > 0)
    {
-      XClearArea (display, d, x, y, width, size, FALSE);
-      XClearArea (display, d, x, y + height - size, width, size, FALSE);
+      _XmPlatClearOneRect (display, d, x, y, width, size) ;
+      _XmPlatClearOneRect (display, d, x, y + height - size, width, size) ;
    }
 
    if (size > 0 && height - (2 * size) > 0)
    {
-      XClearArea (display, d, x, y + size, size, height - (2 * size), FALSE);
-      XClearArea (display, d, x + width - size, y + size, size, 
-                  height - (2 * size), FALSE);
+      _XmPlatClearOneRect (display, d, x, y + size, size, height - (2 * size)) ;
+      _XmPlatClearOneRect (display, d, x + width - size, y + size, size, height - (2 * size)) ;
    }
 }
 
@@ -692,13 +717,7 @@ Boolean fill)
 
    if (fill)
        if (size > 6)
-           XFillRectangle (XtDisplay ((Widget) w), 
-                           XtWindow ((Widget) w),
-                           centerGC, 
-                           ((fill) ? x+2 : x+3),
-                           ((fill) ? y+2 : y+3),
-                           ((fill) ? size-4 : size-6),
-                           ((fill) ? size-4 : size-6));
+           _XmPlatFillOneRect (XtDisplay ((Widget) w), XtWindow ((Widget) w), centerGC, ((fill) ? x+2 : x+3), ((fill) ? y+2 : y+3), ((fill) ? size-4 : size-6), ((fill) ? size-4 : size-6)) ;
 } 
 
 /************************************************************************
@@ -872,14 +891,41 @@ Boolean fill)
        seg[11].y2 = midY - 1;
     }
 
-   XDrawSegments (XtDisplay ((Widget) tw), XtWindow ((Widget) tw),
-                  topGC, &seg[3], 3);
+   { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay ((Widget) tw), XtWindow ((Widget) tw), topGC) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(3) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(3) ; _pi++) {
+    _ps[_pi].x1 = seg[(3) + _pi].x1 ; _ps[_pi].y1 = seg[(3) + _pi].y1 ;
+    _ps[_pi].x2 = seg[(3) + _pi].x2 ; _ps[_pi].y2 = seg[(3) + _pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, 3) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+}
 
-   XDrawSegments (XtDisplay ((Widget) tw), XtWindow ((Widget) tw),
-                  bottomGC, &seg[6], 6);
+   { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay ((Widget) tw), XtWindow ((Widget) tw), bottomGC) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(6) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(6) ; _pi++) {
+    _ps[_pi].x1 = seg[(6) + _pi].x1 ; _ps[_pi].y1 = seg[(6) + _pi].y1 ;
+    _ps[_pi].x2 = seg[(6) + _pi].x2 ; _ps[_pi].y2 = seg[(6) + _pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, 6) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+}
 
-   XDrawSegments (XtDisplay ((Widget) tw), XtWindow ((Widget) tw),
-                  topGC, &seg[0], 3);
+   { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay ((Widget) tw), XtWindow ((Widget) tw), topGC) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(3) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(3) ; _pi++) {
+    _ps[_pi].x1 = seg[(0) + _pi].x1 ; _ps[_pi].y1 = seg[(0) + _pi].y1 ;
+    _ps[_pi].x2 = seg[(0) + _pi].x2 ; _ps[_pi].y2 = seg[(0) + _pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, 3) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+}
 
   
 /* For Fill */
@@ -909,7 +955,7 @@ Boolean fill)
 
    /* NOTE: code which handled the next two ifs by setting pt[1-3]
       to match pt[0] values was replaced with return statements because
-      passing 4 identical coordinates to XFillPolygon caused the PMAX
+      passing 4 identical coordinates to the polygon primitive caused the PMAX
       to give a bus error.  Dana@HP reports that the call is legitimate
       and that the error is in the PMAX server.  The return statements
       will stay until the situation with the PMAX is resolved. (mitch) */
@@ -925,8 +971,16 @@ Boolean fill)
        return;
      }
 
-   XFillPolygon (XtDisplay ((Widget) tw), XtWindow ((Widget) tw),
-                 centerGC, pt, 4, Convex, CoordModeOrigin);
+   { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay ((Widget) tw), XtWindow ((Widget) tw), centerGC) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(4) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pp[_pi].x = pt[_pi].x ; _pp[_pi].y = pt[_pi].y ;
+  }
+  _XmPlatFillPolygon (_c, _pp, 4, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+}
 }
 
 /************************************************************************
@@ -1057,8 +1111,34 @@ register int height)
    get_rects(half_size, half_size, x, y, width, height, 
                 pos_top, pos_left, pos_bottom, pos_right);
 
-   XFillRectangles (display, d, bottom_GC, &rects[size2], size2);
-   XFillRectangles (display, d, top_GC, &rects[0], size2);
+   {
+     XmPlatDrawCtx _c = _XmPlatCtx (display, d, bottom_GC) ;
+     XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(size2) * sizeof (XmPlatRect)) ;
+     int _pi ;
+     for (_pi = 0 ; _pi < (int)(size2) ; _pi++) {
+       _pr[_pi].x = rects[(size2) + _pi].x ;
+       _pr[_pi].y = rects[(size2) + _pi].y ;
+       _pr[_pi].width = rects[(size2) + _pi].width ;
+       _pr[_pi].height = rects[(size2) + _pi].height ;
+     }
+     _XmPlatFillRects (_c, _pr, size2) ;
+     _XmPlatCtxFree (_c) ;
+     XtFree ((char *) _pr) ;
+   }
+   {
+     XmPlatDrawCtx _c = _XmPlatCtx (display, d, top_GC) ;
+     XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(size2) * sizeof (XmPlatRect)) ;
+     int _pi ;
+     for (_pi = 0 ; _pi < (int)(size2) ; _pi++) {
+       _pr[_pi].x = rects[0 + _pi].x ;
+       _pr[_pi].y = rects[0 + _pi].y ;
+       _pr[_pi].width = rects[0 + _pi].width ;
+       _pr[_pi].height = rects[0 + _pi].height ;
+     }
+     _XmPlatFillRects (_c, _pr, size2) ;
+     _XmPlatCtxFree (_c) ;
+     XtFree ((char *) _pr) ;
+   }
 }
 
 
@@ -1147,7 +1227,18 @@ void _XmDrawBorder ( Widget w, GC gc,
    rect[3].width = width;
    rect[3].height = highlight_width;
 
-   XFillRectangles (XtDisplay (w), XtWindow (w), gc, &rect[0], 4);
+   { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (w), XtWindow (w), gc) ;
+  { XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(4) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pr[_pi].x = rect[0 + _pi].x ; _pr[_pi].y = rect[0 + _pi].y ;
+    _pr[_pi].width = rect[0 + _pi].width ; _pr[_pi].height = rect[0 + _pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, 4) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+  }
+}
 }
 
 /***************************************************************

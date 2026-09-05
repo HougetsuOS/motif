@@ -31,6 +31,7 @@
 #include "xmlist.h"
 #include <Xm/TreeP.h>
 #include <X11/Xutil.h>
+#include "XmPlat/XmPlatP.h"
 
 /************************************************************
 *	TYPEDEFS AND DEFINES
@@ -541,8 +542,7 @@ Resize(Widget w)
     if (XmHierarchy_refigure_mode(tw)) {
 	LayoutChildren(w, NULL);
 	if (XtIsRealized((Widget)tw)) {
-	    XClearArea(XtDisplay(tw), XtWindow(tw),
-		       0, 0, tw->core.width, tw->core.height, True);
+	    _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), 0, 0, tw->core.width, tw->core.height);
 	}
     }
 }
@@ -647,8 +647,7 @@ ChangeManaged(Widget w)
 	CalcLocations(w, True);
 	LayoutChildren(w, NULL);
 	if (XtIsRealized((Widget)tw)) {
-	    XClearArea(XtDisplay(tw), XtWindow(tw),
-		       0, 0, tw->core.width, tw->core.height, True);
+	    _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), 0, 0, tw->core.width, tw->core.height);
 	}
     }
 
@@ -713,8 +712,7 @@ GeometryManager(Widget w, XtWidgetGeometry * request,
 	CalcLocations(tw, True);
 	LayoutChildren(tw, w);
 	if (XtIsRealized(tw)) {
-	    XClearArea(XtDisplay(tw), XtWindow(tw),
-		       0, 0, tw->core.width, tw->core.height, True);
+	    _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), 0, 0, tw->core.width, tw->core.height);
 	}
     }
 
@@ -916,8 +914,7 @@ ConstraintSetValues(Widget current, Widget request, Widget set,
     if (XtIsRealized(tw) && redisplay && 
 	(XmHierarchy_refigure_mode((XmTreeWidget)tw)))
     {
-	XClearArea(XtDisplay(tw), XtWindow(tw),
-		   0, 0, tw->core.width, tw->core.height, True);
+	_XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), 0, 0, tw->core.width, tw->core.height);
     }
 	
     return(False);   
@@ -959,8 +956,7 @@ ToggleNodeState(Widget w, XtPointer node_ptr, XtPointer call_data)
      */
 
     if (XtIsRealized(tw)) {
-	XClearArea(XtDisplay(tw), XtWindow(tw),
-		   0, 0, tw->core.width, tw->core.height, True);
+	_XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), 0, 0, tw->core.width, tw->core.height);
     }
 }
 
@@ -1240,17 +1236,13 @@ DrawExtraLadderLines( Widget w, GC gc, LadderPoint first_kid,
 
       if (XmTree_orientation(tw) == XmHORIZONTAL)
       {
-          XDrawLine(XtDisplay(w), XtWindow(w), gc, parent_point.x,
-		parent_point.y, first_kid.x, parent_point.y ); 
-          XDrawLine(XtDisplay(w), XtWindow(w), gc, first_kid.x, first_kid.y,
-		first_kid.x, last_kid.y );
+          _XmPlatDrawOneLine (XtDisplay (w), XtWindow (w), gc, parent_point.x, parent_point.y, first_kid.x, parent_point.y ); 
+          _XmPlatDrawOneLine (XtDisplay (w), XtWindow (w), gc, first_kid.x, first_kid.y, first_kid.x, last_kid.y );
       }
       else    /* orientation == XmVERTICAL */
       {
-          XDrawLine(XtDisplay(w), XtWindow(w), gc, parent_point.x,
-		parent_point.y, parent_point.x, first_kid.y ); 
-          XDrawLine(XtDisplay(w), XtWindow(w), gc, first_kid.x, first_kid.y,
-		last_kid.x, first_kid.y );
+          _XmPlatDrawOneLine (XtDisplay (w), XtWindow (w), gc, parent_point.x, parent_point.y, parent_point.x, first_kid.y ); 
+          _XmPlatDrawOneLine (XtDisplay (w), XtWindow (w), gc, first_kid.x, first_kid.y, last_kid.x, first_kid.y );
       }
     }
   
@@ -1512,10 +1504,9 @@ _DrawLine(Widget w, XRectangle *rect, TreeConstraints parent,
     {
 	if ((XmTree_connect_style(tw) == XmTreeLadder)
 	    &&(XmHierarchyC_num_children(parent) > 1))
-	    XDrawLine(XtDisplay(w), XtWindow(w), gc, cx1, cy1, cx2, cy2);
+	    _XmPlatDrawOneLine (XtDisplay (w), XtWindow (w), gc, cx1, cy1, cx2, cy2);
 	else
-	    XDrawLine(XtDisplay(w), XtWindow(w), gc, from_ladder_point.x,
-		      from_ladder_point.y, x2, y2);
+	    _XmPlatDrawOneLine (XtDisplay (w), XtWindow (w), gc, from_ladder_point.x, from_ladder_point.y, x2, y2);
     }
 
     /* This is sent back because the ladder lines get connected later */

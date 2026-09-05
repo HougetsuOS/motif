@@ -42,6 +42,7 @@ static char rcsid[] = "$XConsortium: DragUnder.c /main/12 1995/07/14 10:26:51 dr
 #include "MessagesI.h"
 #include "RegionI.h"
 #include "ScreenI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define MESSAGE1	_XmMMsgDragUnder_0000
 #define MESSAGE2	_XmMMsgDragUnder_0001
@@ -188,8 +189,12 @@ CreateAnimationSaveData(
     v.graphics_exposures = False;
     v.subwindow_mode = IncludeInferiors;
     vmask = GCGraphicsExposures|GCSubwindowMode|GCForeground|GCBackground;
-    aSaveData->drawGC =
-	XCreateGC (aSaveData->display, aSaveData->window, vmask, &v);
+{ XmPlatSurface _s = _XmPlatSurface (aSaveData->display, aSaveData->window) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, vmask, &v) ;
+  aSaveData->drawGC = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 
     if (aSaveData -> dragOver != (Widget) NULL) {
       /* Save info on active drag over mode */
@@ -292,10 +297,12 @@ SaveAll(
 	_XmAllocScratchPixmap (aSaveData->xmScreen,
 			       (Cardinal) aSaveData->windowDepth,
 		               pData->width, pData->height);
-    XCopyArea (aSaveData->display, aSaveData->window,
-    	       pData->pixmap, aSaveData->drawGC,
-               pData->x, pData->y,
-	       pData->width, pData->height, 0, 0);
+    { XmPlatDrawCtx _c = _XmPlatCtx (aSaveData->display, pData->pixmap, aSaveData->drawGC) ;
+  XmPlatSurface _src = _XmPlatSurface (aSaveData->display, aSaveData->window) ;
+  _XmPlatBlit (_c, _src, pData->x, pData->y, 0, 0, pData->width, pData->height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
     return (True);
 }
@@ -353,10 +360,12 @@ SaveSegments(
 	_XmAllocScratchPixmap (aSaveData->xmScreen,
 			       (Cardinal) aSaveData->windowDepth,
 		               pData->width, pData->height);
-    XCopyArea (aSaveData->display, aSaveData->window,
-    	       pData->pixmap, aSaveData->drawGC,
-               pData->x, pData->y,
-	       pData->width, pData->height, 0, 0);
+    { XmPlatDrawCtx _c = _XmPlatCtx (aSaveData->display, pData->pixmap, aSaveData->drawGC) ;
+  XmPlatSurface _src = _XmPlatSurface (aSaveData->display, aSaveData->window) ;
+  _XmPlatBlit (_c, _src, pData->x, pData->y, 0, 0, pData->width, pData->height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
     pData++;
     pData->x = x;
@@ -367,10 +376,12 @@ SaveSegments(
 	_XmAllocScratchPixmap (aSaveData->xmScreen,
 			       (Cardinal) aSaveData->windowDepth,
 		               pData->width, pData->height);
-    XCopyArea (aSaveData->display, aSaveData->window,
-    	       pData->pixmap, aSaveData->drawGC,
-               pData->x, pData->y,
-	       pData->width, pData->height, 0, 0);
+    { XmPlatDrawCtx _c = _XmPlatCtx (aSaveData->display, pData->pixmap, aSaveData->drawGC) ;
+  XmPlatSurface _src = _XmPlatSurface (aSaveData->display, aSaveData->window) ;
+  _XmPlatBlit (_c, _src, pData->x, pData->y, 0, 0, pData->width, pData->height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
     pData++;
     pData->x = x;
@@ -381,10 +392,12 @@ SaveSegments(
 	_XmAllocScratchPixmap (aSaveData->xmScreen,
 			       (Cardinal) aSaveData->windowDepth,
 		               pData->width, pData->height);
-    XCopyArea (aSaveData->display, aSaveData->window,
-    	       pData->pixmap, aSaveData->drawGC,
-               pData->x, pData->y,
-	       pData->width, pData->height, 0, 0);
+    { XmPlatDrawCtx _c = _XmPlatCtx (aSaveData->display, pData->pixmap, aSaveData->drawGC) ;
+  XmPlatSurface _src = _XmPlatSurface (aSaveData->display, aSaveData->window) ;
+  _XmPlatBlit (_c, _src, pData->x, pData->y, 0, 0, pData->width, pData->height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
     pData++;
     pData->x = x + width - *thickness;
@@ -395,10 +408,12 @@ SaveSegments(
 	_XmAllocScratchPixmap (aSaveData->xmScreen,
 			       (Cardinal) aSaveData->windowDepth,
 		               pData->width, pData->height);
-    XCopyArea (aSaveData->display, aSaveData->window,
-    	       pData->pixmap, aSaveData->drawGC,
-               pData->x, pData->y,
-	       pData->width, pData->height, 0, 0);
+    { XmPlatDrawCtx _c = _XmPlatCtx (aSaveData->display, pData->pixmap, aSaveData->drawGC) ;
+  XmPlatSurface _src = _XmPlatSurface (aSaveData->display, aSaveData->window) ;
+  _XmPlatBlit (_c, _src, pData->x, pData->y, 0, 0, pData->width, pData->height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
     return (True);
 }
@@ -454,8 +469,12 @@ DrawHighlight(
        }
     }
 
-    aSaveData->highlightGC =
-	XCreateGC(aSaveData->display, aSaveData->window, vmask, &v);
+{ XmPlatSurface _s = _XmPlatSurface (aSaveData->display, aSaveData->window) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, vmask, &v) ;
+  aSaveData->highlightGC = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 
     _XmRegionSetGCRegion (aSaveData->display, aSaveData->highlightGC,
 			  0, 0, aSaveData->clipRegion);
@@ -543,8 +562,12 @@ DrawShadow(
        }
     }
 
-    aSaveData->topShadowGC =
-	XCreateGC(aSaveData->display, aSaveData->window, vmask, &v);
+    { XmPlatSurface _s = _XmPlatSurface (aSaveData->display, aSaveData->window) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, vmask, &v) ;
+  aSaveData->topShadowGC = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 
     _XmRegionSetGCRegion (aSaveData->display, aSaveData->topShadowGC,
 			  0, 0, aSaveData->clipRegion);
@@ -581,8 +604,12 @@ DrawShadow(
     }
 
 
-    aSaveData->bottomShadowGC =
-	XCreateGC(aSaveData->display, aSaveData->window, vmask, &v);
+    { XmPlatSurface _s = _XmPlatSurface (aSaveData->display, aSaveData->window) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, vmask, &v) ;
+  aSaveData->bottomShadowGC = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 
     _XmRegionSetGCRegion (aSaveData->display, aSaveData->bottomShadowGC,
 			  0, 0, aSaveData->clipRegion);
@@ -697,21 +724,32 @@ DrawPixmap(
 	    v.subwindow_mode = IncludeInferiors;
 	    vmask = GCGraphicsExposures|GCSubwindowMode|
 	            GCBackground|GCForeground|GCFunction;
-	    maskGC = XCreateGC (aSaveData->display, mask, vmask, &v);
+	    { XmPlatSurface _s = _XmPlatSurface (aSaveData->display, mask) ;
+  XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, vmask, &v) ;
+  maskGC = _XmPlatGcOf (_c) ;
+  _XmPlatCtxFree (_c) ;
+  _XmPlatSurfaceFree (_s) ;
+  }
 
-	    XFillRectangle (aSaveData->display, mask, maskGC,
-		            0, 0, width, height);
+	    _XmPlatFillOneRect (aSaveData->display, mask, maskGC, 0, 0, width, height) ;
 
 	    XSetFunction (aSaveData->display, maskGC, GXor);
 	    _XmRegionSetGCRegion (aSaveData->display, maskGC,
 				  -x, -y, aSaveData->clipRegion);
-	    XCopyArea (aSaveData->display,
-		       aSaveData->animationMask,
-    	               mask, maskGC,
-                       0, 0, width, height, 0, 0);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (aSaveData->display, mask, maskGC) ;
+  XmPlatSurface _src = _XmPlatSurface (aSaveData->display, aSaveData->animationMask) ;
+  _XmPlatBlit (_c, _src, 0, 0, 0, 0, width, height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
 	    XSetClipOrigin (aSaveData->display, aSaveData->drawGC, x, y);
-	    XSetClipMask (aSaveData->display, aSaveData->drawGC, mask);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (aSaveData->display, 0, aSaveData->drawGC) ;
+	      XmPlatSurface _m = _XmPlatSurface (aSaveData->display, mask) ;
+	      _XmPlatSetClipMaskSurf (_c, _m, 0, 0) ;
+	      _XmPlatSurfaceFree (_m) ;
+	      _XmPlatCtxFree (_c) ;
+	    }
 
 	    XFreeGC (aSaveData->display, maskGC);
 	}
@@ -729,16 +767,20 @@ DrawPixmap(
 	 */
 
 	if (aSaveData->animationPixmapDepth == 1) {
-	    XCopyPlane (aSaveData->display,
-			aSaveData->animationPixmap,
-    	                aSaveData->window, aSaveData->drawGC,
-                        0, 0, width, height, x, y, 1L);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (aSaveData->display, aSaveData->window, aSaveData->drawGC) ;
+  XmPlatSurface _src = _XmPlatSurface (aSaveData->display, aSaveData->animationPixmap) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, x, y, width, height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 	else {
-	    XCopyArea (aSaveData->display,
-		       aSaveData->animationPixmap,
-    	               aSaveData->window, aSaveData->drawGC,
-                       0, 0, width, height, x, y);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (aSaveData->display, aSaveData->window, aSaveData->drawGC) ;
+  XmPlatSurface _src = _XmPlatSurface (aSaveData->display, aSaveData->animationPixmap) ;
+  _XmPlatBlit (_c, _src, 0, 0, x, y, width, height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 	if (mask != XmUNSPECIFIED_PIXMAP) {
 	    _XmFreeScratchPixmap (aSaveData->xmScreen, mask);
@@ -895,15 +937,12 @@ AnimateLeave(
 			      0, 0, aSaveData->clipRegion);
         for (pData = aSaveData->savedPixmaps, i = aSaveData->numSavedPixmaps;
 	     i; pData++, i--) {
-            XCopyArea (aSaveData->display,
-		       pData->pixmap,
-		       aSaveData->window,
-		       aSaveData->drawGC,
-                       0, 0,
-		       pData->width,
-		       pData->height, 
-		       pData->x,
-		       pData->y);
+            { XmPlatDrawCtx _c = _XmPlatCtx (aSaveData->display, aSaveData->window, aSaveData->drawGC) ;
+  XmPlatSurface _src = _XmPlatSurface (aSaveData->display, pData->pixmap) ;
+  _XmPlatBlit (_c, _src, 0, 0, pData->x, pData->y, pData->width, pData->height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
         }
 
 	/*

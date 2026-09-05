@@ -54,6 +54,7 @@ static char rcsid[] = "$TOG: TearOff.c /main/15 1997/08/21 14:19:26 csn $"
 #include "TearOffI.h"
 #include "TraversalI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define IsPopup(m)     \
     (((XmRowColumnWidget) (m))->row_column.type == XmMENU_POPUP)
@@ -155,8 +156,14 @@ InitXmTearOffXorGC(
     gcv.cap_style = CapNotLast;
     gcv.subwindow_mode = IncludeInferiors;
 
-    return (XCreateGC (XtDisplay(wid), wid->core.screen->root,
-		       mask, &gcv));
+    {
+    XmPlatSurface _s = _XmPlatSurface (XtDisplay (wid), wid->core.screen->root) ;
+    XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, mask, &gcv) ;
+    GC _ret = _XmPlatGcOf (_c) ;
+    _XmPlatCtxFree (_c) ;
+    _XmPlatSurfaceFree (_s) ;
+    return _ret ;
+  }
 }
 
 static void
@@ -206,8 +213,17 @@ SetupOutline(
       h -= 2;
    }
 
-   XDrawSegments(XtDisplay(wid), wid->core.screen->root, gc, 
-		 pOutline, SEGS_PER_DRAW);
+   { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (wid), wid->core.screen->root, gc) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(SEGS_PER_DRAW) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(SEGS_PER_DRAW) ; _pi++) {
+    _ps[_pi].x1 = pOutline[_pi].x1 ; _ps[_pi].y1 = pOutline[_pi].y1 ;
+    _ps[_pi].x2 = pOutline[_pi].x2 ; _ps[_pi].y2 = pOutline[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, SEGS_PER_DRAW) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+}
 }
 
 static void
@@ -216,8 +232,17 @@ EraseOutline(
 	GC gc,
 	XSegment *pOutline )
 {
-   XDrawSegments(XtDisplay(wid), wid->core.screen->root, gc,
-		 pOutline, SEGS_PER_DRAW);
+   { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (wid), wid->core.screen->root, gc) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(SEGS_PER_DRAW) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(SEGS_PER_DRAW) ; _pi++) {
+    _ps[_pi].x1 = pOutline[_pi].x1 ; _ps[_pi].y1 = pOutline[_pi].y1 ;
+    _ps[_pi].x2 = pOutline[_pi].x2 ; _ps[_pi].y2 = pOutline[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, SEGS_PER_DRAW) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+}
 }
 
 static void
@@ -1381,10 +1406,12 @@ _XmRestoreTearOffToMenuShell(
          shell->core.depth);
       /* End of Fix #4855 */
 
-      XCopyArea(XtDisplay(shell), XtWindow(submenu),
-	 shell->core.background_pixmap, gc, 0, 0,
-	 shell->core.width, shell->core.height,
-	 0, 0);
+      { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(shell), shell->core.background_pixmap, gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(shell), XtWindow(submenu)) ;
+  _XmPlatBlit (_c, _src, 0, 0, 0, 0, shell->core.width, shell->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
       XtReleaseGC((Widget) shell, gc);
 

@@ -53,6 +53,8 @@
 #include <Xm/DragIcon.h>
 #endif
 
+#include "XmPlat/XmPlatP.h"
+
 #ifdef _ARGS
 #undef _ARGS
 #endif
@@ -146,7 +148,9 @@ static void XiMoveTabPanel _ARGS((Widget, Widget));
       XGCValues _macro_gc_values; \
       _macro_gc_values.foreground = (p); \
       _macro_gc_values.fill_style = FillSolid; \
-      XChangeGC((d),(g), GCForeground | GCFillStyle, &_macro_gc_values); \
+      { XmPlatDrawCtx _pc = _XmPlatCtx ((d), 0, (g)) ; \
+	_XmPlatSetForeground (_pc, _macro_gc_values.foreground) ; \
+	_XmPlatCtxFree (_pc) ; } \
 }
 
 #define SetTiledGC(d,g,p) \
@@ -154,7 +158,9 @@ static void XiMoveTabPanel _ARGS((Widget, Widget));
       XGCValues _macro_gc_values; \
       _macro_gc_values.tile = (p); \
       _macro_gc_values.fill_style = FillTiled; \
-      XChangeGC((d),(g), GCTile | GCFillStyle, &_macro_gc_values); \
+      { XmPlatDrawCtx _pc = _XmPlatCtx ((d), 0, (g)) ; \
+	_XmPlatSetTile (_pc, _XmPlatSurface ((d), _macro_gc_values.tile)) ; \
+	_XmPlatCtxFree (_pc) ; } \
 }
 
 #define XiBackgroundSpecified(c) \
@@ -1113,8 +1119,12 @@ Realize(w, mask, attr)
     /*
      * Lets create a GC that we will use for drawing.
      */
-    XmTabStack__gc(tab) = XCreateGC(XtDisplay(tab), XtWindow(tab),
-				   0, NULL);
+{ XmPlatSurface _s = _XmPlatSurface (XtDisplay (tab), XtWindow(tab)) ;
+    XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, 0, NULL) ;
+    XmTabStack__gc(tab) = _XmPlatGcOf (_c) ;
+    _XmPlatCtxFree (_c) ;
+    _XmPlatSurfaceFree (_s) ;
+  }
 }
 
 /*
@@ -1178,13 +1188,7 @@ Resize(widget)
 	
 	if( stacked && active != NULL && cnt > 0 )
 	{
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			   active->core.x - BBPart(tab).margin_width,
-			   active->core.y - BBPart(tab).margin_height,
-			   XtWidth(active) +
-			   2*BBPart(tab).margin_width,
-			   XtHeight(active)+
-			   2*BBPart(tab).margin_height);
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, active->core.x - BBPart(tab).margin_width, active->core.y - BBPart(tab).margin_height, XtWidth(active) + 			   2*BBPart(tab).margin_width, XtHeight(active)+ 			   2*BBPart(tab).margin_height) ;
 	}
 	else
 	{
@@ -1255,26 +1259,17 @@ Redisplay(widget, event, region)
 
 	if( stacked )
 	{
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			   active->core.x - BBPart(tab).margin_width,
-			   active->core.y - BBPart(tab).margin_height,
-			   XtWidth(active) +
-			   2 * (BBPart(tab).margin_width),
-			   XtHeight(active) +
-			   2 * (BBPart(tab).margin_height));
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, active->core.x - BBPart(tab).margin_width, active->core.y - BBPart(tab).margin_height, XtWidth(active) + 			   2 * (BBPart(tab).margin_width), XtHeight(active) + 			   2 * (BBPart(tab).margin_height)) ;
 	}
 	else
 	{
 	    if( event == NULL || event->xany.type != Expose )
 	    {
-		XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			       0, 0, XtWidth(tab), XtHeight(tab));
+		_XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, 0, 0, XtWidth(tab), XtHeight(tab)) ;
 	    }
 	    else
 	    {
-		XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			       event->xexpose.x, event->xexpose.y,
-			       event->xexpose.width, event->xexpose.height);
+		_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, event->xexpose.x, event->xexpose.y, event->xexpose.width, event->xexpose.height);
 	    }
 	}
     }
@@ -1508,7 +1503,7 @@ SetValues(current, request, set, arg_list, arg_cnt)
 
 	if( XtIsRealized(canvas) )
 	{
-	    XClearArea(XtDisplay(set), XtWindow(canvas), 0, 0, 0, 0, True);
+	    _XmPlatClearOneRect (XtDisplay (set), XtWindow (canvas), 0, 0, 0, 0);
 	}
     }
 
@@ -2636,7 +2631,7 @@ ConstraintSetValues(current, request, set, arg_list, arg_cnt)
 	 cfield(tab_background_pixmap) != sfield(tab_background_pixmap)) &&
          XtIsRealized((Widget)tab) )
     {
-	XClearArea(XtDisplay(tab), XtWindow(tab), 0, 0, 0, 0, True);
+	_XmPlatClearOneRect (XtDisplay (tab), XtWindow (tab), 0, 0, 0, 0);
     }
 
     return( False );
@@ -2936,10 +2931,30 @@ DrawShadows(tab, top_GC, bottom_GC, x, y, width, height)
 	break;
     }
 
-    XFillRectangles(XtDisplay(tab), XtWindow(tab), top_GC, top_rects,
-		    num_top_rects);
-    XFillRectangles(XtDisplay(tab), XtWindow(tab), bottom_GC, bottom_rects,
-		    num_bottom_rects);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XtWindow(tab), top_GC) ;
+  { XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(num_top_rects) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(num_top_rects) ; _pi++) {
+    _pr[_pi].x = top_rects[_pi].x ; _pr[_pi].y = top_rects[_pi].y ;
+    _pr[_pi].width = top_rects[_pi].width ; _pr[_pi].height = top_rects[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, num_top_rects) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+}
+}
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XtWindow(tab), bottom_GC) ;
+  { XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(num_bottom_rects) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(num_bottom_rects) ; _pi++) {
+    _pr[_pi].x = bottom_rects[_pi].x ; _pr[_pi].y = bottom_rects[_pi].y ;
+    _pr[_pi].width = bottom_rects[_pi].width ; _pr[_pi].height = bottom_rects[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, num_bottom_rects) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+}
+}
     XmDrawBevel(XtDisplay(tab), XtWindow(tab), top_GC, bottom_GC,
 		bevel.x, bevel.y, shadow, XmBEVEL_BOTH);
 }
@@ -3295,20 +3310,16 @@ TabSelectedCallback(widget, client, cbdata)
 	if( XiSelectSpecified(tab) )
 	{
 	    SetSelectGC(tab, XmTabStack__gc(tab));
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), XmTabStack__gc(tab),
-			   x, y, width, height);
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), XmTabStack__gc(tab), x, y, width, height);
 	}
 	else if( XiBackgroundSpecified(active) )
 	{
 	    SetChildGC(active, XmTabStack__gc(tab));
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), XmTabStack__gc(tab),
-			   x, y, width, height);
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), XmTabStack__gc(tab), x, y, width, height);
 	}
 	else
 	{
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab),
-			   tab->manager.background_GC,
-			   x, y, width, height);
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.background_GC, x, y, width, height);
 	}
     }
 
@@ -3576,9 +3587,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	    x = 0;
 	    y = XmTabStack_tab_box(tab)->core.height;
 
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), bottom_GC,
-		       x + shadow + offset * (num_rows - 1), y + base_height,
-		       base_width + shadow, shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), bottom_GC, x + shadow + offset * (num_rows - 1), y + base_height, base_width + shadow, shadow);
 
 	    x += offset * (num_rows - 1);
 	    x2 = x + offset;
@@ -3588,9 +3597,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	    {
 	    	if (i == 0)
 		{
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab),
-			       tab->manager.top_shadow_GC,
-			       x, y, shadow, y2 - y);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.top_shadow_GC, x, y, shadow, y2 - y);
 		    XmDrawBevel(XtDisplay(tab), XtWindow(tab), top_GC, bottom_GC,
 				   x, y2, shadow, XmBEVEL_BOTH);
 		    y2 -= offset;
@@ -3614,8 +3621,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 			    gc = XmTabStack__gc(tab);
 			    SetChildGC(child, gc);
 			}
-			XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   x, y, x2 - x, y2 - y);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, x, y, x2 - x, y2 - y);
 
 			if( XmIsManager(parent) )
 			{
@@ -3633,15 +3639,10 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 				SetSolidGC(XtDisplay(tab), gc, pixel);
 			    }
 		        }
-			XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   x, y2, x2 - x, (int)XtHeight(tab) - y2);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, x, y2, x2 - x, (int)XtHeight(tab) - y2) ;
 
-			XFillRectangle(XtDisplay(tab), XtWindow(tab),
-				   tab->manager.top_shadow_GC,
-				   x, y, shadow, y2 - y);
-			XFillRectangle(XtDisplay(tab), XtWindow(tab),
-				   tab->manager.bottom_shadow_GC,
-				   x, y2 - shadow, x2 - x, shadow);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.top_shadow_GC, x, y, shadow, y2 - y);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.bottom_shadow_GC, x, y2 - shadow, x2 - x, shadow);
 			XmDrawBevel(XtDisplay(tab), XtWindow(tab), top_GC, bottom_GC,
 				   x, y2 - shadow, shadow, XmBEVEL_BOTH);
 			x2 -= offset;
@@ -3666,27 +3667,19 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 		    SetSolidGC(XtDisplay(tab), gc, pixel);
 		}
 	    }
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			offset * (num_rows-1) + base_width + 2*shadow, 0,
-			XtWidth(tab) - offset * (num_rows-1) + base_width + 2*shadow, XtHeight(tab));
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, offset * (num_rows-1) + base_width + 2*shadow, 0, XtWidth(tab) - offset * (num_rows-1) + base_width + 2*shadow, XtHeight(tab)) ;
 	    if( _XiGetTabIndex(XmTabStack_tab_box(tab), num_rows-1,
 		    num_cols-1) < 0 )
 	    {
-	        XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			0, 0, offset, XtHeight(tab));
+	        _XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, 0, 0, offset, XtHeight(tab)) ;
 	    }
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), bottom_GC,
-		       offset * (num_rows - 1) + base_width + shadow, y,
-		       shadow, base_height + shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), bottom_GC, offset * (num_rows - 1) + base_width + shadow, y, shadow, base_height + shadow);
 	} else {
 	    x = 0;
 	    y = XmTabStack_tab_box(tab)->core.height;
 
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), top_GC,
-		       x, y, shadow, base_height + shadow);
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), bottom_GC,
-		       x + shadow, y + base_height, base_width + shadow,
-		       shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), top_GC, x, y, shadow, base_height + shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), bottom_GC, x + shadow, y + base_height, base_width + shadow, shadow);
 	    XmDrawBevel(XtDisplay(tab), XtWindow(tab), top_GC, bottom_GC,
 		    x, y + base_height, shadow, XmBEVEL_BOTTOM);
 
@@ -3697,9 +3690,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	    {
 		if( i == 0 )
 		{
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab),
-			       tab->manager.bottom_shadow_GC,
-			       x, y, shadow, y2 - y);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.bottom_shadow_GC, x, y, shadow, y2 - y);
 		    x += shadow;
 		    x2 = x + offset;
 		}
@@ -3719,8 +3710,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 			    gc = XmTabStack__gc(tab);
 			    SetChildGC(child, gc);
 			}
-		        XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   x, y, x2 - x, y2 - y);
+		        _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, x, y, x2 - x, y2 - y);
 
 			if( XmIsManager(parent) )
 			{
@@ -3738,15 +3728,10 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 				SetSolidGC(XtDisplay(tab), gc, pixel);
 			    }
 			}
-			XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   x, y2, x2 - x, (int)XtHeight(tab) - y2);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, x, y2, x2 - x, (int)XtHeight(tab) - y2) ;
 
-			XFillRectangle(XtDisplay(tab), XtWindow(tab),
-				   tab->manager.bottom_shadow_GC,
-				   x2 - shadow, y, shadow, y2 - y);
-			XFillRectangle(XtDisplay(tab), XtWindow(tab),
-				   tab->manager.bottom_shadow_GC,
-				   x, y2 - shadow, x2 - x, shadow);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.bottom_shadow_GC, x2 - shadow, y, shadow, y2 - y);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.bottom_shadow_GC, x, y2 - shadow, x2 - x, shadow);
 			x = x2;
 		    }
 		    x2 += offset;
@@ -3773,20 +3758,16 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	    }
 	    if( x < (int)XtWidth(tab) )
 	    {
-		XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			   x, 0, (int)XtWidth(tab) - x, XtHeight(tab));
+		_XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, x, 0, (int)XtWidth(tab) - x, XtHeight(tab)) ;
 	    }
 	}
 	break;
     case XmTABS_ON_BOTTOM:
 	if( LayoutIsRtoL(tab) )
 	{
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), bottom_GC,
-		    offset * (num_rows - 1) + base_width + shadow, 0, shadow, XtHeight(tab));
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), bottom_GC, offset * (num_rows - 1) + base_width + shadow, 0, shadow, XtHeight(tab)) ;
 	
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), top_GC,
-		    offset * (num_rows - 1), 0,
-		    base_width + shadow, shadow);
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), top_GC, offset * (num_rows - 1), 0, base_width + shadow, shadow);
 
 	    x = offset * (num_rows - 1);
 	    y = 0;
@@ -3797,9 +3778,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	    {
 	    	if (i == 0)
 		{
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab),
-			       tab->manager.top_shadow_GC,
-			       x, y + shadow, shadow, base_height);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.top_shadow_GC, x, y + shadow, shadow, base_height);
 		    x -= offset;
 		    x2 -= offset;
 		}
@@ -3819,8 +3798,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 			    gc = XmTabStack__gc(tab);
 			    SetChildGC(child, gc);
 			}
-			XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   x, y2 + shadow, x2 - x, base_height - y2);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, x, y2 + shadow, x2 - x, base_height - y2);
 
 			if( XmIsManager(parent) )
 			{
@@ -3838,14 +3816,9 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 				SetSolidGC(XtDisplay(tab), gc, pixel);
 			    }
 			}
-			XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   x, y, x2 - x, y2 - y);
-			XFillRectangle(XtDisplay(tab), XtWindow(tab),
-				   tab->manager.top_shadow_GC,
-				   x, y2 + shadow, shadow, base_height - y2);
-			XFillRectangle(XtDisplay(tab), XtWindow(tab),
-				   tab->manager.top_shadow_GC,
-				   x, y2, x2 - x, shadow);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, x, y, x2 - x, y2 - y);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.top_shadow_GC, x, y2 + shadow, shadow, base_height - y2);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.top_shadow_GC, x, y2, x2 - x, shadow);
 			
 			x2 -= offset;
 		    }
@@ -3873,14 +3846,12 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	    i = offset * (num_rows-1) + base_width + shadow*2;
 	    if( i < (int)XtWidth(tab) )
 	    {
-		XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			   i, 0, (int)XtWidth(tab) - i, XtHeight(tab));
+		_XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, i, 0, (int)XtWidth(tab) - i, XtHeight(tab)) ;
 	    }
 	    if( _XiGetTabIndex(XmTabStack_tab_box(tab), num_rows-1,
 		    num_cols-1) < 0 )
 	    {
-	        XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			0, 0, offset, XtHeight(tab));
+	        _XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, 0, 0, offset, XtHeight(tab)) ;
 	    }
 	}
 	else
@@ -3894,7 +3865,18 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	    rts[1].y = 0;
 	    rts[1].width = base_width + shadow;
 	    rts[1].height = shadow;
-	    XFillRectangles(XtDisplay(tab), XtWindow(tab), top_GC, rts, 2);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XtWindow(tab), top_GC) ;
+  { XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(2) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(2) ; _pi++) {
+    _pr[_pi].x = rts[_pi].x ; _pr[_pi].y = rts[_pi].y ;
+    _pr[_pi].width = rts[_pi].width ; _pr[_pi].height = rts[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, 2) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+}
+}
 	    x += base_width + shadow;
 
 	    XmDrawBevel(XtDisplay(tab), XtWindow(tab),
@@ -3909,9 +3891,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	    {
 		if( i == 0 )
 		{
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab),
-			       tab->manager.bottom_shadow_GC,
-			       x, y, shadow, y2 - y);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.bottom_shadow_GC, x, y, shadow, y2 - y);
 		
 		    x += shadow;
 		    x2 = x + offset;
@@ -3933,8 +3913,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 			    gc = XmTabStack__gc(tab);
 			    SetChildGC(child, gc);
 			}
-			XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   x, y, x2 - x, y2 - y);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, x, y, x2 - x, y2 - y);
 
 	
 			if( XmIsManager(parent) )
@@ -3953,15 +3932,10 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 				SetSolidGC(XtDisplay(tab), gc, pixel);
 			    }
 			}
-			XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   x, 0, x2 - x, y);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, x, 0, x2 - x, y);
 
-			XFillRectangle(XtDisplay(tab), XtWindow(tab),
-				   tab->manager.bottom_shadow_GC,
-				   x2 - shadow, y, shadow, y2 - y);
-			XFillRectangle(XtDisplay(tab), XtWindow(tab),
-				   tab->manager.top_shadow_GC,
-				   x, y, x2 - x, shadow);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.bottom_shadow_GC, x2 - shadow, y, shadow, y2 - y);
+			_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.top_shadow_GC, x, y, x2 - x, shadow);
 			XmDrawBevel(XtDisplay(tab), XtWindow(tab),
 				tab->manager.top_shadow_GC,
 				tab->manager.bottom_shadow_GC,
@@ -3990,8 +3964,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	    }
 	    if( x < (int)XtWidth(tab) )
 	    {
-		XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			   x, 0, (int)XtWidth(tab) - x, XtHeight(tab));
+		_XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, x, 0, (int)XtWidth(tab) - x, XtHeight(tab)) ;
 	    }
 	}
 	break;
@@ -4005,7 +3978,18 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	rts[1].y = shadow;
 	rts[1].width = shadow;
 	rts[1].height = base_width + shadow;
-	XFillRectangles(XtDisplay(tab), XtWindow(tab), top_GC, rts, 2);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XtWindow(tab), top_GC) ;
+  { XmPlatRect *_pr = (XmPlatRect *) XtMalloc ((size_t)(2) * sizeof (XmPlatRect)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(2) ; _pi++) {
+    _pr[_pi].x = rts[_pi].x ; _pr[_pi].y = rts[_pi].y ;
+    _pr[_pi].width = rts[_pi].width ; _pr[_pi].height = rts[_pi].height ;
+  }
+  _XmPlatFillRects (_c, _pr, 2) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pr) ;
+}
+}
 	y += base_height + shadow;
 	
 	XmDrawBevel(XtDisplay(tab), XtWindow(tab),
@@ -4019,9 +4003,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	{
 	    if( i == 0 )
 	    {
-		XFillRectangle(XtDisplay(tab), XtWindow(tab),
-			       tab->manager.bottom_shadow_GC,
-			       x, y, x2 - x, shadow);
+		_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.bottom_shadow_GC, x, y, x2 - x, shadow);
 		y += shadow;
 		y2 = y + offset;
 	    }
@@ -4041,8 +4023,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 			gc = XmTabStack__gc(tab);
 			SetChildGC(child, gc);
 		    }
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   x, y, x2 - x, y2 - y);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, x, y, x2 - x, y2 - y);
 		    
 		    if( XmIsManager(parent) )
 		    {
@@ -4061,14 +4042,9 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 			}
 		    }
 		    
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   0, y, x, y2 - y);
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab), 
-				   tab->manager.bottom_shadow_GC,
-				   x, y2 - shadow, x2 - x, shadow);
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab), 
-				   tab->manager.top_shadow_GC,
-				   x, y, shadow, y2 - y);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, 0, y, x, y2 - y);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.bottom_shadow_GC, x, y2 - shadow, x2 - x, shadow);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.top_shadow_GC, x, y, shadow, y2 - y);
 		    XmDrawBevel(XtDisplay(tab), XtWindow(tab),
 				tab->manager.top_shadow_GC,
 				tab->manager.bottom_shadow_GC,
@@ -4097,19 +4073,15 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	}
 	if( x < (int)XtWidth(tab) )
 	{
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			   0, y, XtWidth(tab), (int)XtHeight(tab) - y);
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, 0, y, XtWidth(tab), (int)XtHeight(tab) - y) ;
 	}
 	break;
     case XmTABS_ON_LEFT:
 	y = 0;
 	x = XtWidth(XmTabStack_tab_box(tab));
 
-	XFillRectangle(XtDisplay(tab), XtWindow(tab), top_GC,
-		       x, y, base_width + shadow, shadow);
-	XFillRectangle(XtDisplay(tab), XtWindow(tab), bottom_GC,
-		       x + base_width, y + shadow, shadow,
-		       base_height + shadow);
+	_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), top_GC, x, y, base_width + shadow, shadow);
+	_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), bottom_GC, x + base_width, y + shadow, shadow, base_height + shadow);
 	XmDrawBevel(XtDisplay(tab), XtWindow(tab), top_GC, bottom_GC,
 		    x + base_width, y, shadow, XmBEVEL_BOTTOM);
 
@@ -4120,9 +4092,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	{
 	    if( i == 0 )
 	    {
-		XFillRectangle(XtDisplay(tab), XtWindow(tab),
-			       tab->manager.bottom_shadow_GC,
-			       x, y, x2 - x, shadow);
+		_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.bottom_shadow_GC, x, y, x2 - x, shadow);
 		y += shadow;
 		y2 = y + offset;
 	    }
@@ -4142,8 +4112,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 			gc = XmTabStack__gc(tab);
 			SetChildGC(child, gc);
 		    }
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   x, y, x2 - x, y2 - y);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, x, y, x2 - x, y2 - y);
 
 	
 		    if( XmIsManager(parent) )
@@ -4162,14 +4131,9 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 			    SetSolidGC(XtDisplay(tab), gc, pixel);
 			}
 		    }
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-				   x2, y, (int)XtWidth(tab) - x2, y2 - y);
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab),
-				   tab->manager.bottom_shadow_GC,
-				   x, y2 - shadow, x2 - x, shadow);
-		    XFillRectangle(XtDisplay(tab), XtWindow(tab),
-				   tab->manager.bottom_shadow_GC,
-				   x2 - shadow, y, shadow, y2 - y);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, x2, y, (int)XtWidth(tab) - x2, y2 - y);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.bottom_shadow_GC, x, y2 - shadow, x2 - x, shadow);
+		    _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), tab->manager.bottom_shadow_GC, x2 - shadow, y, shadow, y2 - y);
 		    y = y2;
 		}
 		y2 += offset;
@@ -4194,8 +4158,7 @@ DrawStackedShadows(tab, top_GC, bottom_GC, x, y, base_width, base_height)
 	}
 	if( x < (int)XtWidth(tab) )
 	{
-	    XFillRectangle(XtDisplay(tab), XtWindow(tab), gc,
-			   0, y, XtWidth(tab), (int)XtHeight(tab) - y);
+	    _XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, 0, y, XtWidth(tab), (int)XtHeight(tab) - y) ;
 	}
 	break;
     }

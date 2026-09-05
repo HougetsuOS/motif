@@ -84,6 +84,7 @@ static char rcsid[] = "$TOG: LabelG.c /main/24 1999/01/26 15:31:18 mgreess $"
 #ifdef USE_XFT
 #include "XmRenderTI.h"
 #include <X11/Xft/Xft.h>
+#include "XmPlat/XmPlatP.h"
 #endif
 #endif
 
@@ -2226,13 +2227,7 @@ LRectangle *background_box)
     if (background_box->height < 0)
         background_box->height = 0;
 
-    XFillRectangle(XtDisplay(lw),
-        XtWindow((Widget) lw),
-        LabG_BackgroundGC(lw),
-        background_box->x,
-        background_box->y,
-        background_box->width,
-        background_box->height);
+    _XmPlatFillOneRect (XtDisplay (lw), XtWindow ((Widget) lw), LabG_BackgroundGC(lw), background_box->x, background_box->y, background_box->width, background_box->height);
 }
 
 
@@ -2328,7 +2323,7 @@ LRectangle *background_box)
 #endif
     } else
     {
-    XSetClipMask (XtDisplay (lw), clipgc, None);
+    _XmPlatClrClip (XtDisplay (lw), clipgc);
 #ifdef FIX_1521    
 #ifdef USE_XFT
 	XftDraw	*draw = _XmXftDrawCreate(XtDisplay(lw), XtWindow(lw));
@@ -2363,8 +2358,7 @@ LRectangle *background_box)
     	height = availH - marginal_height - y;
 #endif
     
-    XFillRectangle(XtDisplay(lw), XtWindow(lw), LabG_BackgroundGC(lw),
-		x, y, width, height);
+    _XmPlatFillOneRect (XtDisplay (lw), XtWindow (lw), LabG_BackgroundGC(lw), x, y, width, height);
     }
 #endif
 #endif
@@ -2387,21 +2381,19 @@ LRectangle *background_box)
                     NULL, NULL, NULL, NULL, NULL, NULL);
 
                 if (depth == XtParent(lw)->core.depth)
-                    XCopyArea (XtDisplay(lw), Pix(lw), XtWindow(lw), gc, 0, 0,
-                        LabG_PixmapRect(lw).width, LabG_PixmapRect(lw).height,
-                        lw->rectangle.x + LabG_TextRect(lw).x +
-				LabG_PixmapRect(lw).x,
-                        lw->rectangle.y + LabG_TextRect(lw).y +
-				LabG_PixmapRect(lw).y);
+                    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(lw), XtWindow(lw), gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(lw), Pix(lw)) ;
+  _XmPlatBlit (_c, _src, 0, 0, lw->rectangle.x + LabG_TextRect(lw).x + 				LabG_PixmapRect(lw).x, lw->rectangle.y + LabG_TextRect(lw).y + 				LabG_PixmapRect(lw).y, LabG_PixmapRect(lw).width, LabG_PixmapRect(lw).height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
                 else if (depth == 1)
-                    XCopyPlane (XtDisplay(lw), Pix(lw), XtWindow(lw), gc, 0, 0,
-                            LabG_PixmapRect(lw).width,
-			    LabG_PixmapRect(lw).height,
-                            lw->rectangle.x + LabG_TextRect(lw).x +
-				LabG_PixmapRect(lw).x,
-                            lw->rectangle.y + LabG_TextRect(lw).y +
-				LabG_PixmapRect(lw).y,
-			    1);
+                    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(lw), XtWindow(lw), gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(lw), Pix(lw)) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, lw->rectangle.x + LabG_TextRect(lw).x + 				LabG_PixmapRect(lw).x, lw->rectangle.y + LabG_TextRect(lw).y + 				LabG_PixmapRect(lw).y, LabG_PixmapRect(lw).width, LabG_PixmapRect(lw).height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
             }
         }
         else
@@ -2422,19 +2414,19 @@ LRectangle *background_box)
                     NULL, NULL, NULL, NULL, NULL, NULL);
 
                 if (depth == XtParent(lw)->core.depth)
-                    XCopyArea (XtDisplay(lw), pix_use, XtWindow(lw), gc, 0, 0,
-                        LabG_PixmapRect(lw).width, LabG_PixmapRect(lw).height,
-                        lw->rectangle.x + LabG_TextRect(lw).x +
-				LabG_PixmapRect(lw).x,
-                        lw->rectangle.y + LabG_TextRect(lw).y +
-				LabG_PixmapRect(lw).y);
+                    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(lw), XtWindow(lw), gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(lw), pix_use) ;
+  _XmPlatBlit (_c, _src, 0, 0, lw->rectangle.x + LabG_TextRect(lw).x + 				LabG_PixmapRect(lw).x, lw->rectangle.y + LabG_TextRect(lw).y + 				LabG_PixmapRect(lw).y, LabG_PixmapRect(lw).width, LabG_PixmapRect(lw).height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
                 else if (depth == 1)
-                    XCopyPlane (XtDisplay(lw), pix_use, XtWindow(lw), gc, 0, 0,
-                            LabG_PixmapRect(lw).width,
-			    LabG_PixmapRect(lw).height,
-                            lw->rectangle.x + LabG_TextRect(lw).x + LabG_PixmapRect(lw).x,
-                            lw->rectangle.y + LabG_TextRect(lw).y + LabG_PixmapRect(lw).y,
-			    1);
+                    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(lw), XtWindow(lw), gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(lw), pix_use) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, lw->rectangle.x + LabG_TextRect(lw).x + LabG_PixmapRect(lw).x, lw->rectangle.y + LabG_TextRect(lw).y + LabG_PixmapRect(lw).y, LabG_PixmapRect(lw).width, LabG_PixmapRect(lw).height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
 #ifndef FIX_1381
                 /* if no insensitive pixmap but a regular one, we need
@@ -2442,14 +2434,7 @@ LRectangle *background_box)
 				if (pix_use == Pix(lw))		{
                     /* need fill stipple, not opaque */
                     XSetFillStyle(XtDisplay(lw), gc, FillStippled);
-                    XFillRectangle(XtDisplay(lw), XtWindow(lw),
-                        gc,
-			lw->rectangle.x + LabG_TextRect(lw).x +
-				LabG_PixmapRect(lw).x,
-                        lw->rectangle.y + LabG_TextRect(lw).y +
-				LabG_PixmapRect(lw).y,
-                        LabG_PixmapRect(lw).width,
-                        LabG_PixmapRect(lw).height);
+                    _XmPlatFillOneRect (XtDisplay (lw), XtWindow(lw), gc, lw->rectangle.x + LabG_TextRect(lw).x + 				LabG_PixmapRect(lw).x, lw->rectangle.y + LabG_TextRect(lw).y + 				LabG_PixmapRect(lw).y, LabG_PixmapRect(lw).width, LabG_PixmapRect(lw).height) ;
                     XSetFillStyle(XtDisplay(lw), gc, FillOpaqueStippled);
                 }
 #endif
@@ -2457,13 +2442,7 @@ LRectangle *background_box)
                 if (pix_use == Pix(lw)) {
                     XSetFillStyle(XtDisplay(lw), gc, FillStippled);
                     XSetStipple(XtDisplay(lw), gc, _XmGetInsensitiveStippleBitmap((Widget)lw));
-                    XFillRectangle(XtDisplay(lw), XtWindow(lw), gc,
-                       lw->rectangle.x + LabG_TextRect(lw).x +
-                       LabG_PixmapRect(lw).x,
-                       lw->rectangle.y + LabG_TextRect(lw).y +
-                       LabG_PixmapRect(lw).y,
-                       LabG_PixmapRect(lw).width,
-                       LabG_PixmapRect(lw).height);
+                    _XmPlatFillOneRect (XtDisplay (lw), XtWindow(lw), gc, lw->rectangle.x + LabG_TextRect(lw).x +                        LabG_PixmapRect(lw).x, lw->rectangle.y + LabG_TextRect(lw).y +                        LabG_PixmapRect(lw).y, LabG_PixmapRect(lw).width, LabG_PixmapRect(lw).height) ;
                     XSetFillStyle(XtDisplay(lw), gc, FillSolid);
                 }
 #endif
@@ -2577,13 +2556,7 @@ LRectangle *background_box)
 #ifdef USE_XFT
         if (!XtIsSensitive(wid)) {
           XSetFillStyle(XtDisplay(lw), LabG_InsensitiveGC(lw), FillStippled);
-          XFillRectangle(XtDisplay(lw), XtWindow(lw), LabG_InsensitiveGC(lw),
-			lw->rectangle.x + LabG_TextRect(lw).x +
-				LabG_StringRect(lw).x,
-                        lw->rectangle.y + LabG_TextRect(lw).y +
-				LabG_StringRect(lw).y,
-                        LabG_StringRect(lw).width,
-                        LabG_StringRect(lw).height);
+          _XmPlatFillOneRect (XtDisplay (lw), XtWindow(lw), LabG_InsensitiveGC(lw), lw->rectangle.x + LabG_TextRect(lw).x + 				LabG_StringRect(lw).x, lw->rectangle.y + LabG_TextRect(lw).y + 				LabG_StringRect(lw).y, LabG_StringRect(lw).width, LabG_StringRect(lw).height) ;
           XSetFillStyle(XtDisplay(lw), LabG_InsensitiveGC(lw), FillOpaqueStippled);
         }
 #endif

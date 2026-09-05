@@ -41,6 +41,7 @@
 #include <Xm/ExtP.h>
 #include <Xm/XmP.h>
 #include "RepTypeI.h"
+#include "XmPlat/XmPlatP.h"
 
 /************************************************************
 *	TYPEDEFS AND DEFINES
@@ -1603,7 +1604,10 @@ HSlideLeftArrowCallback(Widget w, XtPointer client_data, XtPointer junk)
         XmI18List_left_loc(ilist) = 0;
     }
 
-    XClearWindow(XtDisplay(ilist), XtWindow(ilist));
+    { XmPlatSurface _s = _XmPlatSurfaceOfWindow (XtDisplay (ilist), XtWindow (ilist)) ;
+  _XmPlatClearWindow (_s) ;
+  _XmPlatSurfaceFree (_s) ;
+}
     DisplayList((Widget) ilist, XmI18List_first_row(ilist), 
                 (XmI18List_num_rows(ilist) - XmI18List_first_row(ilist)), TRUE);
     DrawSeparator((Widget) ilist);
@@ -1673,7 +1677,10 @@ HSlideRightArrowCallback(Widget w, XtPointer client_data, XtPointer junk)
         XmI18List_left_loc(ilist) = 0 - (width - ilist->core.width);
     }
 
-    XClearWindow(XtDisplay(ilist), XtWindow(ilist));
+    { XmPlatSurface _s = _XmPlatSurfaceOfWindow (XtDisplay (ilist), XtWindow (ilist)) ;
+  _XmPlatClearWindow (_s) ;
+  _XmPlatSurfaceFree (_s) ;
+}
     DisplayList((Widget) ilist, XmI18List_first_row(ilist), 
                 (XmI18List_num_rows(ilist) - XmI18List_first_row(ilist)), TRUE);
     DrawSeparator((Widget) ilist);
@@ -1777,26 +1784,21 @@ DisplayList(Widget w, short start_row, short num_rows, Boolean redraw_headers)
 		height -= ilist->primitive.shadow_thickness;
 	    else
 		height -= LINE_HEIGHT;
-	    XFillRectangle(XtDisplay(w), XtWindow(w), XmI18List_entry_background_fill_gc(ilist),
-	                   LayoutIsRtoLP(w)
-			   ? -tot_width + XtWidth(w) - XmI18List_left_loc(ilist) + HORIZONTAL_SPACE/2
-			   : XmI18List_left_loc(ilist) - HORIZONTAL_SPACE/2,
-			   cur_y,
 #define MaX(a,b) (a>b?a:b)
-			   (unsigned int) MaX(w->core.width,tot_width), 
+	    _XmPlatFillOneRect (XtDisplay (w), XtWindow(w),
+				XmI18List_entry_background_fill_gc(ilist),
+				LayoutIsRtoLP(w)
+				? -tot_width + XtWidth(w) - XmI18List_left_loc(ilist) + HORIZONTAL_SPACE/2
+				: XmI18List_left_loc(ilist) - HORIZONTAL_SPACE/2,
+				cur_y,
+				(unsigned int) MaX(w->core.width,tot_width),
 #undef MaX
-			   (unsigned int) height);
+				(unsigned int) height);
     }
 
     for (i = start_row ; i <= end_row ; i++) {
 	if (XmI18List_row_data(ilist)[i].selected) {
-	    XFillRectangle(XtDisplay(w), XtWindow(w), XmI18List_gc(ilist),
-	                   LayoutIsRtoLP(w)
-			   ? -tot_width + XtWidth(w) - XmI18List_left_loc(ilist) + HORIZONTAL_SPACE/2
-			   : XmI18List_left_loc(ilist) - HORIZONTAL_SPACE/2,
-			   cur_y,
-			   (unsigned int) tot_width, 
-			   (unsigned int) row_height);
+	    _XmPlatFillOneRect (XtDisplay (w), XtWindow(w), XmI18List_gc(ilist), LayoutIsRtoLP(w) 			   ? -tot_width + XtWidth(w) - XmI18List_left_loc(ilist) + HORIZONTAL_SPACE/2 			   : XmI18List_left_loc(ilist) - HORIZONTAL_SPACE/2, cur_y, (unsigned int) tot_width, (unsigned int) row_height) ;
 	}
 	
 	cur_y += row_height;
@@ -1849,10 +1851,7 @@ DisplayList(Widget w, short start_row, short num_rows, Boolean redraw_headers)
 		y_loc = VERTICAL_SPACE/2;
 		x_loc = cur_x - HORIZONTAL_SPACE/2;
 		
-		XFillRectangle(XtDisplay(w), XtWindow(w), XmI18List_gc(ilist),
-			       x_loc, y_loc, 
-			       (unsigned int) col_widths[i] + HORIZONTAL_SPACE,
-			       (unsigned int) title_row_height);
+		_XmPlatFillOneRect (XtDisplay (w), XtWindow(w), XmI18List_gc(ilist), x_loc, y_loc, (unsigned int) col_widths[i] + HORIZONTAL_SPACE, (unsigned int) title_row_height) ;
 	    }
 	    else {
 		if (XtIsSensitive(w))
@@ -1907,24 +1906,20 @@ DisplayList(Widget w, short start_row, short num_rows, Boolean redraw_headers)
 		      (row_height - XmI18List_row_data(ilist)[j].pix_height)/2;
 		    
 		    if (XmI18List_row_data(ilist)[j].pix_depth == 1 ){
-		      XCopyPlane(XtDisplay(w), XmI18List_row_data(ilist)[j].pixmap,
-				 XtWindow(w), entry_gc, 0, 0,
-				 XmI18List_row_data(ilist)[j].pix_width,
-				 XmI18List_row_data(ilist)[j].pix_height,
-				 LayoutIsRtoLP(w)
-				 ? width - XmI18List_left_loc(ilist) - XmI18List_row_data(ilist)[j].pix_width
-				 : cur_x,
-				 cur_y+pix_y_offset, (unsigned long) 1);
+		      { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(w), XtWindow(w), entry_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(w), XmI18List_row_data(ilist)[j].pixmap) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, LayoutIsRtoLP(w) 				 ? width - XmI18List_left_loc(ilist) - XmI18List_row_data(ilist)[j].pix_width 				 : cur_x, cur_y+pix_y_offset, XmI18List_row_data(ilist)[j].pix_width, XmI18List_row_data(ilist)[j].pix_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 		    }
 		    else {
-		      XCopyArea(XtDisplay(w), XmI18List_row_data(ilist)[j].pixmap,
-				 XtWindow(w), entry_gc, 0, 0,
-				 XmI18List_row_data(ilist)[j].pix_width,
-				 XmI18List_row_data(ilist)[j].pix_height,
-				 LayoutIsRtoLP(w)
-				 ? width - XmI18List_left_loc(ilist) - XmI18List_row_data(ilist)[j].pix_width
-				 : cur_x,
-				 cur_y+pix_y_offset );
+		      { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(w), XtWindow(w), entry_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(w), XmI18List_row_data(ilist)[j].pixmap) ;
+  _XmPlatBlit (_c, _src, 0, 0, LayoutIsRtoLP(w) 				 ? width - XmI18List_left_loc(ilist) - XmI18List_row_data(ilist)[j].pix_width 				 : cur_x, cur_y+pix_y_offset, XmI18List_row_data(ilist)[j].pix_width, XmI18List_row_data(ilist)[j].pix_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 		    }
 		}
 		
@@ -2016,11 +2011,7 @@ DrawSeparator(Widget w)
 	else
 	    gc = XmI18List_stippled_gc(ilist);
 	
-	XFillRectangle(XtDisplay(w), XtWindow(w), gc,
-		       0,
-		       XmI18List_sep_y(ilist),
-		       width,
-		       LINE_HEIGHT);
+	_XmPlatFillOneRect (XtDisplay (w), XtWindow (w), gc, 0, XmI18List_sep_y(ilist), width, LINE_HEIGHT);
     }
 }
 
@@ -2515,8 +2506,7 @@ VScroll(Widget w, short amount)
     else
 	y_start += LINE_HEIGHT;
 
-    XClearArea(XtDisplay(w), XtWindow(w), 0, y_start,
-	       (unsigned int) 0, (unsigned int) 0, FALSE);
+    _XmPlatClearOneRect (XtDisplay (w), XtWindow (w), 0, y_start, (unsigned int) 0, (unsigned int) 0);
 
     num_rows = XmI18List_num_rows(ilist) - XmI18List_first_row(ilist);
     DisplayList(w, XmI18List_first_row(ilist), num_rows, TRUE);
@@ -2624,10 +2614,8 @@ HScroll(Widget w, short amount)
     else
 	y_start += LINE_HEIGHT;
 
-    XClearArea(XtDisplay(w), XtWindow(w), 0, 0, 
-	       (unsigned int) 0, title_height, FALSE);
-    XClearArea(XtDisplay(w), XtWindow(w), 0, y_start, 
-	       (unsigned int) 0, (unsigned int) 0, FALSE);
+    _XmPlatClearOneRect (XtDisplay (w), XtWindow (w), 0, 0, (unsigned int) 0, title_height);
+    _XmPlatClearOneRect (XtDisplay (w), XtWindow (w), 0, y_start, (unsigned int) 0, (unsigned int) 0);
 
     num_rows = XmI18List_num_rows(ilist) - XmI18List_first_row(ilist);
     DisplayList(w, XmI18List_first_row(ilist), num_rows, TRUE);
@@ -2874,22 +2862,19 @@ InvertArea(Widget w, short row, short column)
     gc_to_use = XmI18List_entry_background_inv_gc(ilist);
   }
   
-  XFillRectangle(XtDisplay(w), XtWindow(w), gc_to_use,
-		 (int) x, (int) y, width, height);
+  _XmPlatFillOneRect (XtDisplay (w), XtWindow (w), gc_to_use, (int) x, (int) y, width, height);
   
   if ( (XmI18List_first_col_pixmaps(ilist)) && 
        (XmI18List_row_data(ilist)[row].pix_depth != 1 ) &&
        IsValidPixmap(XmI18List_row_data(ilist)[row].pixmap) )
   {
       pix_y_offset = (height - XmI18List_row_data(ilist)[row].pix_height)/2;
-      XCopyArea(XtDisplay(w), XmI18List_row_data(ilist)[row].pixmap,
-		XtWindow(w), XmI18List_entry_background_gc(ilist), 0, 0,
-		XmI18List_row_data(ilist)[row].pix_width,
-		XmI18List_row_data(ilist)[row].pix_height,
-		LayoutIsRtoLP(w)
-		  ? XtWidth(ilist) - XmI18List_left_loc(ilist) - XmI18List_row_data(ilist)[row].pix_height
-		  : XmI18List_left_loc(ilist),
-		y+pix_y_offset );
+      { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(w), XtWindow(w), XmI18List_entry_background_gc(ilist)) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(w), XmI18List_row_data(ilist)[row].pixmap) ;
+  _XmPlatBlit (_c, _src, 0, 0, LayoutIsRtoLP(w) 		  ? XtWidth(ilist) - XmI18List_left_loc(ilist) - XmI18List_row_data(ilist)[row].pix_height 		  : XmI18List_left_loc(ilist), y+pix_y_offset, XmI18List_row_data(ilist)[row].pix_width, XmI18List_row_data(ilist)[row].pix_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
   }
 }
 
@@ -2909,7 +2894,10 @@ RedrawList(Widget w)
     short num_rows;
 
     if (XtIsRealized(w)) {
-        XClearWindow(XtDisplay(w), XtWindow(w));
+        { XmPlatSurface _s = _XmPlatSurfaceOfWindow (XtDisplay (w), XtWindow (w)) ;
+  _XmPlatClearWindow (_s) ;
+  _XmPlatSurfaceFree (_s) ;
+}
 
         num_rows = XmI18List_num_rows(ilist) - XmI18List_first_row(ilist);
         DisplayList(w, XmI18List_first_row(ilist), num_rows, TRUE);

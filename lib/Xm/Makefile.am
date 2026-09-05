@@ -6,6 +6,7 @@ EXTRA_DIST = xmstring.list Xm.msg \
              XmStrDefs.ct
 
 INCLUDES = -I.. -I$(srcdir)/.. -I$(top_srcdir) \
+           -I$(srcdir)/XmPlat \
            -DXMBINDDIR_FALLBACK=\"@XMBINDDIR_FALLBACK@\" \
            -DINCDIR=\"@INCDIR@\" \
            -DLIBDIR=\"@LIBDIR@\" \
@@ -15,6 +16,9 @@ xmdir = $(includedir)/Xm
 libXm_la_LDFLAGS = -version-info @CURRENT@:@REVISION@:@AGE@
 
 lib_LTLIBRARIES = libXm.la
+
+XMPLAT_SRCS = XmPlat/XmPlat.c XmPlat/XmPlatDraw.c
+XMPLAT_HDRS = XmPlat/XmPlat.h XmPlat/XmPlatTypes.h XmPlat/XmPlatP.h
 
 TIP_SRCS = ToolTip.c
 TIP_HDRS = ToolTipI.h

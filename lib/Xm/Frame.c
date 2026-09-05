@@ -38,6 +38,7 @@ static char rcsid[] = "$XConsortium: Frame.c /main/18 1996/10/15 15:01:45 cde-os
 #include "GMUtilsI.h"
 #include "RepTypeI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define GetFrameConstraint(w) \
         (&((XmFrameConstraintPtr) (w)->core.constraints)->frame)
@@ -644,10 +645,7 @@ Redisplay(
 
    if (title_area && XmIsGadget(title_area) && XtIsManaged(title_area))
    {
-      XClearArea (XtDisplay(fw), XtWindow(fw),
-		  title_area->core.x, title_area->core.y,
-		  title_area->core.width, title_area->core.height,
-		  False);
+      _XmPlatClearOneRect (XtDisplay (fw), XtWindow (fw), title_area->core.x, title_area->core.y, title_area->core.width, title_area->core.height);
       if (region && !XRectInRegion (region, title_area->core.x,
 	title_area->core.y, title_area->core.width, title_area->core.height))
       {

@@ -58,6 +58,7 @@ extern "C" { /* some 'locale.h' do not have prototypes (sun) */
 #include "XmRenderTI.h"
 #include "XmStringI.h"
 #include "XmTabListI.h"
+#include "XmPlat/XmPlatP.h"
 
 # include <stdarg.h>
 
@@ -1770,8 +1771,9 @@ XmStringConcatAndFree(XmString a,
 	    MergeEnds((_XmStringEntry)a_last, (_XmStringEntry)b_seg);
 
 	  _XmEntryTextTypeSet(a_last, (a_type == XmNO_TEXT) ? b_type : a_type);
-	  memcpy(((char *)_XmEntryTextGet((_XmStringEntry)a_last)) + a_len, 
-		 _XmEntryTextGet((_XmStringEntry)b_seg), b_len);
+	  if (b_len > 0)
+	    memcpy(((char *)_XmEntryTextGet((_XmStringEntry)a_last)) + a_len,
+		   _XmEntryTextGet((_XmStringEntry)b_seg), b_len);
 
 	  _XmEntryByteCountSet(a_last, a_len + b_len);
 
@@ -3739,7 +3741,10 @@ _XmStringDrawLining(Display *d,
 	    {
 	      old_fg = current_gcv.foreground;
 	      xgcv.foreground = fg;
-	      XChangeGC(d, gc, GCForeground, &xgcv);
+	      { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCForeground, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	    }
 	}
     
@@ -3750,7 +3755,10 @@ _XmStringDrawLining(Display *d,
 	    {
 	      old_bg = current_gcv.background;
 	      xgcv.background = bg;
-	      XChangeGC(d, gc, GCBackground, &xgcv);
+	      { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCBackground, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	    }
 	}
     }
@@ -3766,12 +3774,13 @@ _XmStringDrawLining(Display *d,
       if (old_style != style)
 	{
 	  cur_style = xgcv.line_style = style;
-	  XChangeGC(d, gc, GCLineStyle, &xgcv);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCLineStyle, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
       
-      XDrawLine (d, w, gc,
-		 x, y + SINGLE_OFFSET,
-		 x + width - 1, y + SINGLE_OFFSET);
+      _XmPlatDrawOneLine (d, w, gc, x, y + SINGLE_OFFSET, x + width - 1, y + SINGLE_OFFSET) ;
     }
   else
     {
@@ -3788,15 +3797,16 @@ _XmStringDrawLining(Display *d,
 	  if (cur_style != style)
 	    {
 	      cur_style = xgcv.line_style = style;
-	      XChangeGC(d, gc, GCLineStyle, &xgcv);
+	      { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCLineStyle, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	    }
       
 	  if ((under == XmSINGLE_LINE) ||
 	      (under == XmSINGLE_DASHED_LINE))
 	    {
-	      XDrawLine(d, w, gc,
-			x, y + SINGLE_OFFSET,
-			(x + width - 1), y + SINGLE_OFFSET);
+	      _XmPlatDrawOneLine (d, w, gc, x, y + SINGLE_OFFSET, (x + width - 1), y + SINGLE_OFFSET) ;
 	    }
 	  else if ((under == XmDOUBLE_LINE) ||
 		   (under == XmDOUBLE_DASHED_LINE))
@@ -3808,7 +3818,17 @@ _XmStringDrawLining(Display *d,
 	      segs[0].y1 = segs[0].y2 = y;
 	      segs[1].y1 = segs[1].y2 = y + DOUBLE_OFFSET;
 
-	      XDrawSegments(d, w, gc, segs, 2);
+	      { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(2) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(2) ; _pi++) {
+    _ps[_pi].x1 = segs[_pi].x1 ; _ps[_pi].y1 = segs[_pi].y1 ;
+    _ps[_pi].x2 = segs[_pi].x2 ; _ps[_pi].y2 = segs[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, 2) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+  }
 	    }
 	}
 
@@ -3822,15 +3842,16 @@ _XmStringDrawLining(Display *d,
 	  if (cur_style != style)
 	    {
 	      cur_style = xgcv.line_style = style;
-	      XChangeGC(d, gc, GCLineStyle, &xgcv);
+	      { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCLineStyle, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	    }
       
 	  if ((thru == XmSINGLE_LINE) ||
 	      (thru == XmSINGLE_DASHED_LINE))
 	    {
-	      XDrawLine(d, w, gc,
-			x, (y + descender - height/2 - 1),
-			(x + width - 1), (y + descender - height/2 - 1));
+	      _XmPlatDrawOneLine (d, w, gc, x, (y + descender - height/2 - 1), (x + width - 1), (y + descender - height/2 - 1)) ;
 	    }
 	  else if ((thru == XmDOUBLE_LINE) ||
 		   (thru == XmDOUBLE_DASHED_LINE))
@@ -3842,7 +3863,17 @@ _XmStringDrawLining(Display *d,
 	      segs[0].y1 = segs[0].y2 = (y + descender - height/2) - 2;
 	      segs[1].y1 = segs[1].y2 = (y + descender - height/2) + 1;
 
-	      XDrawSegments(d, w, gc, segs, 2);
+	      { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(2) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(2) ; _pi++) {
+    _ps[_pi].x1 = segs[_pi].x1 ; _ps[_pi].y1 = segs[_pi].y1 ;
+    _ps[_pi].x2 = segs[_pi].x2 ; _ps[_pi].y2 = segs[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, 2) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+  }
 	    }
 	}
     }
@@ -3852,7 +3883,10 @@ _XmStringDrawLining(Display *d,
        (old_style == LineDoubleDash)))
     {
       xgcv.line_style = old_style;
-      XChangeGC(d, gc, GCLineStyle, &xgcv);
+      { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCLineStyle, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
 
   if (!colors_set)
@@ -3860,13 +3894,19 @@ _XmStringDrawLining(Display *d,
       if (old_fg != XmUNSPECIFIED_PIXEL)
 	{
 	  xgcv.foreground = old_fg;
-	  XChangeGC(d, gc, GCForeground, &xgcv);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCForeground, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 
       if (old_bg != XmUNSPECIFIED_PIXEL)
 	{
 	  xgcv.background = old_bg;
-	  XChangeGC(d, gc, GCBackground, &xgcv);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCBackground, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
     }
 }
@@ -3958,7 +3998,10 @@ _XmStringDrawSegment(Display *d,
 	    {
 	      old_fg = current_gcv.foreground;
 	      xgcv.foreground = fg;
-	      XChangeGC(d, gc, GCForeground, &xgcv);
+	      { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCForeground, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	    }
 	}
     
@@ -3969,7 +4012,10 @@ _XmStringDrawSegment(Display *d,
 	    {
 	      old_bg = current_gcv.background;
 	      xgcv.background = bg;
-	      XChangeGC(d, gc, GCBackground, &xgcv);
+	      { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCBackground, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	    }
 	}
    
@@ -3990,7 +4036,10 @@ _XmStringDrawSegment(Display *d,
 	  if (current_gcv.font != xgcv.font)	  /* not right one */
 	    {					  /* change it */
 	      oldfont = current_gcv.font;
-	      XChangeGC(d, gc, GCFont, &xgcv);
+	      { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCFont, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	    }
 	}
 
@@ -4137,11 +4186,16 @@ _XmStringDrawSegment(Display *d,
 		/* TODO: it is very unoptimized convert the same sting
 		 * twice - for getting extents and drawing */
 		ucs_str = _XmUtf8ToUcs2(draw_text, seg_len, &ucs_str_len);
-		XDrawImageString16(d, w, gc, x, y, ucs_str, ucs_str_len);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (d, gc), XmPlatText16, ucs_str, ucs_str_len, x, y, 1) ;
+  _XmPlatCtxFree (_c) ;
+  }
 		XFree(ucs_str);
 	    } else
-	        XDrawImageString16(d, w, gc, x, y, (XChar2b*)draw_text, 
-			       Half(seg_len));
+	        { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (d, gc), XmPlatText16, (XChar2b*)draw_text, Half(seg_len), x, y, 1) ;
+  _XmPlatCtxFree (_c) ;
+  }
 #ifdef UTF8_SUPPORTED
           else if (utf8)
             Xutf8DrawImageString(d, w, (XFontSet)_XmRendFont(rend), gc, x, y,
@@ -4155,7 +4209,10 @@ _XmStringDrawSegment(Display *d,
 				gc, x, y, (wchar_t *) draw_text,
 				(seg_len / sizeof(wchar_t)));
 	  else
-	    XDrawImageString (d, w, gc, x, y, draw_text, seg_len);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (d, gc), XmPlatText8, draw_text, seg_len, x, y, 1) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
       else
 	{
@@ -4169,11 +4226,16 @@ _XmStringDrawSegment(Display *d,
 		/* TODO: it is very unoptimized convert the same sting
 		 * twice - for getting extents and drawing */
 		ucs_str = _XmUtf8ToUcs2(draw_text, seg_len, &ucs_str_len);
-		XDrawString16(d, w, gc, x, y, ucs_str, ucs_str_len);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (d, gc), XmPlatText16, ucs_str, ucs_str_len, x, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
 		XFree(ucs_str);
 	    } else
-		    XDrawString16 (d, w, gc, x, y, (XChar2b *)draw_text,
-				    Half(seg_len));
+		    { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (d, gc), XmPlatText16, (XChar2b *)draw_text, Half(seg_len), x, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	  }
 #ifdef UTF8_SUPPORTED
           else if (utf8)
@@ -4188,7 +4250,10 @@ _XmStringDrawSegment(Display *d,
 			   gc, x, y, (wchar_t *) draw_text,
 			   (seg_len / sizeof(wchar_t)));
 	  else 
-	    XDrawString(d, w, gc, x, y, draw_text, seg_len);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (d, w, gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (d, gc), XmPlatText8, draw_text, seg_len, x, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 	}
 
@@ -4197,9 +4262,7 @@ _XmStringDrawSegment(Display *d,
 	{
 	  *underline = (_XmString) NULL;	  /* only once */
 
-	  XDrawLine (d, w, gc,
-		     under_begin, (y + descender),
-		     under_end, (y + descender));
+	  _XmPlatDrawOneLine (d, w, gc, under_begin, (y + descender), under_end, (y + descender)) ;
 	}
 
       _XmStringDrawLining(d, w, x, y, width, height, descender,
@@ -4209,19 +4272,28 @@ _XmStringDrawSegment(Display *d,
 	  ((Font)~0 != oldfont))		  /* put it back */
 	{			
 	  xgcv.font = oldfont;
-	  XChangeGC (d, gc, GCFont, &xgcv);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCFont, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 
       if (old_fg != XmUNSPECIFIED_PIXEL)
 	{
 	  xgcv.foreground = old_fg;
-	  XChangeGC(d, gc, GCForeground, &xgcv);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCForeground, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 
       if (old_bg != XmUNSPECIFIED_PIXEL)
 	{
 	  xgcv.background = old_bg;
-	  XChangeGC(d, gc, GCBackground, &xgcv);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (d, 0, gc) ;
+  _XmPlatChangeGCValues (_c, GCBackground, &xgcv) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 
       if (flip_char_extra != NULL) 
@@ -5178,7 +5250,7 @@ _render(Display *d,
 	  } else
 #endif
 #endif
-		  XSetClipMask (d, gc, None); 
+		  _XmPlatClrClip (d, gc) ; 
   }
 
   if (_XmRendTags(rend1) != NULL) XtFree((char *)_XmRendTags(rend1));

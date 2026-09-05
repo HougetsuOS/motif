@@ -29,6 +29,7 @@
 #include <Xm/OutlineP.h>
 #include <Xm/DropSMgr.h>
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 /************************************************************
 *	TYPEDEFS AND DEFINES
@@ -345,8 +346,7 @@ Resize(Widget w)
 	
 	LayoutChildren(w, NULL);
 	if (XtIsRealized((Widget)ow)) {
-	    XClearArea(XtDisplay(ow), XtWindow(ow),
-		       0, 0, ow->core.width, ow->core.height, True);
+	    _XmPlatClearOneRect (XtDisplay (ow), XtWindow (ow), 0, 0, ow->core.width, ow->core.height);
 	}
     }
 }
@@ -574,8 +574,7 @@ ChangeManaged(Widget w)
 	
 	LayoutChildren(w, NULL);
 	if (XtIsRealized((Widget)ow)) {
-	    XClearArea(XtDisplay(ow), XtWindow(ow),
-		       0, 0, ow->core.width, ow->core.height, True);
+	    _XmPlatClearOneRect (XtDisplay (ow), XtWindow (ow), 0, 0, ow->core.width, ow->core.height);
 	}
     }
 
@@ -667,8 +666,7 @@ GeometryManager(Widget w, XtWidgetGeometry * request,
 	
 	LayoutChildren(XtParent(w), w);
 	if (XtIsRealized((Widget)ow)) {
-	    XClearArea(XtDisplay(ow), XtWindow(ow),
-		       0, 0, ow->core.width, ow->core.height, True);
+	    _XmPlatClearOneRect (XtDisplay (ow), XtWindow (ow), 0, 0, ow->core.width, ow->core.height);
 	}
     }
 
@@ -759,8 +757,7 @@ ConstraintSetValues(Widget current, Widget request, Widget set,
     if (XtIsRealized(ow) && redisplay && 
         (XmHierarchy_refigure_mode((XmOutlineWidget)ow)))
     {
-	XClearArea(XtDisplay(ow), XtWindow(ow),
-		   0, 0, ow->core.width, ow->core.height, True);
+	_XmPlatClearOneRect (XtDisplay (ow), XtWindow (ow), 0, 0, ow->core.width, ow->core.height);
     }
 	
     return(False);   
@@ -852,8 +849,7 @@ ToggleNodeState(Widget w, XtPointer node_ptr, XtPointer call_data)
      */
 
     if (XtIsRealized(ow)) {
-	XClearArea(XtDisplay(ow), XtWindow(ow),
-		   0, 0, ow->core.width, ow->core.height, True);
+	_XmPlatClearOneRect (XtDisplay (ow), XtWindow (ow), 0, 0, ow->core.width, ow->core.height);
     }
 }
 
@@ -1759,8 +1755,7 @@ DrawOutlineLine(Widget w, XRectangle *rect, OutlineConstraints node)
     if (num_kids > 0 && anyKidManaged) 
 	{ /* CR03730 Support Case 22066 anyKidManaged added to prevent draw needless
 	     (x & y are not initialized if no kid managed) line */
-          XDrawLine(XtDisplay(w), XtWindow(w), XmOutline_draw_gc(ow), from_node_point.x, from_node_point.y,
-		from_node_point.x, last_kid_point.y );
+          _XmPlatDrawOneLine (XtDisplay (w), XtWindow (w), XmOutline_draw_gc(ow), from_node_point.x, from_node_point.y, from_node_point.x, last_kid_point.y );
 	}
    }
 }
@@ -1844,7 +1839,7 @@ _OutlineDrawLine(Widget w, XRectangle *rect, OutlineConstraints parent,
      */
 
     if (!((cx1 > rx2) || (cy1 > ry2) || (cx2 < rect->x) || (cy2 < rect->y)))
-	    XDrawLine(XtDisplay(w), XtWindow(w), gc, cx1, cy1, cx2, cy2);
+	    _XmPlatDrawOneLine (XtDisplay (w), XtWindow (w), gc, cx1, cy1, cx2, cy2);
 
     /* This is sent back because the ladder lines get connected later */
     to_ladder_point->x = cx1;

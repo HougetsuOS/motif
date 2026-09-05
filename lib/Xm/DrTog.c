@@ -32,6 +32,7 @@
 
 
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 #include <Xm/DrawP.h>
 
 
@@ -91,8 +92,7 @@ DrawCheckMark(Display *display,
 	      Dimension height,
 	      Dimension margin)
 {
-  XGCValues old_values, new_values;
-  XtGCMask mask;
+  unsigned int old_width;
   XPoint check[XtNumber(check_template)];
   float scale_x = (width - 2 * margin - 1) / (float)CHECK_TEMPLATE_WIDTH;
   float scale_y = (height - 2 * margin - 1) / (float)CHECK_TEMPLATE_HEIGHT;
@@ -107,16 +107,34 @@ DrawCheckMark(Display *display,
     }
 
   /* CR 9656: Force line_width so test results are not platform-dependent. */
-  mask = 0;
-  new_values.line_width = 1, mask |= GCLineWidth;
-  XGetGCValues(display, gc, mask, &old_values);
-  XChangeGC(display, gc, mask, &new_values);
+  {
+    XmPlatDrawCtx plat = _XmPlatCtx (display, d, gc) ;
+    old_width = _XmPlatGetLineWidth (plat) ;
+    _XmPlatSetLineWidth (plat, 1) ;
+    _XmPlatCtxFree (plat) ;
+  }
 
   /* Draw the check mark. */
-  XFillPolygon(display, d, gc, check, npoints - 1, Nonconvex, CoordModeOrigin);
-  XDrawLines(display, d, gc, check, npoints, CoordModeOrigin);
+  {
+    XmPlatDrawCtx plat = _XmPlatCtx (display, d, gc) ;
+    XmPlatPoint *ppts = (XmPlatPoint *) XtMalloc ((size_t)npoints *
+						  sizeof (XmPlatPoint)) ;
+    int pi ;
+    for (pi = 0 ; pi < npoints ; pi++) {
+      ppts[pi].x = check[pi].x ;
+      ppts[pi].y = check[pi].y ;
+    }
+    _XmPlatFillPolygon (plat, ppts, npoints - 1, 0) ;
+    _XmPlatDrawLines (plat, ppts, npoints, 0) ;
+    _XmPlatCtxFree (plat) ;
+    XtFree ((char *) ppts) ;
+  }
 
-  XChangeGC(display, gc, mask, &old_values);
+  {
+    XmPlatDrawCtx plat = _XmPlatCtx (display, d, gc) ;
+    _XmPlatSetLineWidth (plat, old_width) ;
+    _XmPlatCtxFree (plat) ;
+  }
 }
 
 static void
@@ -175,7 +193,18 @@ DrawCross(Display *display,
 
   assert(nsegs <= XtNumber(segs));
 
-  XDrawSegments(display, d, gc, segs, nsegs);
+  {
+    XmPlatDrawCtx plat = _XmPlatCtx (display, d, gc) ;
+    XmPlatSegment psegs[6] ;
+    unsigned int psi ;
+
+    for (psi = 0 ; psi < nsegs ; psi++) {
+      psegs[psi].x1 = segs[psi].x1 ; psegs[psi].y1 = segs[psi].y1 ;
+      psegs[psi].x2 = segs[psi].x2 ; psegs[psi].y2 = segs[psi].y2 ;
+    }
+    _XmPlatDrawSegments (plat, psegs, (int)nsegs) ;
+    _XmPlatCtxFree (plat) ;
+  }
 }
 
 
@@ -209,7 +238,11 @@ void XmeDrawDiamond(Display *display, Drawable d,
    if (width % 2 == 0) width--;
 
    if (width == 1) {
-       XDrawPoint(display, d, top_gc, x,y);
+       {
+	 XmPlatDrawCtx plat = _XmPlatCtx (display, d, top_gc) ;
+	 _XmPlatDrawPoint (plat, x, y) ;
+	 _XmPlatCtxFree (plat) ;
+       }
        _XmAppUnlock(app);
        return ;
    } else
@@ -221,7 +254,18 @@ void XmeDrawDiamond(Display *display, Drawable d,
        seg[1].x1 = seg[1].x2 = x + 1;           
        seg[1].y1 = y ;
        seg[1].y2 = y + 2;
-       XDrawSegments (display, d, top_gc, seg, 2);
+       {
+	 XmPlatDrawCtx plat = _XmPlatCtx (display, d, top_gc) ;
+	 XmPlatSegment pseg[2] ;
+	 int psi ;
+
+	 for (psi = 0 ; psi < 2 ; psi++) {
+	   pseg[psi].x1 = seg[psi].x1 ; pseg[psi].y1 = seg[psi].y1 ;
+	   pseg[psi].x2 = seg[psi].x2 ; pseg[psi].y2 = seg[psi].y2 ;
+	 }
+	 _XmPlatDrawSegments (plat, pseg, 2) ;
+	 _XmPlatCtxFree (plat) ;
+       }
        _XmAppUnlock(app);
        return ;
    } else   {        /* NORMAL SIZED ToggleButtonS : initial width >= 5 */
@@ -290,9 +334,25 @@ void XmeDrawDiamond(Display *display, Drawable d,
        seg[11].y2 = midY - 1;
    }
 
-   XDrawSegments (display, d, top_gc, &seg[3], 3);
-   XDrawSegments (display, d, bottom_gc, &seg[6], 6);
-   XDrawSegments (display, d, top_gc, &seg[0], 3);
+   {
+     XmPlatDrawCtx plat ;
+     XmPlatSegment pseg[12] ;
+     int psi ;
+
+     for (psi = 0 ; psi < 12 ; psi++) {
+       pseg[psi].x1 = seg[psi].x1 ; pseg[psi].y1 = seg[psi].y1 ;
+       pseg[psi].x2 = seg[psi].x2 ; pseg[psi].y2 = seg[psi].y2 ;
+     }
+     plat = _XmPlatCtx (display, d, top_gc) ;
+     _XmPlatDrawSegments (plat, pseg + 3, 3) ;
+     _XmPlatCtxFree (plat) ;
+     plat = _XmPlatCtx (display, d, bottom_gc) ;
+     _XmPlatDrawSegments (plat, pseg + 6, 6) ;
+     _XmPlatCtxFree (plat) ;
+     plat = _XmPlatCtx (display, d, top_gc) ;
+     _XmPlatDrawSegments (plat, pseg + 0, 3) ;
+     _XmPlatCtxFree (plat) ;
+   }
 
    if (width == 5 || !center_gc) { _XmAppUnlock(app); return ; }   /* <= 5 in fact */
 
@@ -310,7 +370,17 @@ void XmeDrawDiamond(Display *display, Drawable d,
    pt[2].x = x + width - 3 - delta;
    pt[3].y = y + width - 3 - delta;
    
-   XFillPolygon (display, d, center_gc, pt, 4, Convex, CoordModeOrigin);
+   {
+     XmPlatDrawCtx plat = _XmPlatCtx (display, d, center_gc) ;
+     XmPlatPoint ppts[4] ;
+     int psi ;
+
+     for (psi = 0 ; psi < 4 ; psi++) {
+       ppts[psi].x = pt[psi].x ; ppts[psi].y = pt[psi].y ;
+     }
+     _XmPlatFillPolygon (plat, ppts, 4, 1) ;
+     _XmPlatCtxFree (plat) ;
+   }
    _XmAppUnlock(app);
 }
 
@@ -381,53 +451,61 @@ XmeDrawCircle(Display *display,
   if (shadow_thick > 0)
     {
       /* Force the GCs to use our values. */
-      XGCValues top_values, bottom_values, new_values;
-      XtGCMask mask;
+      XmPlatDrawCtx top_plat = _XmPlatCtx (display, d, top_gc) ;
+      XmPlatDrawCtx bot_plat = _XmPlatCtx (display, d, bottom_gc) ;
+      unsigned int top_old_w = _XmPlatGetLineWidth (top_plat) ;
+      unsigned int bot_old_w = _XmPlatGetLineWidth (bot_plat) ;
 
-      mask = 0;
-      new_values.line_width = line_width, mask |= GCLineWidth;
-
-      XGetGCValues(display, top_gc, mask, &top_values);
-      XGetGCValues(display, bottom_gc, mask, &bottom_values);
-
-      XChangeGC(display, top_gc, mask, &new_values);
-      XChangeGC(display, bottom_gc, mask, &new_values);
+      _XmPlatSetLineWidth (top_plat, (unsigned) line_width) ;
+      _XmPlatSetLineWidth (bot_plat, (unsigned) line_width) ;
 
 #ifdef FIX_1402
       if (center_gc != NULL) {
     	  int delta = MIN(line_width + margin, MIN(width, height) / 2) -1;
-    	  XFillArc(display, d, center_gc,
-    			  x + delta, y + delta,
-    			  MAX(width - 2 * delta, 1), 
-    			  MAX(height - 2 * delta, 1),
-    			  0, 360 * 64);
+	  XmPlatDrawCtx plat = _XmPlatCtx (display, d, center_gc) ;
+	  _XmPlatFillArc (plat,
+			  x + delta, y + delta,
+			  (unsigned) MAX(width - 2 * delta, 1),
+			  (unsigned) MAX(height - 2 * delta, 1),
+			  0, 360 * 64) ;
+	  _XmPlatCtxFree (plat) ;
       }
 #endif
       
-      XDrawArc(display, d, top_gc,
-	       x + line_width/2, y + line_width/2, 
-	       MAX(width - line_width, 1),
-	       MAX(height - line_width, 1),
-	       45 * 64, 180 * 64);
-      XDrawArc(display, d, bottom_gc,
-	       x + line_width/2, y + line_width/2, 
-	       MAX(width - line_width, 1),
-	       MAX(height - line_width, 1),
-	       45 * 64, -180 * 64);
+      {
+	XmPlatDrawCtx plat = _XmPlatCtx (display, d, top_gc) ;
+	_XmPlatDrawArc (plat,
+			x + line_width/2, y + line_width/2,
+			(unsigned) MAX(width - line_width, 1),
+			(unsigned) MAX(height - line_width, 1),
+			45 * 64, 180 * 64) ;
+	_XmPlatCtxFree (plat) ;
+	plat = _XmPlatCtx (display, d, bottom_gc) ;
+	_XmPlatDrawArc (plat,
+			x + line_width/2, y + line_width/2,
+			(unsigned) MAX(width - line_width, 1),
+			(unsigned) MAX(height - line_width, 1),
+			45 * 64, -180 * 64) ;
+	_XmPlatCtxFree (plat) ;
+      }
 
-      XChangeGC(display, top_gc, mask, &top_values);
-      XChangeGC(display, bottom_gc, mask, &bottom_values);
+      _XmPlatSetLineWidth (top_plat, top_old_w) ;
+      _XmPlatSetLineWidth (bot_plat, bot_old_w) ;
+      _XmPlatCtxFree (top_plat) ;
+      _XmPlatCtxFree (bot_plat) ;
     }
 
 #ifdef FIX_1402
   else {
 	  if (center_gc != NULL) {
 		  int delta = MIN(line_width + margin, MIN(width, height) / 2);
-		  XFillArc(display, d, center_gc,
+		  XmPlatDrawCtx plat = _XmPlatCtx (display, d, center_gc) ;
+		  _XmPlatFillArc (plat,
 				  x + delta, y + delta,
-				  MAX(width - 2 * delta, 1), 
-				  MAX(height - 2 * delta, 1),
-				  0, 360 * 64);
+				  (unsigned) MAX(width - 2 * delta, 1),
+				  (unsigned) MAX(height - 2 * delta, 1),
+				  0, 360 * 64) ;
+		  _XmPlatCtxFree (plat) ;
 	  }
   }
 #else
@@ -435,11 +513,13 @@ XmeDrawCircle(Display *display,
     {
       /* Fill the center of the circle. */
       int delta = MIN(line_width + margin, MIN(width, height) / 2);
-      XFillArc(display, d, center_gc,
-	       x + delta, y + delta,
-	       MAX(width - 2 * delta, 1), 
-	       MAX(height - 2 * delta, 1),
-	       0, 360 * 64);
+      XmPlatDrawCtx plat = _XmPlatCtx (display, d, center_gc) ;
+      _XmPlatFillArc (plat,
+		      x + delta, y + delta,
+		      (unsigned) MAX(width - 2 * delta, 1),
+		      (unsigned) MAX(height - 2 * delta, 1),
+		      0, 360 * 64) ;
+      _XmPlatCtxFree (plat) ;
     }
 #endif
   _XmAppUnlock(app);

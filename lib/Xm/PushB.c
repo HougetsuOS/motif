@@ -57,6 +57,7 @@ static char rcsid[] = "$TOG: PushB.c /main/29 1999/01/27 16:08:33 mgreess $"
 #include "XmI.h"
 #include "VaSimpleI.h"
 #include "ExtP.h"
+#include "XmPlat/XmPlatP.h"
 
 #define XmINVALID_MULTICLICK	255
 #define DELAY_DEFAULT		100 
@@ -908,8 +909,12 @@ DrawDefaultGlyphPixmap(
   width = MIN(def_pixmap_width, Lab_MarginRight(pb));
   height = MIN(def_pixmap_height, 
 	       MAX(Lab_TextRect_height(pb), pb->label.acc_TextRect.height));
-  XCopyPlane (XtDisplay (pb), def_pixmap, XtWindow (pb),
-	      pb->label.normal_GC, 0, 0, width, height, dx, dy, 1);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (pb), XtWindow (pb), pb->label.normal_GC) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay (pb), def_pixmap) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, dx, dy, width, height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 #endif /* DEFAULT_GLYPH_PIXMAP */
 
@@ -935,8 +940,7 @@ EraseDefaultGlyphPixmap(
   width = Lab_MarginRight(pb) ;
   height = MAX(Lab_TextRect_height(pb), pb->label.acc_TextRect.height) ;
 
-  XClearArea (XtDisplay (pb), XtWindow (pb),
-	      dx, dy, width, height, False);
+  _XmPlatClearOneRect (XtDisplay (pb), XtWindow (pb), dx, dy, width, height);
 }
 #endif /* DEFAULT_GLYPH_PIXMAP */
 
@@ -1324,8 +1328,7 @@ DrawPushButtonBackground(
   /* really need to fill with background if not armed ? */
 
   if (tmp_gc)
-    XFillRectangle (XtDisplay(pb), XtWindow(pb), tmp_gc,
-		    box.x, box.y, box.width, box.height);
+    _XmPlatFillOneRect (XtDisplay (pb), XtWindow (pb), tmp_gc, box.x, box.y, box.width, box.height);
 }
 
 /*
@@ -1749,9 +1752,7 @@ BorderHighlight(
 
        if (etched_in && !XmIsTearOffButton(pb) ) 
 	 {
-	     XFillRectangle (XtDisplay(pb), XtWindow(pb),
-			     pb->pushbutton.fill_gc,
-			     0, 0, pb->core.width, pb->core.height);
+	     _XmPlatFillOneRect (XtDisplay (pb), XtWindow (pb), pb->pushbutton.fill_gc, 0, 0, pb->core.width, pb->core.height);
 
 	     DrawPushButtonLabel (pb, event, NULL);	
 	 }
@@ -1863,9 +1864,7 @@ BorderUnhighlight(
      pb->pushbutton.armed = FALSE;
 
      if (etched_in && !XmIsTearOffButton(pb) ) {
-	  XFillRectangle (XtDisplay(pb), XtWindow(pb),
-			  pb->pushbutton.background_gc,
-			  0, 0, pb->core.width, pb->core.height);
+	  _XmPlatFillOneRect (XtDisplay (pb), XtWindow (pb), pb->pushbutton.background_gc, 0, 0, pb->core.width, pb->core.height);
 	  DrawPushButtonLabel (pb, event, NULL);
      }
       else
@@ -2775,9 +2774,7 @@ Enter(
 	  /* etched in menu button */
 	  if (etched_in && !XmIsTearOffButton(pb) ) {
 
-	      XFillRectangle (XtDisplay(pb), XtWindow(pb),
-			      pb->pushbutton.fill_gc,
-			      0, 0, pb->core.width, pb->core.height);
+	      _XmPlatFillOneRect (XtDisplay (pb), XtWindow (pb), pb->pushbutton.fill_gc, 0, 0, pb->core.width, pb->core.height);
 	      DrawPushButtonLabel( pb, event, NULL );
 	  }
 
@@ -2848,9 +2845,7 @@ Leave(
 	  ((XmManagerWidget) XtParent(wid))->manager.active_child = NULL;
 
 	  if (etched_in && !XmIsTearOffButton(pb) ) {
-	      XFillRectangle (XtDisplay(pb), XtWindow(pb),
-			      pb->pushbutton.background_gc,
-			      0, 0, pb->core.width, pb->core.height);
+	      _XmPlatFillOneRect (XtDisplay (pb), XtWindow (pb), pb->pushbutton.background_gc, 0, 0, pb->core.width, pb->core.height);
 	      DrawPushButtonLabel (pb, event, NULL);
 	  }
 	  else 

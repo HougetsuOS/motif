@@ -48,6 +48,7 @@ static char rcsid[] = "$TOG: ArrowBG.c /main/20 1999/01/26 15:30:15 mgreess $"
 #include "TravActI.h"
 #include "TraversalI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define DELAY_DEFAULT	100
 #define INVALID_PIXEL	((Pixel) -1)
@@ -530,13 +531,7 @@ Redisplay(
   background_width = iwidth - 2 * aw->gadget.shadow_thickness;
   
   if (aw->arrowbutton.fill_bg_box)
-    XFillRectangle(XtDisplay(aw),
-		   XtWindow((Widget) aw),
-		   aw->arrowbutton.background_GC,
-		   background_x_offset,
-		   background_y_offset,
-		   background_width,
-		   background_height);
+    _XmPlatFillOneRect (XtDisplay (aw), XtWindow ((Widget) aw), aw->arrowbutton.background_GC, background_x_offset, background_y_offset, background_width, background_height);
   
   /*  Draw the arrow  */
   if ((iwidth > 0) && (iheight > 0))
@@ -1446,7 +1441,7 @@ DrawArrowG(XmArrowButtonGadget ag,
       ag->arrowbutton.detail_shadow_thickness == 1) 
       center_gc = ag->arrowbutton.arrow_GC ;
   if (center_gc)
-    XSetClipMask(XtDisplay((Widget) ag), center_gc, None);
+    _XmPlatClrClip (XtDisplay ((Widget) ag), center_gc);
 
   XmeDrawArrow (XtDisplay ((Widget) ag), XtWindow ((Widget) ag),
 		top_gc, bottom_gc, center_gc,

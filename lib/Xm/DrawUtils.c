@@ -23,6 +23,7 @@
 
 #include <X11/Intrinsic.h>
 #include <Xm/DrawUtils.h>
+#include "XmPlat/XmPlatP.h"
 
 #define STATIC_RECTS 20
 /*
@@ -106,11 +107,27 @@ XmDrawBevel(dpy, d, top_gc, bottom_gc, x, y, size, option)
 	    rt[i].width = size - i;
 	    rt[i].height = 1;
 	}
-	XFillRectangles(dpy, d, top_gc, rt, size);
+	{
+	  XmPlatDrawCtx plat = _XmPlatCtx (dpy, d, top_gc) ;
+	  XmPlatRect *pr = (XmPlatRect *) XtMalloc ((size_t)size *
+						     sizeof (XmPlatRect)) ;
+	  int pi ;
+	  for (pi = 0 ; pi < size ; pi++) {
+	    pr[pi].x = rt[pi].x ; pr[pi].y = rt[pi].y ;
+	    pr[pi].width = rt[pi].width ; pr[pi].height = rt[pi].height ;
+	  }
+	  _XmPlatFillRects (plat, pr, size) ;
+	  _XmPlatCtxFree (plat) ;
+	  XtFree ((char *) pr) ;
+	}
     }
     else if( option == XmBEVEL_BOTH )
     {
-	XFillRectangle(dpy, d, top_gc, x, y, size, size);
+	{
+	  XmPlatDrawCtx plat = _XmPlatCtx (dpy, d, top_gc) ;
+	  _XmPlatFillRect (plat, x, y, size, size) ;
+	  _XmPlatCtxFree (plat) ;
+	}
     }
 
     /*
@@ -125,7 +142,19 @@ XmDrawBevel(dpy, d, top_gc, bottom_gc, x, y, size, option)
 	    rt[i].width = i;
 	    rt[i].height = 1;
 	}
-	XFillRectangles(dpy, d, bottom_gc, rt, size);
+	{
+	  XmPlatDrawCtx plat = _XmPlatCtx (dpy, d, bottom_gc) ;
+	  XmPlatRect *pr = (XmPlatRect *) XtMalloc ((size_t)size *
+						     sizeof (XmPlatRect)) ;
+	  int pi ;
+	  for (pi = 0 ; pi < size ; pi++) {
+	    pr[pi].x = rt[pi].x ; pr[pi].y = rt[pi].y ;
+	    pr[pi].width = rt[pi].width ; pr[pi].height = rt[pi].height ;
+	  }
+	  _XmPlatFillRects (plat, pr, size) ;
+	  _XmPlatCtxFree (plat) ;
+	  XtFree ((char *) pr) ;
+	}
     }
 }
 

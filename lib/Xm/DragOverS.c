@@ -155,6 +155,7 @@ static char rcsid[] = "$TOG: DragOverS.c /main/18 1999/08/11 15:53:11 mgreess $"
 #include "RegionI.h"
 #include "ScreenI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define MESSAGE1	_XmMMsgDragOverS_0000
 #define MESSAGE2	_XmMMsgDragOverS_0001
@@ -575,8 +576,21 @@ DoZapEffect(
   v.function = GXxor;
   v.clip_mask = None;
   vmask = GCForeground|GCFunction|GCClipMask;
-  XChangeGC (display, draw_gc, vmask, &v);
-  XDrawSegments (display, root, draw_gc, segments, 4);
+  { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, draw_gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
+  { XmPlatDrawCtx _c = _XmPlatCtx (display, root, draw_gc) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(4) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _ps[_pi].x1 = segments[_pi].x1 ; _ps[_pi].y1 = segments[_pi].y1 ;
+    _ps[_pi].x2 = segments[_pi].x2 ; _ps[_pi].y2 = segments[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, 4) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+  }
   XFlush(display);
     
   /*
@@ -595,17 +609,32 @@ DoZapEffect(
        *  Erase the previously drawn lines and restore the root.
        */
 	
-      XDrawSegments (display, root, draw_gc, segments, 4);
+      { XmPlatDrawCtx _c = _XmPlatCtx (display, root, draw_gc) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(4) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _ps[_pi].x1 = segments[_pi].x1 ; _ps[_pi].y1 = segments[_pi].y1 ;
+    _ps[_pi].x2 = segments[_pi].x2 ; _ps[_pi].y2 = segments[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, 4) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+  }
 	
       if (dos->drag.activeMode != XmDRAG_WINDOW) {
 	v.foreground = dos->drag.cursorForeground;
 	v.function = GXcopy;
 	vmask = GCForeground|GCFunction;
-	XChangeGC (display, draw_gc, vmask, &v);
-	XCopyArea (display, BackingPixmap(dos), root,
-		   draw_gc,
-		   0, 0, dos->core.width, dos->core.height,
-		   segments[0].x2, segments[0].y2);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (display, 0, draw_gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
+	{ XmPlatDrawCtx _c = _XmPlatCtx (display, root, draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, BackingPixmap(dos)) ;
+  _XmPlatBlit (_c, _src, 0, 0, segments[0].x2, segments[0].y2, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
       }
 	
       /* Here is where we always leave the loop */
@@ -629,9 +658,12 @@ DoZapEffect(
       if (dos->drag.activeMode == XmDRAG_WINDOW) {
 	XtMoveWidget((Widget) dos, segments[0].x2, segments[0].y2);
       } else {
-	XCopyArea (display, root, BackingPixmap(dos), draw_gc,
-		   segments[0].x2, segments[0].y2, 
-		   dos->core.width, dos->core.height, 0, 0);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (display, BackingPixmap(dos), draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, root) ;
+  _XmPlatBlit (_c, _src, segments[0].x2, segments[0].y2, 0, 0, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	DrawIcon (dos,
 		  (dos->drag.rootBlend.mixedIcon ?
 		   dos->drag.rootBlend.mixedIcon :
@@ -642,8 +674,21 @@ DoZapEffect(
       v.foreground = 1;
       v.function = GXxor;
       vmask = GCForeground|GCFunction;
-      XChangeGC (display, draw_gc, vmask, &v);
-      XDrawSegments (display, root, draw_gc, segments, 4);
+      { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, draw_gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
+      { XmPlatDrawCtx _c = _XmPlatCtx (display, root, draw_gc) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(4) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _ps[_pi].x1 = segments[_pi].x1 ; _ps[_pi].y1 = segments[_pi].y1 ;
+    _ps[_pi].x2 = segments[_pi].x2 ; _ps[_pi].y2 = segments[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, 4) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+  }
       XFlush (display);
     }
   XFlush (display);
@@ -775,12 +820,12 @@ DoMeltEffect(
       {
 	XSetClipRectangles (XtDisplay((Widget)dos), 
 			    draw_gc, 0, 0, rects, 4, Unsorted);
-	XCopyArea (XtDisplay((Widget)dos),
-		   BackingPixmap(dos),
-		   RootWindowOfScreen(XtScreen(dos)),
-		   draw_gc,
-		   0, 0, dos->core.width, dos->core.height,
-		   dos->core.x, dos->core.y);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)dos), RootWindowOfScreen(XtScreen(dos)), draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay((Widget)dos), BackingPixmap(dos)) ;
+  _XmPlatBlit (_c, _src, 0, 0, dos->core.x, dos->core.y, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	XFlush (XtDisplay((Widget)dos));
 	
 	rects[0].height += yClipOffset;
@@ -794,13 +839,13 @@ DoMeltEffect(
 	XmeMicroSleep (MELT_TIME);
       }
     
-    XSetClipMask (XtDisplay((Widget)dos), draw_gc, None);
-    XCopyArea (XtDisplay((Widget)dos),
-	       BackingPixmap(dos),
-	       RootWindowOfScreen(XtScreen(dos)),
-	       draw_gc,
-	       0, 0, dos->core.width, dos->core.height,
-	       dos->core.x, dos->core.y);
+    _XmPlatClrClip (XtDisplay ((Widget)dos), draw_gc);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)dos), RootWindowOfScreen(XtScreen(dos)), draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay((Widget)dos), BackingPixmap(dos)) ;
+  _XmPlatBlit (_c, _src, 0, 0, dos->core.x, dos->core.y, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     
     XFlush (XtDisplay((Widget)dos));
   }
@@ -1036,13 +1081,16 @@ BlendIcon(
       /* Union the masks */
       v.function = GXor;
       vmask |= GCFunction;
-      XChangeGC(display, maskGC, vmask, &v);
-      XCopyArea(display, icon->drag.mask,
-		mixedIcon->drag.mask, maskGC,
-		sourceX, sourceY,
-		mixedIcon->drag.width, 
-		mixedIcon->drag.height,
-		destX, destY);
+      { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, maskGC) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
+      { XmPlatDrawCtx _c = _XmPlatCtx (display, mixedIcon->drag.mask, maskGC) ;
+  XmPlatSurface _src = _XmPlatSurface (display, icon->drag.mask) ;
+  _XmPlatBlit (_c, _src, sourceX, sourceY, destX, destY, mixedIcon->drag.width, mixedIcon->drag.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
       v.clip_mask = icon->drag.mask;
       v.clip_x_origin = destX;
       v.clip_y_origin = destY;
@@ -1053,9 +1101,11 @@ BlendIcon(
       if (mixedIcon->drag.mask != XmUNSPECIFIED_PIXMAP){
 	v.function = GXset;
 	vmask |= GCFunction;
-	XChangeGC (display, maskGC, vmask, &v);
-	XFillRectangle (display, mixedIcon->drag.mask, maskGC,
-			destX, destY, destWidth, destHeight);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (display, 0, maskGC) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
+	_XmPlatFillOneRect (display, mixedIcon->drag.mask, maskGC, destX, destY, destWidth, destHeight) ;
       }
     }
     
@@ -1091,23 +1141,25 @@ BlendIcon(
     }
     v.function = GXcopy;
     vmask |= GCFunction|GCForeground|GCBackground;
-    XChangeGC (display, pixmapGC, vmask, &v);
+    { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, pixmapGC) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
     if (icon->drag.depth == 1) {
-      XCopyPlane (display, icon->drag.pixmap,
-		  mixedIcon->drag.pixmap, pixmapGC,
-		  sourceX, sourceY,
-		  icon->drag.width, 
-		  icon->drag.height,
-		  destX, destY,
-		  1L);
+      { XmPlatDrawCtx _c = _XmPlatCtx (display, mixedIcon->drag.pixmap, pixmapGC) ;
+  XmPlatSurface _src = _XmPlatSurface (display, icon->drag.pixmap) ;
+  _XmPlatBlitMask (_c, _src, _src, sourceX, sourceY, destX, destY, icon->drag.width, icon->drag.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     } else if (icon->drag.depth == mixedIcon->drag.depth) {
-      XCopyArea (display, icon->drag.pixmap,
-		 mixedIcon->drag.pixmap, pixmapGC,
-		 sourceX, sourceY,
-		 icon->drag.width, 
-		 icon->drag.height,
-		 destX, destY);
+      { XmPlatDrawCtx _c = _XmPlatCtx (display, mixedIcon->drag.pixmap, pixmapGC) ;
+  XmPlatSurface _src = _XmPlatSurface (display, icon->drag.pixmap) ;
+  _XmPlatBlit (_c, _src, sourceX, sourceY, destX, destY, icon->drag.width, icon->drag.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     } else {
       XmeWarning ((Widget) icon, MESSAGE1); /* cast ok here */
     }
@@ -1492,11 +1544,13 @@ MixIcons(
 	v.clip_mask = None;
 	v.function = GXset;
 	vmask = GCClipMask|GCFunction;
-        XChangeGC (display, blendPtr->gc, vmask, &v);
+        { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, blendPtr->gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
 
-    XFillRectangle (display, pixmap, blendPtr->gc,
-		    0, 0, mixedIcon->drag.width, mixedIcon->drag.height);
+    _XmPlatFillOneRect (display, pixmap, blendPtr->gc, 0, 0, mixedIcon->drag.width, mixedIcon->drag.height) ;
 
     if (mask != XmUNSPECIFIED_PIXMAP) {
 	if (cursorBlend->gc == NULL) {
@@ -1521,11 +1575,13 @@ MixIcons(
 	       v.clip_mask = None;
 	       vmask |= GCClipMask;
             }
-            XChangeGC (display, cursorBlend->gc, vmask, &v);
+            { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, cursorBlend->gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
         }
 
-	XFillRectangle (display, mixedIcon->drag.mask, cursorBlend->gc,
-			0, 0, mixedIcon->drag.width, mixedIcon->drag.height);
+	_XmPlatFillOneRect (display, mixedIcon->drag.mask, cursorBlend->gc, 0, 0, mixedIcon->drag.width, mixedIcon->drag.height) ;
     }
 
     /*
@@ -1695,7 +1751,10 @@ GetDragIconColors(
 	v.background = dos->drag.cursorBackground = bg;
 	v.foreground = dos->drag.cursorForeground = fg;
 	vmask = GCBackground|GCForeground;
-	XChangeGC (display, dos->drag.rootBlend.gc, vmask, &v);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (display, 0, dos->drag.rootBlend.gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
     return (doChange);
 }
@@ -2011,7 +2070,10 @@ DrawIcon(
 	v.clip_x_origin = x;
 	v.clip_y_origin = y;
 	vmask |= GCClipMask|GCClipXOrigin|GCClipYOrigin;
-	XChangeGC (display, draw_gc, vmask, &v);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (display, 0, draw_gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	clipped = True;
     }
     else {
@@ -2020,13 +2082,19 @@ DrawIcon(
 	   v.clip_x_origin = x;
 	   v.clip_y_origin = y;
 	   vmask |= GCClipXOrigin|GCClipYOrigin;
-	   XChangeGC (display, draw_gc, vmask, &v);
+	   { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, draw_gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	   clipped = True;
         }
         else {
 	   v.clip_mask = None;
 	   vmask |= GCClipMask;
-	   XChangeGC (display, draw_gc, vmask, &v);
+	   { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, draw_gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
         }
     }
 
@@ -2038,25 +2106,27 @@ DrawIcon(
      */
 
     if (icon == dos->drag.cursorBlend.mixedIcon) {
-	XCopyPlane(display,
-		   icon->drag.pixmap, window, draw_gc,
-		   0, 0,
-		   dos->core.width, dos->core.height,
-		   x, y, 1L);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (display, window, draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, icon->drag.pixmap) ;
+  _XmPlatBlitMask (_c, _src, _src, 0, 0, x, y, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
     else if (icon->drag.depth == dos->core.depth) {
-	XCopyArea(display,
-		  icon->drag.pixmap, window, draw_gc,
-		  0, 0,
-		  dos->core.width, dos->core.height,
-		  x, y);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (display, window, draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, icon->drag.pixmap) ;
+  _XmPlatBlit (_c, _src, 0, 0, x, y, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
     else {
 	XmeWarning ((Widget) icon, MESSAGE1); /* cast ok here */
     }
 
     if (clipped) {
-        XSetClipMask (display, draw_gc, None);
+        _XmPlatClrClip (display, draw_gc) ;
     }
 }
 
@@ -2124,22 +2194,20 @@ _XmDragOverHide(
 				  clipOriginX, clipOriginY, clipRegion);
 	  }
 	  else {
-	    XSetClipMask (XtDisplay(w),
-                          dos->drag.rootBlend.gc, None);
+	    _XmPlatClrClip (XtDisplay (w), dos->drag.rootBlend.gc);
 	  }
 
 	  if (BackingPixmap(dos) != XmUNSPECIFIED_PIXMAP) {
-	    XCopyArea (XtDisplay(w),
-	               BackingPixmap(dos),
-	               RootWindowOfScreen(XtScreen(w)),
-		       dos->drag.rootBlend.gc,
-	               0, 0, dos->core.width, dos->core.height,
-	               BackingX(dos), BackingY(dos));
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(w), RootWindowOfScreen(XtScreen(w)), dos->drag.rootBlend.gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(w), BackingPixmap(dos)) ;
+  _XmPlatBlit (_c, _src, 0, 0, BackingX(dos), BackingY(dos), dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	  }
 
 	  if (clipped) {
-            XSetClipMask (XtDisplay(w), 
-		          dos->drag.rootBlend.gc, None);
+            _XmPlatClrClip (XtDisplay (w), dos->drag.rootBlend.gc);
 	  }
 	}
 
@@ -2182,20 +2250,20 @@ _XmDragOverShow(
 				  clipRegion);
 	}
 	else {
-	    XSetClipMask (display, dos->drag.rootBlend.gc, None);
+	    _XmPlatClrClip (display, dos->drag.rootBlend.gc) ;
 	}
 
 	if (dos->drag.activeMode == XmPIXMAP) {
-	  XCopyArea (display, RootWindowOfScreen(XtScreen(w)),
-		     BackingPixmap(dos),
-		     dos->drag.rootBlend.gc,
-		     BackingX(dos), BackingY(dos),
-		     dos->core.width, dos->core.height,
-		     0, 0);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (display, BackingPixmap(dos), dos->drag.rootBlend.gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, RootWindowOfScreen(XtScreen(w))) ;
+  _XmPlatBlit (_c, _src, BackingX(dos), BackingY(dos), 0, 0, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	}
 
         if (clipped) {
-            XSetClipMask (display, dos->drag.rootBlend.gc, None);
+            _XmPlatClrClip (display, dos->drag.rootBlend.gc) ;
         }
 
 	if (dos->drag.activeMode == XmPIXMAP) {
@@ -2317,13 +2385,14 @@ ChangeActiveMode(
 	dos->drag.activeMode == XmDRAG_WINDOW) {
       XtPopdown((Widget)dos);
     }
-    XSetClipMask (display, draw_gc, None);
+    _XmPlatClrClip (display, draw_gc) ;
     if (BackingPixmap(dos) != XmUNSPECIFIED_PIXMAP) {
-      XCopyArea (display, BackingPixmap(dos),
-		 RootWindowOfScreen(XtScreen(dos)), draw_gc,
-		 0, 0,
-		 dos->core.width, dos->core.height,
-		 BackingX(dos), BackingY(dos));
+      { XmPlatDrawCtx _c = _XmPlatCtx (display, RootWindowOfScreen(XtScreen(dos)), draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, BackingPixmap(dos)) ;
+  _XmPlatBlit (_c, _src, 0, 0, BackingX(dos), BackingY(dos), dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
   }
   dos->drag.isVisible = False;
@@ -2401,11 +2470,13 @@ ChangeActiveMode(
 				 dos->core.width, dos->core.height);
       }
     
-      XSetClipMask (display, draw_gc, None);
-      XCopyArea (display, RootWindowOfScreen(XtScreen(dos)),
-		 BackingPixmap(dos), draw_gc,
-		 BackingX(dos), BackingY(dos),
-		 dos->core.width, dos->core.height, 0, 0);
+      _XmPlatClrClip (display, draw_gc) ;
+      { XmPlatDrawCtx _c = _XmPlatCtx (display, BackingPixmap(dos), draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, RootWindowOfScreen(XtScreen(dos))) ;
+  _XmPlatBlit (_c, _src, BackingX(dos), BackingY(dos), 0, 0, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
       DrawIcon (dos, blend->mixedIcon,
 		RootWindowOfScreen(XtScreen(dos)),
 		dos->core.x, dos->core.y);
@@ -2480,8 +2551,7 @@ ChangeDragWindow(XmDragOverShellWidget	dos)
   mixedIcon = blend->mixedIcon;
   
   XSetFunction (display, blend->gc, GXset);
-  XFillRectangle (display, mixedIcon->drag.pixmap, blend->gc,
-		  0, 0, mixedIcon->drag.width, mixedIcon->drag.height);
+  _XmPlatFillOneRect (display, mixedIcon->drag.pixmap, blend->gc, 0, 0, mixedIcon->drag.width, mixedIcon->drag.height) ;
   
   if (mixedIcon->drag.mask != XmUNSPECIFIED_PIXMAP) {
     if (cursorBlend->gc == NULL) {
@@ -2502,10 +2572,12 @@ ChangeDragWindow(XmDragOverShellWidget	dos)
       v.clip_mask = None;
       v.function = GXclear;
       vmask = GCClipMask|GCFunction;
-      XChangeGC (display, cursorBlend->gc, vmask, &v);
+      { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, cursorBlend->gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
     }
-    XFillRectangle (display, mixedIcon->drag.mask, cursorBlend->gc,
-		    0, 0, mixedIcon->drag.width, mixedIcon->drag.height);
+    _XmPlatFillOneRect (display, mixedIcon->drag.mask, cursorBlend->gc, 0, 0, mixedIcon->drag.width, mixedIcon->drag.height) ;
   }
   
   BlendIcon (dos, sourceIcon, mixedIcon, blend->sourceX,
@@ -2548,11 +2620,13 @@ ChangeDragWindow(XmDragOverShellWidget	dos)
   BackingX(dos) = dos->core.x;
   BackingY(dos) = dos->core.y;
   
-  XSetClipMask (display, draw_gc, None);
-  XCopyArea (display, RootWindowOfScreen(XtScreen(dos)),
-	     BackingPixmap(dos), draw_gc,
-	     BackingX(dos), BackingY(dos),
-	     dos->core.width, dos->core.height, 0, 0);
+  _XmPlatClrClip (display, draw_gc) ;
+  { XmPlatDrawCtx _c = _XmPlatCtx (display, BackingPixmap(dos), draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, RootWindowOfScreen(XtScreen(dos))) ;
+  _XmPlatBlit (_c, _src, BackingX(dos), BackingY(dos), 0, 0, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
   
   /*
    *  Move, resize, and remap the drag window.
@@ -2645,9 +2719,16 @@ _XmDragOverMove(
     v.clip_mask = None;
     v.function = GXcopy;
     vmask = GCClipMask|GCFunction;
-    XChangeGC (display, draw_gc, vmask, &v);
-    XCopyArea (display, root, new_backing, draw_gc,
-	       x, y, dos->core.width, dos->core.height, 0, 0);
+    { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, draw_gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
+    { XmPlatDrawCtx _c = _XmPlatCtx (display, new_backing, draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, root) ;
+  _XmPlatBlit (_c, _src, x, y, 0, 0, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     
     if (x + ((Position) dos->core.width) > BackingX(dos) &&
 	x < BackingX(dos) + ((Position) dos->core.width) &&
@@ -2684,14 +2765,19 @@ _XmDragOverMove(
     	    v.clip_mask = None;
     	    v.function = GXset;
     	    vmask = GCClipMask|GCFunction;
-    	    XChangeGC (display, mask_gc, vmask, &v);
-	    XFillRectangle (display, root_mask, mask_gc,
-		            0, 0, dos->core.width, dos->core.height);
+    	    { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, mask_gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
+	    _XmPlatFillOneRect (display, root_mask, mask_gc, 0, 0, dos->core.width, dos->core.height) ;
 
 	    XSetFunction (display, mask_gc, GXandInverted);
-            XCopyArea (display, mixedIcon->drag.mask, root_mask, mask_gc,
-	               0, 0, mixedIcon->drag.width, mixedIcon->drag.height,
-	               x - BackingX(dos), y - BackingY(dos));
+            { XmPlatDrawCtx _c = _XmPlatCtx (display, root_mask, mask_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, mixedIcon->drag.mask) ;
+  _XmPlatBlit (_c, _src, 0, 0, x - BackingX(dos), y - BackingY(dos), mixedIcon->drag.width, mixedIcon->drag.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     
 	    /*
 	     *  Copy the icon into the new area and refresh the root.
@@ -2703,11 +2789,17 @@ _XmDragOverMove(
     	    v.clip_x_origin = BackingX(dos);
     	    v.clip_y_origin = BackingY(dos);
     	    vmask = GCClipMask|GCClipXOrigin|GCClipYOrigin;
-    	    XChangeGC (display, draw_gc, vmask, &v);
-            XCopyArea (display, old_backing, root, draw_gc,
-	               0, 0, dos->core.width, dos->core.height,
-	               BackingX(dos), BackingY(dos));
-	    XSetClipMask (display, draw_gc, None);
+    	    { XmPlatDrawCtx _c = _XmPlatCtx (display, 0, draw_gc) ;
+  _XmPlatChangeGCValues (_c, vmask, &v) ;
+  _XmPlatCtxFree (_c) ;
+  }
+            { XmPlatDrawCtx _c = _XmPlatCtx (display, root, draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, old_backing) ;
+  _XmPlatBlit (_c, _src, 0, 0, BackingX(dos), BackingY(dos), dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
+	    _XmPlatClrClip (display, draw_gc) ;
 	}
 	else {
     
@@ -2737,9 +2829,12 @@ _XmDragOverMove(
 	    pt.y = BackingY(dos);
 	
 	    if (rect1.width > 0) {
-                XCopyArea (display, old_backing, root, draw_gc,
-	                   rect1.x, rect1.y, rect1.width, rect1.height,
-		           pt.x, pt.y);
+                { XmPlatDrawCtx _c = _XmPlatCtx (display, root, draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, old_backing) ;
+  _XmPlatBlit (_c, _src, rect1.x, rect1.y, pt.x, pt.y, rect1.width, rect1.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	    }
 	
 	    /*
@@ -2761,9 +2856,12 @@ _XmDragOverMove(
 	    pt.y = BackingY(dos) + rect2.y;
 	
 	    if (rect2.height > 0) {
-                XCopyArea (display, old_backing, root, draw_gc,
-	                   rect2.x, rect2.y, rect2.width, rect2.height,
-		           pt.x, pt.y);
+                { XmPlatDrawCtx _c = _XmPlatCtx (display, root, draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, old_backing) ;
+  _XmPlatBlit (_c, _src, rect2.x, rect2.y, pt.x, pt.y, rect2.width, rect2.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	    }
 	}
 
@@ -2795,16 +2893,23 @@ _XmDragOverMove(
 	    rect.height = dos->core.height - pt.y;
 	}
 	
-	XCopyArea (display, old_backing, new_backing, draw_gc,
-		   rect.x, rect.y, rect.width, rect.height, pt.x, pt.y);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (display, new_backing, draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, old_backing) ;
+  _XmPlatBlit (_c, _src, rect.x, rect.y, pt.x, pt.y, rect.width, rect.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
         if (mixedIcon->drag.restore_region) {
             XSetRegion(display, draw_gc, mixedIcon->drag.restore_region);
             XSetClipOrigin(display, draw_gc, x, y);
-            XCopyArea (display, new_backing, root,
-                       draw_gc, 0, 0, dos->core.width,
-                       dos->core.height, x, y);
-            XSetClipMask(display, draw_gc, None);
+            { XmPlatDrawCtx _c = _XmPlatCtx (display, root, draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, new_backing) ;
+  _XmPlatBlit (_c, _src, 0, 0, x, y, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
+            _XmPlatClrClip (display, draw_gc) ;
         }
     }
     else {
@@ -2814,9 +2919,12 @@ _XmDragOverMove(
 	 *  new_backing is valid.
 	 */
 
-        XCopyArea (display, old_backing, root, draw_gc,
-	           0, 0, dos->core.width, dos->core.height,
-	           BackingX(dos), BackingY(dos));
+        { XmPlatDrawCtx _c = _XmPlatCtx (display, root, draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (display, old_backing) ;
+  _XmPlatBlit (_c, _src, 0, 0, BackingX(dos), BackingY(dos), dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     
 	DrawIcon (dos, mixedIcon, root, x, y);
     }
@@ -3084,12 +3192,14 @@ _XmDragOverFinish(
  * changed.
 
 	XFlush (XtDisplay((Widget)dos));
-        XSetClipMask (XtDisplay((Widget)dos), draw_gc, None);
+        _XmPlatClrClip (XtDisplay ((Widget)dos), draw_gc);
 	XtPopdown(w);
-        XCopyArea (XtDisplay((Widget)dos), RootWindowOfScreen(XtScreen(dos)),
-	           BackingPixmap(dos), draw_gc,
-	           BackingX(dos), BackingY(dos),
-	           dos->core.width, dos->core.height, 0, 0);
+        { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)dos), BackingPixmap(dos), draw_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay((Widget)dos), RootWindowOfScreen(XtScreen(dos))) ;
+  _XmPlatBlit (_c, _src, BackingX(dos), BackingY(dos), 0, 0, dos->core.width, dos->core.height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     	XtPopup(w, XtGrabNone);
 */
 	XGrabServer(XtDisplay(w));

@@ -58,6 +58,7 @@
 #include "XmI.h"
 
 #include <Xm/SpinBP.h>
+#include "XmPlat/XmPlatP.h"
 
 #define FIX_1519
 
@@ -576,7 +577,7 @@ Resize(Widget w)
   LayoutSpinBox(w, &spinG, NULL);
 
   if (XtIsRealized(w))
-     XClearArea(XtDisplay(w), XtWindow(w), 0, 0, 0, 0, True);			/*  Force Redisplay */
+     _XmPlatClearOneRect (XtDisplay (w), XtWindow (w), 0, 0, 0, 0);			/*  Force Redisplay */
 }
 
 /*ARGSUSED*/
@@ -740,7 +741,7 @@ GeometryManager(Widget w,
 
      /*  Force Redisplay */
      if (XtIsRealized(w))
-       XClearArea(XtDisplay(w), XtWindow(w), 0, 0, 0, 0, True);
+       _XmPlatClearOneRect (XtDisplay (w), XtWindow (w), 0, 0, 0, 0);
    }
   else
     {
@@ -1395,7 +1396,7 @@ SpinBRight(Widget   rightWidget, XEvent   *rightEvent,
 static void
 ClearArrows(Widget clearW)
 {
-  XClearArea(XtDisplay(clearW), XtWindow(clearW), 0, 0, 0, 0, False);
+  _XmPlatClearOneRect (XtDisplay (clearW), XtWindow (clearW), 0, 0, 0, 0);
 }
 
 /******************************************************************************
@@ -1894,7 +1895,7 @@ DrawSpinArrow(Widget arrowWidget, int arrowFlag)
 	    }
 	  else {
 	    arrowGC = spinW->spinBox.insensitive_gc;
-	    XSetClipMask(XtDisplay(arrowWidget), arrowGC, None);
+	    _XmPlatClrClip (XtDisplay (arrowWidget), arrowGC);
 	  }
 	}
       else
@@ -1911,7 +1912,7 @@ DrawSpinArrow(Widget arrowWidget, int arrowFlag)
 	    }
 	  else {
 	    arrowGC = spinW->spinBox.insensitive_gc;
-	    XSetClipMask(XtDisplay(arrowWidget), arrowGC, None);
+	    _XmPlatClrClip (XtDisplay (arrowWidget), arrowGC);
 	  }
 	}
  

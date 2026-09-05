@@ -358,7 +358,26 @@ Total at baseline: 193 lines in 38 files.
 draw:   806 lines / 47 files      image:  197 lines / 26 files
 font:   128 lines / 25 files      event: 1811 lines / 87 files
 atoms:  193 lines / 38 files
+
+# after Phase 1 — 2026-09-06
+draw:     0 lines / 0 files (widget code; 37 lines in XmPlat/XmPlatDraw.c
+          = the backend implementation, which is where they belong)
+image:  197 lines / 26 files (unchanged — Phase 3)
+font:   128 lines / 25 files (unchanged — Phase 2)
+event:  1811 lines / 87 files (unchanged — Phase 4)
+atoms:  193 lines / 38 files (unchanged — Phase 5)
 ```
+
+Phase-1 exit criterion met: zero `XDraw*`/`XFill*`/`XCreateGC`/`XChangeGC`/
+`XSetClipMask`/`XClearArea` outside `lib/Xm/XmPlat` (Xpm*/ImageCache exempt
+until Phase 3).  Gate: `tools/gate/p1-draw-gate.sh`.  Screenshot baselines:
+`tests/screenshots/` (hellomotif, periodic) — harness `tools/gate/screenshot-harness.sh`.
+
+X11 surface/ctx handles cross into widget code at the seam via stack
+constructors (`_XmPlatCtx`/`_XmPlatSurface`, `XmPlatP.h`); when Phase 2/6
+rework GC/font management these constructors change in one place.  Text
+drawing temporarily rides the GC's font (`_XmPlatFontOfGC`) until the Phase-2
+`XmFont` contract replaces it.
 
 ---
 

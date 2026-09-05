@@ -37,6 +37,7 @@ static char rcsid[] = "$XConsortium: GeoUtils.c /main/13 1996/08/15 17:11:25 pas
 #include "XmI.h"
 #include "GeoUtilsI.h"
 #include "GMUtilsI.h"
+#include "XmPlat/XmPlatP.h"
 
 
 /********    Static Function Declarations    ********/
@@ -2459,13 +2460,10 @@ _XmGeoClearRectObjAreas(
 /****************/
 
     bw2 = old->border_width << 1;
-    XClearArea( XtDisplay( parent), XtWindow( parent), old->x, old->y,
-                                   old->width + bw2, old->height + bw2, TRUE) ;
+    _XmPlatClearOneRect (XtDisplay ( parent), XtWindow ( parent), old->x, old->y, old->width + bw2, old->height + bw2) ;
 
     bw2 = r->rectangle.border_width << 1;
-    XClearArea( XtDisplay( parent), XtWindow( parent), (int) r->rectangle.x,
-               (int) r->rectangle.y, (unsigned int) (r->rectangle.width + bw2),
-                            (unsigned int) (r->rectangle.height + bw2), TRUE) ;
+    _XmPlatClearOneRect (XtDisplay ( parent), XtWindow ( parent), (int) r->rectangle.x, (int) r->rectangle.y, (unsigned int) (r->rectangle.width + bw2), (unsigned int) (r->rectangle.height + bw2)) ;
     return ;
     }
 

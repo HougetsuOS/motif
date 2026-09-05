@@ -67,6 +67,7 @@
 #include "MessagesI.h"
 #include "ClipWindTI.h"
 #include <Xm/XmosP.h>                /* for bzero et al */
+#include "XmPlat/XmPlatP.h"
 
 #define FIX_1384
 #define FIX_1401
@@ -1547,7 +1548,7 @@ Resize(
      */
     if (CtrLayoutIsOUTLINE_DETAIL(cw))
 	if (XtIsRealized((Widget)cw))
-	        XClearArea(XtDisplay((Widget)cw),XtWindow((Widget)cw),0,0,0,0,True);
+	        _XmPlatClearOneRect (XtDisplay ((Widget)cw), XtWindow ((Widget)cw), 0, 0, 0, 0);
 }
 
 /************************************************************************
@@ -1574,10 +1575,8 @@ Redisplay(
 	XSetRegion(XtDisplay(wid), cw->container.normalGC, region);
 	XSetForeground(XtDisplay(wid), cw->container.normalGC,
 		       cw->core.background_pixel);
-	XFillRectangle(XtDisplay(wid), XtWindow(wid), cw->container.normalGC,
-		       event->xexpose.x, event->xexpose.y,
-		       event->xexpose.width, event->xexpose.height);
-	XSetClipMask(XtDisplay(wid), cw->container.normalGC, None);
+	_XmPlatFillOneRect (XtDisplay (wid), XtWindow (wid), cw->container.normalGC, event->xexpose.x, event->xexpose.y, event->xexpose.width, event->xexpose.height);
+	_XmPlatClrClip (XtDisplay (wid), cw->container.normalGC);
 	XSetForeground(XtDisplay(wid), cw->container.normalGC,
 		       cw->manager.foreground);
     }
@@ -1586,11 +1585,18 @@ Redisplay(
      * If lines are present & we're in outline layout, draw the lines.
      */
     if (CtrDrawLinesOUTLINE(cw) && (cw->container.outline_seg_count > 0)) {
-	XSetClipMask(XtDisplay(wid), cw->container.normalGC, None);
-	XDrawSegments(XtDisplay(wid),XtWindow(wid),
-		cw->container.normalGC,
-		cw->container.outline_segs,
-		cw->container.outline_seg_count);
+	_XmPlatClrClip (XtDisplay (wid), cw->container.normalGC);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (wid), XtWindow(wid), cw->container.normalGC) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(cw->container.outline_seg_count) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(cw->container.outline_seg_count) ; _pi++) {
+    _ps[_pi].x1 = cw->container.outline_segs[_pi].x1 ; _ps[_pi].y1 = cw->container.outline_segs[_pi].y1 ;
+    _ps[_pi].x2 = cw->container.outline_segs[_pi].x2 ; _ps[_pi].y2 = cw->container.outline_segs[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, cw->container.outline_seg_count) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+}
 	}
 
     /*	
@@ -3130,7 +3136,7 @@ ConstraintDestroy(
 		cw->container.selection_state = save_state;
 		}
     if (XtIsRealized((Widget)cw))
-	XClearArea(XtDisplay((Widget)cw),XtWindow((Widget)cw),0,0,0,0,True);
+	_XmPlatClearOneRect (XtDisplay ((Widget)cw), XtWindow ((Widget)cw), 0, 0, 0, 0);
 }
 
 /************************************************************************
@@ -3296,7 +3302,7 @@ ConstraintSetValues(
         }
 
      if (need_expose && XtIsRealized((Widget)cw))
-       XClearArea(XtDisplay((Widget)cw),XtWindow((Widget)cw),0,0,0,0,True);
+       _XmPlatClearOneRect (XtDisplay ((Widget)cw), XtWindow ((Widget)cw), 0, 0, 0, 0);
 
      /* everything that needs to be done so far has been */
      return(False);
@@ -4612,11 +4618,7 @@ ContainerEndSelect(
       DrawMarquee(wid);
       cw->container.marquee_drawn = False;
       if XtIsRealized(wid)
-	XClearArea(XtDisplay(wid),XtWindow(wid),
-		   cw->container.marquee_smallest.x,
-		   cw->container.marquee_smallest.y,
-		   cw->container.marquee_largest.x,
-		   cw->container.marquee_largest.y,True);
+	_XmPlatClearOneRect (XtDisplay (wid), XtWindow (wid), cw->container.marquee_smallest.x, cw->container.marquee_smallest.y, cw->container.marquee_largest.x, cw->container.marquee_largest.y);
     }
   if (cw->container.anchor_cwid)
     {
@@ -4801,11 +4803,7 @@ ContainerEndExtend(
                 DrawMarquee(wid);
                 cw->container.marquee_drawn = False;
                 if XtIsRealized(wid)
-                        XClearArea(XtDisplay(wid),XtWindow(wid),
-                                cw->container.marquee_smallest.x,
-                                cw->container.marquee_smallest.y,
-                                cw->container.marquee_largest.x,
-                                cw->container.marquee_largest.y,True);
+                        _XmPlatClearOneRect (XtDisplay (wid), XtWindow (wid), cw->container.marquee_smallest.x, cw->container.marquee_smallest.y, cw->container.marquee_largest.x, cw->container.marquee_largest.y);
                 }
 	SetMarkedCwids(wid);
 	GainPrimary(wid,event->xbutton.time);
@@ -4864,11 +4862,7 @@ ContainerCancel(
                 DrawMarquee(wid);
                 cw->container.marquee_drawn = False;
                 if XtIsRealized(wid)
-                        XClearArea(XtDisplay(wid),XtWindow(wid),
-                                cw->container.marquee_smallest.x,
-                                cw->container.marquee_smallest.y,
-                                cw->container.marquee_largest.x,
-                                cw->container.marquee_largest.y,True);
+                        _XmPlatClearOneRect (XtDisplay (wid), XtWindow (wid), cw->container.marquee_smallest.x, cw->container.marquee_smallest.y, cw->container.marquee_largest.x, cw->container.marquee_largest.y);
                 }
 	if (CtrIsAUTO_SELECT(cw) && selection_changes)
 		{
@@ -5005,12 +4999,7 @@ ContainerToggleMode(
     if CtrPolicyIsEXTENDED(cw)
 	cw->container.kaddmode = !cw->container.kaddmode;
     if (XtIsRealized(wid) && focus_cwid && (focus_cwid != wid))
-        XClearArea(XtDisplay(wid),XtWindow(wid),
-                        focus_cwid->core.x,
-                        focus_cwid->core.y,
-                        focus_cwid->core.width,
-                        focus_cwid->core.height,
-                        True);
+        _XmPlatClearOneRect (XtDisplay (wid), XtWindow (wid), focus_cwid->core.x, focus_cwid->core.y, focus_cwid->core.width, focus_cwid->core.height);
 }
 
 /************************************************************************
@@ -5920,7 +5909,7 @@ RequestOutlineDetail(
     if (geo_desired->height < 1) geo_desired->height = cw->core.height ; 
     _XmMakeGeometryRequest(wid,geo_desired);
     if (XtIsRealized((Widget)cw))
-	XClearArea(XtDisplay((Widget)cw),XtWindow((Widget)cw),0,0,0,0,True);
+	_XmPlatClearOneRect (XtDisplay ((Widget)cw), XtWindow ((Widget)cw), 0, 0, 0, 0);
     LayoutOutlineDetail(wid);
     cw->container.prev_width = cw->core.width;
 }
@@ -7344,7 +7333,7 @@ StartSelect(
 	if ((CtrTechIsMARQUEE_ES(cw) || CtrTechIsMARQUEE_EB(cw)) &&
 	    (!CtrLayoutIsDETAIL(cw)))
 		{
-		XSetClipMask(XtDisplay(wid), cw->container.marqueeGC, None);
+		_XmPlatClrClip (XtDisplay (wid), cw->container.marqueeGC);
 		RecalcMarquee(wid,cw->container.anchor_cwid,
 				event->xbutton.x,event->xbutton.y);
 		DrawMarquee(wid);
@@ -8002,9 +7991,10 @@ DrawMarquee(
 				- cw->container.marquee_start.x);
 	height = (Dimension)(cw->container.marquee_end.y
 				- cw->container.marquee_start.y);
-	XDrawRectangle(XtDisplay(wid),XtWindow(wid),cw->container.marqueeGC,
-		cw->container.marquee_start.x,cw->container.marquee_start.y,
-		width,height);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (wid), XtWindow(wid), cw->container.marqueeGC) ;
+  _XmPlatDrawRect (_c, cw->container.marquee_start.x, cw->container.marquee_start.y, width, height) ;
+  _XmPlatCtxFree (_c) ;
+}
 }
 
 /************************************************************************
@@ -8638,7 +8628,7 @@ ExpandCwid(
 
     /* need to redraw lines correctly */
     if (XtIsRealized((Widget)cw))
-	XClearArea(XtDisplay((Widget)cw),XtWindow((Widget)cw),0,0,0,0,True);
+	_XmPlatClearOneRect (XtDisplay ((Widget)cw), XtWindow ((Widget)cw), 0, 0, 0, 0);
 }
 
 /************************************************************************
@@ -8683,7 +8673,7 @@ CollapseCwid(
 
     /* need to redraw lines correctly */
     if (XtIsRealized((Widget)cw))
-	XClearArea(XtDisplay((Widget)cw),XtWindow((Widget)cw),0,0,0,0,True);
+	_XmPlatClearOneRect (XtDisplay ((Widget)cw), XtWindow ((Widget)cw), 0, 0, 0, 0);
 }
 
 /************************************************************************
@@ -9027,20 +9017,25 @@ DragStart(
       dragIconInfo -> source = (Widget) NULL;
       cross = XCreatePixmap(XtDisplay(cw),XtWindow(cw),farpoint,farpoint,1);
       cross_m = XCreatePixmap(XtDisplay(cw),XtWindow(cw),farpoint,farpoint,1);
-      tempgc = XCreateGC(XtDisplay(cw), cross, 0L, NULL);
+{ XmPlatSurface _s = _XmPlatSurface (XtDisplay (cw), cross) ;
+      XmPlatDrawCtx _c = _XmPlatCreateCtxOnSurface (_s, 0L, NULL) ;
+      tempgc = _XmPlatGcOf (_c) ;
+      _XmPlatCtxFree (_c) ;
+      _XmPlatSurfaceFree (_s) ;
+    }
       /* Draw a plus sign */
       XSetForeground(XtDisplay(cw), tempgc, 0);
-      XFillRectangle(XtDisplay(cw), cross, tempgc, 0, 0, farpoint, farpoint);
-      XFillRectangle(XtDisplay(cw), cross_m, tempgc, 0, 0, farpoint, farpoint);
+      _XmPlatFillOneRect (XtDisplay (cw), cross, tempgc, 0, 0, farpoint, farpoint) ;
+      _XmPlatFillOneRect (XtDisplay (cw), cross_m, tempgc, 0, 0, farpoint, farpoint) ;
       XSetForeground(XtDisplay(cw), tempgc, 1);
       XSetLineAttributes(XtDisplay(cw), tempgc, 2, LineSolid,
 			 CapButt, JoinMiter);
-      XDrawLine(XtDisplay(cw), cross, tempgc, midpoint, 0, midpoint, farpoint);
-      XDrawLine(XtDisplay(cw), cross, tempgc, 0, midpoint, farpoint, midpoint);
+      _XmPlatDrawOneLine (XtDisplay(cw), cross, tempgc, midpoint, 0, midpoint, farpoint) ;
+      _XmPlatDrawOneLine (XtDisplay(cw), cross, tempgc, 0, midpoint, farpoint, midpoint) ;
       XSetLineAttributes(XtDisplay(cw), tempgc, 6, LineSolid,
 			 CapButt, JoinMiter);
-      XDrawLine(XtDisplay(cw),cross_m,tempgc,midpoint,0,midpoint,farpoint);
-      XDrawLine(XtDisplay(cw),cross_m,tempgc,0,midpoint,farpoint,midpoint);
+      _XmPlatDrawOneLine (XtDisplay(cw), cross_m, tempgc, midpoint, 0, midpoint, farpoint) ;
+      _XmPlatDrawOneLine (XtDisplay(cw), cross_m, tempgc, 0, midpoint, farpoint, midpoint) ;
       XFreeGC(XtDisplay(cw), tempgc);
       n = 0;
       XtSetArg(args[n], XmNpixmap, cross); n++;
@@ -9284,9 +9279,7 @@ MoveItemCallback(
       (wid,cwid);
   
   /* Clear old placement */
-  XClearArea(XtDisplay(wid),XtWindow(wid),
-	     cwid->core.x,cwid->core.y,
-	     cwid->core.width,cwid->core.height, True);
+  _XmPlatClearOneRect (XtDisplay (wid), XtWindow (wid), cwid->core.x, cwid->core.y, cwid->core.width, cwid->core.height);
   
   if (CtrSpatialStyleIsGRID(cw) || CtrSpatialStyleIsCELLS(cw))
     /*
@@ -9689,7 +9682,7 @@ XmContainerRelayout(
     LayoutSpatial(wid,False,NULL);
 
     if (XtIsRealized(wid))
-	XClearArea(XtDisplay(wid),XtWindow(wid),0,0,0,0,True);
+	_XmPlatClearOneRect (XtDisplay (wid), XtWindow (wid), 0, 0, 0, 0);
     _XmAppUnlock(app);
 }
 
@@ -9751,7 +9744,7 @@ XmContainerReorder(
 	 * Outline lines may have changed location, erase the old ones.
 	 */
 	if (CtrDrawLinesOUTLINE(cw) && XtIsRealized((Widget)cw))
-	     XClearArea(XtDisplay(wid),XtWindow(wid),0,0,0,0,True);
+	     _XmPlatClearOneRect (XtDisplay (wid), XtWindow (wid), 0, 0, 0, 0);
 	_XmAppUnlock(app);
 }
 

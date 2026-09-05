@@ -91,6 +91,7 @@ extern "C" { /* some 'locale.h' do not have prototypes (sun) */
 #include "TransferI.h"
 #include "TraversalI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define FIX_1528
 
@@ -2886,8 +2887,7 @@ ShowValue(
 	
 	if (width) { /* We were displaying, so we must clear it */
 	    
-	    XClearArea (XtDisplay (sw), XtWindow (sw), x, y, width, 
-			height, FALSE);
+	    _XmPlatClearOneRect (XtDisplay (sw), XtWindow (sw), x, y, width, height);
 	    value_rect.x = x;
 	    value_rect.y = y;
 	    value_rect.width = width;
@@ -2911,7 +2911,7 @@ ShowValue(
 	value_rect.width = width;
 	value_rect.height = height;
 	XIntersectRegion(null_region, value_region, value_region);
-	XClearArea(XtDisplay(sw), XtWindow(sw), x, y, width, height, FALSE);
+	_XmPlatClearOneRect (XtDisplay (sw), XtWindow (sw), x, y, width, height);
 	XUnionRectWithRegion(&value_rect, value_region, value_region);
 	XmeRedisplayGadgets( (Widget) sw, NULL, value_region);
     }
@@ -3019,7 +3019,7 @@ ShowValue(
     
     
     /*  Display the string  */
-    XSetClipMask(XtDisplay(sw), sw->scale.foreground_GC, None);
+    _XmPlatClrClip (XtDisplay (sw), sw->scale.foreground_GC);
 #if USE_XFT
     XmStringDraw(XtDisplay(sw), XtWindow(sw), sw->scale.font_list,
                     tmp_str = XmStringCreateSimple(buffer),
@@ -3029,8 +3029,10 @@ ShowValue(
 		    NULL);
     XmStringFree(tmp_str);
 #else
-    XDrawImageString (XtDisplay(sw), XtWindow(sw),
-		 sw->scale.foreground_GC, x, y, buffer, strlen(buffer));
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (sw), XtWindow(sw), sw->scale.foreground_GC) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (sw), sw->scale.foreground_GC), XmPlatText8, buffer, strlen(buffer), x, y, 1) ;
+  _XmPlatCtxFree (_c) ;
+  }
 #endif
 }
 

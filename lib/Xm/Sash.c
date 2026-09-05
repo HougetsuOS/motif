@@ -39,6 +39,7 @@ static char rcsid[] = "$XConsortium: Sash.c /main/12 1995/07/13 17:51:55 drk $"
 #include <Xm/DisplayP.h>
 #include "MenuStateI.h"
 #include "TraversalI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define defTranslations		_XmSash_defTranslations
 #define SASHSIZE 10
@@ -248,9 +249,7 @@ HighlightSash(
   
   x = y = ((XmSashWidget) sash)->primitive.shadow_thickness;
   
-  XFillRectangle( XtDisplay( sash), XtWindow( sash),
-                   ((XmSashWidget) sash)->primitive.highlight_GC,
-                   x,y, sash->core.width-(2*x), sash->core.height-(2*y));
+  _XmPlatFillOneRect (XtDisplay ( sash), XtWindow( sash), ((XmSashWidget) sash)->primitive.highlight_GC, x, y, sash->core.width-(2*x), sash->core.height-(2*y)) ;
 }
 
 static void 
@@ -261,9 +260,7 @@ UnhighlightSash(
   
   x = y = ((XmSashWidget) sash)->primitive.shadow_thickness;
 
-  XClearArea( XtDisplay( sash), XtWindow( sash),
-                   x,y, sash->core.width-(2*x), sash->core.height-(2*y),
-	           FALSE);
+  _XmPlatClearOneRect (XtDisplay ( sash), XtWindow ( sash), x, y, sash->core.width-(2*x), sash->core.height-(2*y));
 }
 
 static XmNavigability

@@ -51,6 +51,7 @@ static char rcsid[] = "$TOG: SeparatoG.c /main/18 1999/01/26 15:32:56 mgreess $"
 #include "SeparatoGI.h"
 #include "SyntheticI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 
 /********    Static Function Declarations    ********/
@@ -1210,13 +1211,7 @@ Redisplay(
    
 
     if (sg->separator.fill_bg_box)  {
-      XFillRectangle(XtDisplay(sg),
-		     XtWindow((Widget) sg),
-		     SEPG_BackgroundGC(sg),
-		     background_x_offset,
-		     background_y_offset,
-		     background_width,
-		     background_height);
+      _XmPlatFillOneRect (XtDisplay (sg), XtWindow ((Widget) sg), SEPG_BackgroundGC(sg), background_x_offset, background_y_offset, background_width, background_height);
     }
 
     XmeDrawSeparator(XtDisplay((Widget) sg), XtWindow((Widget) sg),

@@ -65,6 +65,7 @@ static char rcsid[] = "$TOG: TextOut.c /main/41 1999/08/12 11:37:30 vipin $"
 #include "XmRenderTI.h"
 #endif
 #include <Xm/XmP.h>
+#include "XmPlat/XmPlatP.h"
 
 
 #define MSG1	_XmMMsgTextOut_0000
@@ -585,7 +586,10 @@ _XmTextAdjustGC(XmTextWidget tw)
   if (data->gc) {
     values.foreground = tw->primitive.foreground ^ tw->core.background_pixel;
     values.background = 0;
-    XChangeGC(XtDisplay(tw), data->gc, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tw), 0, data->gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
   }
 }
 
@@ -624,7 +628,10 @@ SetNormGC(XmTextWidget tw,
       values.fill_style = FillSolid;
   }
   
-  XChangeGC(XtDisplay(tw), gc, valueMask, &values);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tw), 0, gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 
 #ifdef FIX_1381
@@ -640,7 +647,10 @@ SetShadowGC(XmTextWidget tf, GC gc)
 
   values.fill_style = FillSolid;
 
-  XChangeGC(XtDisplay(tf), gc, valueMask, &values);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tf), 0, gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 #endif
 
@@ -664,7 +674,10 @@ SetInvGC(XmTextWidget tw,
   values.foreground = tw->core.background_pixel;
   values.background = tw->primitive.foreground;
   
-  XChangeGC(XtDisplay(tw), gc, valueMask, &values);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tw), 0, gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 
 
@@ -2454,10 +2467,7 @@ Draw(XmTextWidget tw,
 	  else
 	    rec_width = data->linewidth;
 	
-	  XFillRectangle(XtDisplay(tw),
-		         XtWindow(tw->text.inner_widget), data->gc, 
-		         x - (data->linewidth * 0.5), y - data->voffset,
-		         rec_width, rec_height);
+	  _XmPlatFillOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), data->gc, x - (data->linewidth * 0.5), y - data->voffset, rec_width, rec_height);
 	
 	  SetMarginGC(tw, data->gc);
 	  if (highlight == XmHIGHLIGHT_SECONDARY_SELECTED) {
@@ -2467,11 +2477,7 @@ Draw(XmTextWidget tw,
 	    else
 	      SetNormGC(tw, data->gc, False, False);
 	  
-	    XDrawLine(XtDisplay(tw),
-		      XtWindow(tw->text.inner_widget), data->gc, 
-		      x + (int)(data->linewidth * 0.5) - 1, y - data->voffset,
-		      (int)(x + data->linewidth * 0.5) - 1,
-		      ((y - data->voffset) + height) - 1);
+	    _XmPlatDrawOneLine (XtDisplay(tw), XtWindow(tw->text.inner_widget), data->gc, x + (int)(data->linewidth * 0.5) - 1, y - data->voffset, (int)(x + data->linewidth * 0.5) - 1, ((y - data->voffset) + height) - 1) ;
 	  }
 	  y += height;
 	
@@ -2561,10 +2567,7 @@ Draw(XmTextWidget tw,
 	  else
 	    rec_width = data->linewidth;
 	
-	  XFillRectangle(XtDisplay(tw),
-		         XtWindow(tw->text.inner_widget),
-		         data->gc, x - (int)(data->linewidth * 0.5),
-		         y - data->voffset, rec_width, rec_height);
+	  _XmPlatFillOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), data->gc, x - (int)(data->linewidth * 0.5), y - data->voffset, rec_width, rec_height);
 	
 	  SetInvGC(tw, data->gc);
 	  SetMarginGC(tw, data->gc);
@@ -2598,13 +2601,16 @@ Draw(XmTextWidget tw,
 	      if (_XmIsISO10646(XtDisplay(tw), data->font)) {
 	        size_t ucsstr_len = 0;
 		XChar2b *ucsstr = _XmUtf8ToUcs2(p, csize, &ucsstr_len);
-		XDrawString16(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-				data->gc, orig_x, orig_y, ucsstr, ucsstr_len);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText16, ucsstr, ucsstr_len, orig_x, orig_y, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
 		XFree(ucsstr);
 	      } else
-		XDrawString(XtDisplay(tw),
-			  XtWindow(tw->text.inner_widget), data->gc,
-			  orig_x, orig_y, p, csize);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText8, p, csize, orig_x, orig_y, 0) ;
+  _XmPlatCtxFree (_c) ;
+}
 
 	      orig_y += overall.descent;
 	    }
@@ -2618,10 +2624,7 @@ Draw(XmTextWidget tw,
 	    else
 	      rec_width = data->linewidth;
 	  
-	    XFillRectangle(XtDisplay(tw),
-			   XtWindow(tw->text.inner_widget),
-			   data->gc, x - (int)(data->linewidth * 0.5),
-			   y - data->voffset, rec_width, newy - y);
+	    _XmPlatFillOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), data->gc, x - (int)(data->linewidth * 0.5), y - data->voffset, rec_width, newy - y);
 	  }
 	  SetNormGC(tw, data->gc, True, stipple);
 	  if (data->use_fontset) {
@@ -2687,13 +2690,17 @@ Draw(XmTextWidget tw,
 		{
 		  /*Draw shadow for insensitive text*/
 		  SetShadowGC(tw, data->gc);
-		  XDrawString16(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-		  		data->gc, orig_x+1, orig_y+1, ucsstr, ucsstr_len);
+		  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText16, ucsstr, ucsstr_len, orig_x+1, orig_y+1, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
 		  SetNormGC(tw, data->gc, True, stipple);
 		}
 #endif
-		XDrawString16(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-				data->gc, orig_x, orig_y, ucsstr, ucsstr_len);
+		{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText16, ucsstr, ucsstr_len, orig_x, orig_y, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
 		XFree(ucsstr);
 	      } else {
 #ifdef FIX_1381
@@ -2701,15 +2708,17 @@ Draw(XmTextWidget tw,
 		{
 		  /*Draw shadow for insensitive text*/
 		  SetShadowGC(tw, data->gc);
-		  XDrawString(XtDisplay(tw),
-		  		XtWindow(tw->text.inner_widget), data->gc,
-		  		orig_x+1, orig_y+1, p, csize);
+		  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText8, p, csize, orig_x+1, orig_y+1, 0) ;
+  _XmPlatCtxFree (_c) ;
+}
 		  SetNormGC(tw, data->gc, True, stipple);
 		}
 #endif
-	      XDrawString(XtDisplay(tw),
-			  XtWindow(tw->text.inner_widget), data->gc,
-			  orig_x, orig_y, p, csize);
+	      { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText8, p, csize, orig_x, orig_y, 0) ;
+  _XmPlatCtxFree (_c) ;
+}
 	      }
 	      orig_y += overall.descent;
 	    }
@@ -2717,11 +2726,7 @@ Draw(XmTextWidget tw,
 	  if (stipple) SetNormGC(tw, data->gc, True, !stipple);
         }
         if (highlight == XmHIGHLIGHT_SECONDARY_SELECTED)
-	  XDrawLine(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-		    data->gc, x + (int)(data->linewidth * 0.5) - 1,
-		    y - data->voffset,
-		    x + (int)(data->linewidth * 0.5) - 1,
-		    (newy - data->voffset) - 1);
+	  _XmPlatDrawOneLine (XtDisplay(tw), XtWindow(tw->text.inner_widget), data->gc, x + (int)(data->linewidth * 0.5) - 1, y - data->voffset, x + (int)(data->linewidth * 0.5) - 1, (newy - data->voffset) - 1) ;
         y = newy;
         block.length -= length;
         block.ptr += length;
@@ -2797,10 +2802,7 @@ Draw(XmTextWidget tw,
 	else
 	  rec_height = data->font_ascent + data->font_descent;
 	
-	XFillRectangle(XtDisplay(tw),
-		       XtWindow(tw->text.inner_widget), data->gc, 
-		       x - data->hoffset, y - data->font_ascent,
-		       rec_width, rec_height);
+	_XmPlatFillOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), data->gc, x - data->hoffset, y - data->font_ascent, rec_width, rec_height);
 	
 	SetMarginGC(tw, data->gc);
 	if (highlight == XmHIGHLIGHT_SECONDARY_SELECTED) {
@@ -2810,10 +2812,7 @@ Draw(XmTextWidget tw,
 	  else
 	    SetNormGC(tw, data->gc, False, False);
 	  
-	  XDrawLine(XtDisplay(tw),
-		    XtWindow(tw->text.inner_widget), data->gc, 
-		    x - data->hoffset, y,
-		    ((x - data->hoffset) + width) - 1, y);
+	  _XmPlatDrawOneLine (XtDisplay(tw), XtWindow(tw->text.inner_widget), data->gc, x - data->hoffset, y, ((x - data->hoffset) + width) - 1, y) ;
 	}
 	x += width;
 	
@@ -2927,10 +2926,7 @@ Draw(XmTextWidget tw,
 	else
 	  rec_height = data->font_ascent + data->font_descent;
 	
-	XFillRectangle(XtDisplay(tw),
-		       XtWindow(tw->text.inner_widget),
-		       data->gc, x - data->hoffset,
-		       y - data->font_ascent, rec_width, rec_height);
+	_XmPlatFillOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), data->gc, x - data->hoffset, y - data->font_ascent, rec_width, rec_height);
 	
 	SetInvGC(tw, data->gc);
 	SetMarginGC(tw, data->gc);
@@ -2949,15 +2945,16 @@ Draw(XmTextWidget tw,
 	  if (_XmIsISO10646(XtDisplay(tw), data->font)) {
 	    size_t ucsstr_len = 0;
 	    XChar2b *ucsstr = _XmUtf8ToUcs2(block.ptr, length, &ucsstr_len);
-	    XDrawString16(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-				data->gc, x - data->hoffset, y, ucsstr,
-				ucsstr_len);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText16, ucsstr, ucsstr_len, x - data->hoffset, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	    XFree(ucsstr);
 	  } else
-	    XDrawString(XtDisplay(tw),
-		      XtWindow(tw->text.inner_widget), 
-		      data->gc, x - data->hoffset, y, 
-		      block.ptr, length);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText8, block.ptr, length, x - data->hoffset, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+}
 	}
       } else {
 	SetInvGC(tw, data->gc);
@@ -2969,11 +2966,7 @@ Draw(XmTextWidget tw,
 	  else
 	    rec_height = data->font_ascent + data->font_descent;
 	  
-	  XFillRectangle(XtDisplay(tw),
-			 XtWindow(tw->text.inner_widget),
-			 data->gc, x - data->hoffset,
-			 y - data->font_ascent, newx - x, 
-			 rec_height);
+	  _XmPlatFillOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), data->gc, x - data->hoffset, y - data->font_ascent, newx - x, rec_height);
 	}
 	SetNormGC(tw, data->gc, True, stipple);
 	if (data->use_fontset) {
@@ -3019,16 +3012,18 @@ Draw(XmTextWidget tw,
 	      {
 	        /*Draw shadow for insensitive text*/
 	        SetShadowGC(tw, data->gc);
-	        XDrawString16(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-	        data->gc, x - data->hoffset+1, y+1, ucsstr,
-	        ucsstr_len);
+	        { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText16, ucsstr, ucsstr_len, x - data->hoffset+1, y+1, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	        SetNormGC(tw, data->gc, True, stipple);
 	      }
 #endif
 
-	    XDrawString16(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-				data->gc, x - data->hoffset, y, ucsstr,
-				ucsstr_len);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText16, ucsstr, ucsstr_len, x - data->hoffset, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	    XFree(ucsstr);
 	  } else
 	  {
@@ -3037,23 +3032,23 @@ Draw(XmTextWidget tw,
 	      {
 	        /*Draw shadow for insensitive text*/
 	        SetShadowGC(tw, data->gc);
-	        XDrawString(XtDisplay(tw),
-	        XtWindow(tw->text.inner_widget), data->gc,
-	        x - data->hoffset+1, y+1, block.ptr, length);
+	        { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText8, block.ptr, length, x - data->hoffset+1, y+1, 0) ;
+  _XmPlatCtxFree (_c) ;
+}
 		SetNormGC(tw, data->gc, True, stipple);
 	      }
 #endif
-	  XDrawString(XtDisplay(tw),
-		      XtWindow(tw->text.inner_widget), data->gc,
-		      x - data->hoffset, y, block.ptr, length);
+	  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  _XmPlatDrawString (_c, _XmPlatFontOfGC (XtDisplay (tw), data->gc), XmPlatText8, block.ptr, length, x - data->hoffset, y, 0) ;
+  _XmPlatCtxFree (_c) ;
+}
 	}
 	}
 	if (stipple) SetNormGC(tw, data->gc, True, !stipple);
       }
       if (highlight == XmHIGHLIGHT_SECONDARY_SELECTED)
-	XDrawLine(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-		  data->gc, x - data->hoffset, y, 
-		  (newx - data->hoffset) - 1, y);
+	_XmPlatDrawOneLine (XtDisplay(tw), XtWindow(tw->text.inner_widget), data->gc, x - data->hoffset, y, (newx - data->hoffset) - 1, y) ;
       x = newx;
       block.length -= length;
       block.ptr += length;
@@ -3075,10 +3070,7 @@ Draw(XmTextWidget tw,
     text_border = tw->primitive.shadow_thickness +
 		  tw->primitive.highlight_thickness;
     if (data->topmargin - text_border > 0 && x < rightedge + text_border)
-      XClearArea(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-		 x - (int) (data->linewidth * 0.5)-1, text_border,
-		 rightedge - x + (int) (data->linewidth * 0.5),
-		 data->topmargin - text_border, FALSE);
+      _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), x - (int) (data->linewidth * 0.5)-1, text_border, rightedge - x + (int) (data->linewidth * 0.5), data->topmargin - text_border);
   
     if (cleartoend) {
       y -= data->voffset;
@@ -3099,9 +3091,7 @@ Draw(XmTextWidget tw,
 	else
 	  rec_width = data->linewidth;
       
-        XFillRectangle(XtDisplay(tw), 
-		       XtWindow(tw->text.inner_widget), data->gc,
-		       x - (int)(data->linewidth * 0.5), y, rec_width, height);
+        _XmPlatFillOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), data->gc, x - (int)(data->linewidth * 0.5), y, rec_width, height);
 	SetMarginGC(tw, data->gc);
       }
     }
@@ -3111,17 +3101,14 @@ Draw(XmTextWidget tw,
       height = tw->text.inner_widget->core.height -
 	       (data->topmargin + data->bottommargin);
       if (width > 0 && height > 0)
-	XClearArea(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-		   data->leftmargin, y, width, height, False);
+	_XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), data->leftmargin, y, width, height);
     }
   } else {
   /* clear left margin */
   text_border = tw->primitive.shadow_thickness +
     tw->primitive.highlight_thickness;
   if (data->leftmargin - text_border > 0 && (int) (y + data->font_descent) > 0)
-    XClearArea(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-	       text_border, text_border, data->leftmargin - text_border,
-	       y + data->font_descent - text_border, False);
+    _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), text_border, text_border, data->leftmargin - text_border, y + data->font_descent - text_border);
   
   if (cleartoend) {
     x -= data->hoffset;
@@ -3144,9 +3131,7 @@ Draw(XmTextWidget tw,
       else
 	rec_height = data->font_ascent + data->font_descent;
       
-      XFillRectangle(XtDisplay(tw), 
-		     XtWindow(tw->text.inner_widget), data->gc, x, 
-		     y - data->font_ascent, width, rec_height);
+      _XmPlatFillOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), data->gc, x, y - data->font_ascent, width, rec_height);
       SetMarginGC(tw, data->gc);
     }
   }
@@ -3157,8 +3142,7 @@ Draw(XmTextWidget tw,
     height = tw->text.inner_widget->core.height -
       ((y + data->font_descent) + data->bottommargin);
     if (width > 0 && height > 0)
-      XClearArea(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-		 x, y + data->font_descent, width, height, False);
+      _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw->text.inner_widget), x, y + data->font_descent, width, height);
   }
   }
   /* Before exiting, force PaintCursor to refresh its save area */
@@ -3213,11 +3197,13 @@ PaintCursor(XmTextWidget tw)
 	int cursor_height = data->cursorheight;
     if (data->refresh_ibeam_off == True) { /* get area under IBeam first */
       /* Fill is needed to realign clip rectangle with gc */
-      XFillRectangle(XtDisplay((Widget)tw), XtWindow((Widget)tw),
-		     data->save_gc, 0, 0, 0, 0);
-      XCopyArea(XtDisplay((Widget)tw), XtWindow((Widget)tw),
-		data->ibeam_off, data->save_gc, x, y, data->cursorwidth,
-		data->cursorheight, 0, 0);
+      _XmPlatFillOneRect (XtDisplay ((Widget)tw), XtWindow ((Widget)tw), data->save_gc, 0, 0, 0, 0);
+      { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)tw), data->ibeam_off, data->save_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay((Widget)tw), XtWindow((Widget)tw)) ;
+  _XmPlatBlit (_c, _src, x, y, 0, 0, data->cursorwidth, data->cursorheight) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
       data->refresh_ibeam_off = False;
     }
     
@@ -3235,20 +3221,14 @@ PaintCursor(XmTextWidget tw)
 	  if ( cursor_width > 0 && cursor_height > 0 ) {
 	    if (!XtIsSensitive((Widget)tw)) {
 		SetShadowGC(tw, data->imagegc);
-		XFillRectangle(XtDisplay((Widget)tw), XtWindow((Widget)tw),
-					data->imagegc, x + 1, y + 1,
-					(unsigned int )cursor_width,
-					(unsigned int )cursor_height);
+		_XmPlatFillOneRect (XtDisplay ((Widget)tw), XtWindow((Widget)tw), data->imagegc, x + 1, y + 1, (unsigned int )cursor_width, (unsigned int )cursor_height) ;
 	    }
 
 	    _XmTextToggleCursorGC((Widget)tw);
 #else
 	  if ( cursor_width > 0 && cursor_height > 0 )
 #endif
-		XFillRectangle(XtDisplay((Widget)tw), XtWindow((Widget)tw),  
-			data->imagegc, x, y, 
-			(unsigned int )cursor_width,          
-			(unsigned int )cursor_height);                        
+		_XmPlatFillOneRect (XtDisplay ((Widget)tw), XtWindow((Widget)tw), data->imagegc, x, y, (unsigned int )cursor_width, (unsigned int )cursor_height) ;                        
 #ifdef FIX_1501
 	  }
 #endif
@@ -3281,10 +3261,12 @@ PaintCursor(XmTextWidget tw)
         }
            if (cursor_width > 0 && cursor_height > 0)
            {
-              XCopyArea(XtDisplay((Widget)tw), data->ibeam_off,                 
-                     XtWindow((Widget)tw), data->save_gc, src_x, 0,         
-                     (unsigned int)cursor_width, 
- 		    (unsigned int)cursor_height, x, y);
+              { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)tw), XtWindow((Widget)tw), data->save_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay((Widget)tw), data->ibeam_off) ;
+  _XmPlatBlit (_c, _src, src_x, 0, x, y, (unsigned int)cursor_width, (unsigned int)cursor_height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
            }
     }
   }
@@ -3329,71 +3311,56 @@ ChangeHOffset(XmTextWidget tw,
     SetNormGC(tw, data->gc, False, False);
     if (delta < 0) {
       if (width > 0 && innerheight > 0) {
-	XCopyArea(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-		  XtWindow(tw->text.inner_widget), data->gc,
-		  data->leftmargin, data->topmargin, width, innerheight,
-		  data->leftmargin - delta, data->topmargin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(tw), XtWindow(tw->text.inner_widget)) ;
+  _XmPlatBlit (_c, _src, data->leftmargin, data->topmargin, data->leftmargin - delta, data->topmargin, width, innerheight) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	/* clear left margin + delta change */
 	if ((int) (data->leftmargin - delta -
 	     (tw->primitive.shadow_thickness +
 	      tw->primitive.highlight_thickness)) < innerwidth)
-	  XClearArea(XtDisplay(tw), XtWindow(tw),
-		     tw->primitive.shadow_thickness +
-		     tw->primitive.highlight_thickness,
-		     data->topmargin, data->leftmargin -
+	  _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), tw->primitive.shadow_thickness +
+		     tw->primitive.highlight_thickness, data->topmargin, data->leftmargin -
 		     (tw->primitive.shadow_thickness +
-		      tw->primitive.highlight_thickness) - delta,
-		     innerheight, False);
+		      tw->primitive.highlight_thickness) - delta, innerheight);
 	/* clear right margin */
 	if ((int) (data->rightmargin-
 	    (tw->primitive.shadow_thickness +
 	     tw->primitive.highlight_thickness)) > 0)
-	  XClearArea(XtDisplay(tw), XtWindow(tw),
-		     data->leftmargin + innerwidth, data->topmargin,
-		     data->rightmargin -
+	  _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), data->leftmargin + innerwidth, data->topmargin, data->rightmargin -
 		     (tw->primitive.shadow_thickness +
-		      tw->primitive.highlight_thickness),
-		     innerheight,
-		     False);
+		      tw->primitive.highlight_thickness), innerheight);
 	data->exposehscroll++;
       }
       RedrawRegion(tw, data->leftmargin, 0, -delta, height);
     } else {
       if (innerwidth - delta > 0 && innerheight > 0) {
-	XCopyArea(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-		  XtWindow(tw->text.inner_widget), data->gc,
-		  data->leftmargin + delta, data->topmargin,
-		  innerwidth - delta, innerheight,
-		  data->leftmargin, data->topmargin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(tw), XtWindow(tw->text.inner_widget)) ;
+  _XmPlatBlit (_c, _src, data->leftmargin + delta, data->topmargin, data->leftmargin, data->topmargin, innerwidth - delta, innerheight) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	/* clear right margin + delta change */
-	XClearArea(XtDisplay(tw), XtWindow(tw),
-		   data->leftmargin + innerwidth - delta, data->topmargin,
-		   delta + data->rightmargin -
+	_XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), data->leftmargin + innerwidth - delta, data->topmargin, delta + data->rightmargin -
 		   (tw->primitive.shadow_thickness +
-		    tw->primitive.highlight_thickness),
-		   innerheight, False);
+		    tw->primitive.highlight_thickness), innerheight);
 	/* clear left margin */
 	if (data->leftmargin - (int)(tw->primitive.shadow_thickness +
 				     tw->primitive.highlight_thickness)
 	    > 0)
-	  XClearArea(XtDisplay(tw), XtWindow(tw),
-		     tw->primitive.shadow_thickness +
-		     tw->primitive.highlight_thickness,
-		     data->topmargin, data->leftmargin -
+	  _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), tw->primitive.shadow_thickness +
+		     tw->primitive.highlight_thickness, data->topmargin, data->leftmargin -
 		     (tw->primitive.shadow_thickness +
-		      tw->primitive.highlight_thickness),
-		     innerheight, False);
+		      tw->primitive.highlight_thickness), innerheight);
 	data->exposehscroll++;
       } else {
 	/* clear all text */
-	XClearArea(XtDisplay(tw), XtWindow(tw),
-		   tw->primitive.shadow_thickness +
-		   tw->primitive.highlight_thickness,
-		   data->topmargin,
-		   width - 2 *(tw->primitive.shadow_thickness +
-			       tw->primitive.highlight_thickness),
-		   innerheight,
-		   False);
+	_XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), tw->primitive.shadow_thickness +
+		   tw->primitive.highlight_thickness, data->topmargin, width - 2 *(tw->primitive.shadow_thickness +
+			       tw->primitive.highlight_thickness), innerheight);
 	data->exposehscroll++;
       }
       RedrawRegion(tw, width - data->rightmargin - delta, 0,
@@ -3442,74 +3409,56 @@ ChangeVOffset(XmTextWidget tw,
     SetNormGC(tw, data->gc, False, False);
     if (delta < 0) {
       if (height > 0 && innerwidth > 0) {
-	XCopyArea(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-		  XtWindow(tw->text.inner_widget), data->gc,
-		  data->leftmargin, data->topmargin, innerwidth, height,
-		  data->leftmargin, data->topmargin - delta);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(tw), XtWindow(tw->text.inner_widget)) ;
+  _XmPlatBlit (_c, _src, data->leftmargin, data->topmargin, data->leftmargin, data->topmargin - delta, innerwidth, height) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	/* clear top margin + delta change */
 	if ((int) (data->topmargin -
 	     (tw->primitive.shadow_thickness +
 	      tw->primitive.highlight_thickness) - delta) < innerheight)
-	  XClearArea(XtDisplay(tw), XtWindow(tw),
-		     data->leftmargin,
-		     tw->primitive.shadow_thickness +
-		     tw->primitive.highlight_thickness,
-		     innerwidth, data->topmargin -
+	  _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), data->leftmargin, tw->primitive.shadow_thickness +
+		     tw->primitive.highlight_thickness, innerwidth, data->topmargin -
 		     (tw->primitive.shadow_thickness +
-		     tw->primitive.highlight_thickness) - delta, False);
+		     tw->primitive.highlight_thickness) - delta);
 	/* clear right margin */
 	if ((int) data->topmargin -
 	    (int) (tw->primitive.shadow_thickness +
 		   tw->primitive.highlight_thickness) > 0)
-	  XClearArea(XtDisplay(tw), XtWindow(tw),
-		     data->leftmargin, data->topmargin + innerheight,
-		     innerwidth, data->bottommargin -
+	  _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), data->leftmargin, data->topmargin + innerheight, innerwidth, data->bottommargin -
 		     (tw->primitive.shadow_thickness +
-		     tw->primitive.highlight_thickness),
-		     False);
+		     tw->primitive.highlight_thickness));
 	data->exposevscroll++;
       }
       RedrawRegion(tw, 0, data->topmargin, width, -delta);
     } else {
       if (innerheight - delta > 0 && innerwidth > 0) {
-	XCopyArea(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-		  XtWindow(tw->text.inner_widget), data->gc,
-			   data->leftmargin, data->topmargin + delta,
-			   innerwidth, innerheight - delta,
-			   data->leftmargin, data->topmargin);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(tw), XtWindow(tw->text.inner_widget)) ;
+  _XmPlatBlit (_c, _src, data->leftmargin, data->topmargin + delta, data->leftmargin, data->topmargin, innerwidth, innerheight - delta) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
 	/* clear bottom margin + delta change */
-	XClearArea(XtDisplay(tw), XtWindow(tw),
-		   data->leftmargin,
-		   data->topmargin + innerheight - delta,
-		   innerwidth,
-		   delta + data->bottommargin -
+	_XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), data->leftmargin, data->topmargin + innerheight - delta, innerwidth, delta + data->bottommargin -
 		   (tw->primitive.shadow_thickness +
-		   tw->primitive.highlight_thickness),
-		   False);
+		   tw->primitive.highlight_thickness));
 	/* clear top margin */
 	if (data->topmargin - (int)(tw->primitive.shadow_thickness +
 				     tw->primitive.highlight_thickness)
 	    > 0)
-	  XClearArea(XtDisplay(tw), XtWindow(tw),
-		     data->leftmargin,
-		     tw->primitive.shadow_thickness +
-		     tw->primitive.highlight_thickness,
-		     innerwidth,
-		     data->topmargin -
+	  _XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), data->leftmargin, tw->primitive.shadow_thickness +
+		     tw->primitive.highlight_thickness, innerwidth, data->topmargin -
 		     (tw->primitive.shadow_thickness +
-		     tw->primitive.highlight_thickness),
-		     False);
+		     tw->primitive.highlight_thickness));
 	data->exposevscroll++;
       } else {
 	/* clear all text */
-	XClearArea(XtDisplay(tw), XtWindow(tw),
-		   data->leftmargin,
-		   tw->primitive.shadow_thickness +
-		   tw->primitive.highlight_thickness,
-		   innerwidth,
-		   height - 2 *(tw->primitive.shadow_thickness +
-		   tw->primitive.highlight_thickness),
-		   False);
+	_XmPlatClearOneRect (XtDisplay (tw), XtWindow (tw), data->leftmargin, tw->primitive.shadow_thickness +
+		   tw->primitive.highlight_thickness, innerwidth, height - 2 *(tw->primitive.shadow_thickness +
+		   tw->primitive.highlight_thickness));
 	data->exposevscroll++;
       }
       RedrawRegion(tw, 0, height - data->bottommargin - delta,
@@ -3651,34 +3600,19 @@ MoveLines(XmTextWidget tw,
   SetFullGC(tw, data->gc);
   if(XmDirectionMatch(XmPrim_layout_direction(tw),
 		      XmTOP_TO_BOTTOM_RIGHT_TO_LEFT)) {
-    XCopyArea(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-	      XtWindow(tw->text.inner_widget), data->gc,
-	      tw->text.inner_widget->core.width - data->rightmargin -
-	      (Position)data->linewidth * (toline + 1),
-	      tw->primitive.shadow_thickness +
-	      tw->primitive.highlight_thickness,
-	      (Position)data->linewidth * (toline - fromline + 1),
-	      tw->text.inner_widget->core.height -
-	      2 * (tw->primitive.shadow_thickness +
-	           tw->primitive.highlight_thickness),
-	      tw->text.inner_widget->core.width - data->rightmargin -
-	      (Position)data->linewidth *
-	      (destline + toline - fromline + 1),
-	      tw->primitive.shadow_thickness +
-	      tw->primitive.highlight_thickness);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(tw), XtWindow(tw->text.inner_widget)) ;
+  _XmPlatBlit (_c, _src, tw->text.inner_widget->core.width - data->rightmargin - 	      (Position)data->linewidth * (toline + 1), tw->primitive.shadow_thickness + 	      tw->primitive.highlight_thickness, tw->text.inner_widget->core.width - data->rightmargin - 	      (Position)data->linewidth * 	      (destline + toline - fromline + 1), tw->primitive.shadow_thickness + 	      tw->primitive.highlight_thickness, (Position)data->linewidth * (toline - fromline + 1), tw->text.inner_widget->core.height - 	      2 * (tw->primitive.shadow_thickness + 	           tw->primitive.highlight_thickness)) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
   } else {
-  XCopyArea(XtDisplay(tw), XtWindow(tw->text.inner_widget),
-	    XtWindow(tw->text.inner_widget), data->gc,
-	    tw->primitive.shadow_thickness +
-	    tw->primitive.highlight_thickness,
-	    (Position) data->lineheight * fromline + data->topmargin,
-	    tw->text.inner_widget->core.width -
-	    2 * (tw->primitive.shadow_thickness +
-		 tw->primitive.highlight_thickness),
-	    data->lineheight * (toline - fromline + 1),
-	    tw->primitive.shadow_thickness +
-	    tw->primitive.highlight_thickness,
-	    (Position) data->lineheight * destline + data->topmargin);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tw), XtWindow(tw->text.inner_widget), data->gc) ;
+  XmPlatSurface _src = _XmPlatSurface (XtDisplay(tw), XtWindow(tw->text.inner_widget)) ;
+  _XmPlatBlit (_c, _src, tw->primitive.shadow_thickness + 	    tw->primitive.highlight_thickness, (Position) data->lineheight * fromline + data->topmargin, tw->primitive.shadow_thickness + 	    tw->primitive.highlight_thickness, (Position) data->lineheight * destline + data->topmargin, tw->text.inner_widget->core.width - 	    2 * (tw->primitive.shadow_thickness + 		 tw->primitive.highlight_thickness), data->lineheight * (toline - fromline + 1)) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
   }
   SetMarginGC(tw, data->gc);
   if(XmDirectionMatch(XmPrim_layout_direction(tw),
@@ -4091,15 +4025,20 @@ MakeIBeamStencil(XmTextWidget tw,
     values.fill_style = FillSolid;
     values.function = GXcopy;
     valueMask = GCForeground | GCLineWidth | GCFillStyle | GCFunction;
-    XChangeGC(dpy, data->cursor_gc, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, data->cursor_gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
-    XFillRectangle(dpy, data->cursor, data->cursor_gc, 0, 0, data->cursorwidth,
-		   data->cursorheight);
+    _XmPlatFillOneRect (dpy, data->cursor, data->cursor_gc, 0, 0, data->cursorwidth, data->cursorheight) ;
     
     /* Change the GC for use in "cutting out" the I-Beam shape */
     values.foreground = 1;
     values.line_width = line_width;
-    XChangeGC(dpy, data->cursor_gc, GCForeground | GCLineWidth, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, data->cursor_gc) ;
+  _XmPlatChangeGCValues (_c, GCForeground | GCLineWidth, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
     
     /* Draw the segments of the I-Beam */
     if(XmDirectionMatch(XmPrim_layout_direction(tw),
@@ -4142,7 +4081,17 @@ MakeIBeamStencil(XmTextWidget tw,
     }
     
     /* Draw the segments onto the cursor */
-    XDrawSegments(dpy, data->cursor, data->cursor_gc, segments, 3);
+    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, data->cursor, data->cursor_gc) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(3) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(3) ; _pi++) {
+    _ps[_pi].x1 = segments[_pi].x1 ; _ps[_pi].y1 = segments[_pi].y1 ;
+    _ps[_pi].x2 = segments[_pi].x2 ; _ps[_pi].y2 = segments[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, 3) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+  }
     
     /* Install the cursor for pixmap caching */
     (void) _XmCachePixmap(data->cursor, screen, pixmap_name, 1, 0,
@@ -4161,7 +4110,10 @@ MakeIBeamStencil(XmTextWidget tw,
   }
   values.stipple = data->cursor;
   values.fill_style = FillStippled;
-  XChangeGC(XtDisplay(tw), data->imagegc, valueMask, &values);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tw), 0, data->imagegc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
   
 }
 
@@ -4195,10 +4147,17 @@ MakeAddModeCursor(XmTextWidget tw,
     
     values.function = GXcopy;
     valueMask = GCFunction;
-    XChangeGC(dpy, data->cursor_gc, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, 0, data->cursor_gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
-    XCopyArea(dpy, data->cursor, data->add_mode_cursor, data->cursor_gc, 0, 0,
-	      data->cursorwidth, data->cursorheight, 0, 0);
+    { XmPlatDrawCtx _c = _XmPlatCtx (dpy, data->add_mode_cursor, data->cursor_gc) ;
+  XmPlatSurface _src = _XmPlatSurface (dpy, data->cursor) ;
+  _XmPlatBlit (_c, _src, 0, 0, 0, 0, data->cursorwidth, data->cursorheight) ;
+  _XmPlatSurfaceFree (_src) ;
+  _XmPlatCtxFree (_c) ;
+  }
     
     valueMask = (GCTile | GCFillStyle | GCForeground |
 		 GCBackground | GCFunction | GCTileStipXOrigin);
@@ -4209,10 +4168,12 @@ MakeAddModeCursor(XmTextWidget tw,
     values.foreground = tw->primitive.foreground;
     values.background = tw->core.background_pixel;
     
-    XChangeGC(XtDisplay((Widget)tw), data->cursor_gc, valueMask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay((Widget)tw), 0, data->cursor_gc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
     
-    XFillRectangle(dpy, data->add_mode_cursor, data->cursor_gc,
-		   0, 0, data->cursorwidth, data->cursorheight);
+    _XmPlatFillOneRect (dpy, data->add_mode_cursor, data->cursor_gc, 0, 0, data->cursorwidth, data->cursorheight) ;
     
     /* Install the pixmap for pixmap caching */
     _XmCachePixmap(data->add_mode_cursor, screen, pixmap_name, 1, 0,
@@ -4910,7 +4871,10 @@ NotifyResized(Widget w,
     data->rows_set = data->rows;
   
   if (XtIsRealized(w)) {
-    XClearWindow(XtDisplay(tw), XtWindow(tw->text.inner_widget));
+    { XmPlatSurface _s = _XmPlatSurfaceOfWindow (XtDisplay (tw), XtWindow (tw->text.inner_widget)) ;
+  _XmPlatClearWindow (_s) ;
+  _XmPlatSurfaceFree (_s) ;
+}
     data->refresh_ibeam_off = True;
   }
   
@@ -6186,6 +6150,9 @@ _XmTextToggleCursorGC(Widget w)
   }
 #endif
 
-  XSetClipMask(XtDisplay(tw), data->save_gc, None);
-  XChangeGC(XtDisplay(tw), data->imagegc, valueMask, &values);
+  _XmPlatClrClip (XtDisplay (tw), data->save_gc);
+  { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(tw), 0, data->imagegc) ;
+  _XmPlatChangeGCValues (_c, valueMask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }

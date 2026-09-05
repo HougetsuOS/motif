@@ -49,6 +49,7 @@ static char rcsid[] = "$TOG: ScrolledW.c /main/16 1997/07/25 16:49:57 samborn $"
 #include "ScrollFramTI.h"
 #include "TraversalI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define MAXPOS ((1 << 15)-1)
 
@@ -2685,8 +2686,7 @@ Widget wid )
     /* very expensive, redo that asap */
     if (XtIsRealized (wid))
     {
-        XClearArea(XtDisplay(wid), XtWindow(wid), 0, 0,
-            XtWidth(wid),XtHeight(wid), True);
+        _XmPlatClearOneRect (XtDisplay (wid), XtWindow (wid), 0, 0, XtWidth(wid), XtHeight(wid));
 
     }
 

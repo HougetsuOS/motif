@@ -55,6 +55,7 @@
 #include "RepTypeI.h"
 #include "ScrollFramTI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 
 #define MESSAGE0     _XmMMsgNotebook_0000
 #define MESSAGE1     _XmMMsgMotif_0001
@@ -1088,7 +1089,7 @@ Resize (
     LayoutChildren(nb, NULL);
 
     if (XtIsRealized(w))
-	XClearArea(XtDisplay(w),XtWindow(w),0,0,0,0,True);
+	_XmPlatClearOneRect (XtDisplay (w), XtWindow (w), 0, 0, 0, 0);
 }
 
 
@@ -1491,8 +1492,7 @@ GeometryManager (
 	    LayoutChildren(nb, instigator);
 
 	    if (XtIsRealized((Widget)nb))
-		XClearArea(XtDisplay((Widget)nb),XtWindow((Widget)nb),
-			0,0,0,0,True);
+		_XmPlatClearOneRect (XtDisplay ((Widget)nb), XtWindow ((Widget)nb), 0, 0, 0, 0);
 	    }
 	}
     return result;
@@ -1572,7 +1572,7 @@ ChangeManaged (
 
 	/* Clear notebook area otherwise binder and backpage don't update. */
 	if (XtIsRealized((Widget)nb) && !nb->notebook.first_change_managed)
-	    XClearArea(XtDisplay(nb), XtWindow(nb), 0, 0, 0, 0, True);
+	    _XmPlatClearOneRect (XtDisplay (nb), XtWindow (nb), 0, 0, 0, 0);
     }
 
     /* Adjust notebook's children type sizes (based on notebook size) */
@@ -4362,29 +4362,32 @@ MakeSpiralPixmap (
      * Scribble in spiral pixmap
      */
     /* Fill pixmap with notebook background */
-    XFillRectangle(XtDisplay(nb), pixmap, nb->manager.background_GC,
-                0, 0, pw, ph);
+    _XmPlatFillOneRect (XtDisplay (nb), pixmap, nb->manager.background_GC, 0, 0, pw, ph) ;
 
     /* draw binding surface */
     XSetForeground(XtDisplay(nb), nb->notebook.frame_gc,
                 nb->notebook.frame_background);
-    XFillRectangle(XtDisplay(nb), pixmap, nb->notebook.frame_gc,
-                rx, ry, rw, rh);
+    _XmPlatFillOneRect (XtDisplay (nb), pixmap, nb->notebook.frame_gc, rx, ry, rw, rh) ;
 
     /* draw line along binding surface */
-    XSetClipMask(XtDisplay(nb), nb->notebook.foreground_gc, None);
+    _XmPlatClrClip (XtDisplay (nb), nb->notebook.foreground_gc);
     XSetLineAttributes(XtDisplay(nb), nb->notebook.foreground_gc, 1,
                 LineSolid, CapRound, JoinMiter);
-    XDrawLine(XtDisplay(nb), pixmap, nb->notebook.foreground_gc,
-                lx1, ly1, lx2, ly2);
+    _XmPlatDrawOneLine (XtDisplay(nb), pixmap, nb->notebook.foreground_gc, lx1, ly1, lx2, ly2) ;
 
     /* draw hole in binding surface with top/bottom shadows */
-    XFillArc(XtDisplay(nb), pixmap, nb->manager.background_GC,
-                hx, hy, hd, hd, 0, 360 * 64);
-    XDrawArc(XtDisplay(nb), pixmap, nb->manager.bottom_shadow_GC, 
-                hx, hy, hd, hd, 225 * 64, -180 * 64);
-    XDrawArc(XtDisplay(nb), pixmap, nb->manager.top_shadow_GC,
-                hx, hy, hd, hd,  45 * 64, -180 * 64);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), pixmap, nb->manager.background_GC) ;
+  _XmPlatFillArc (_c, hx, hy, hd, hd, 0, 360 * 64) ;
+  _XmPlatCtxFree (_c) ;
+  }
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), pixmap, nb->manager.bottom_shadow_GC) ;
+  _XmPlatDrawArc (_c, hx, hy, hd, hd, 225 * 64, -180 * 64) ;
+  _XmPlatCtxFree (_c) ;
+  }
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), pixmap, nb->manager.top_shadow_GC) ;
+  _XmPlatDrawArc (_c, hx, hy, hd, hd, 45 * 64, -180 * 64) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
     /* draw spiral with top/bottom shadows */
     XSetForeground(XtDisplay(nb), nb->notebook.frame_gc,
@@ -4392,16 +4395,24 @@ MakeSpiralPixmap (
     XSetLineAttributes(XtDisplay(nb), nb->notebook.frame_gc, 1,
                 LineSolid, CapRound, JoinMiter);
     for(i=1; i < sd; i++)
-        XDrawArc(XtDisplay(nb), pixmap, nb->notebook.frame_gc,
-                sx +i, sy +i, sw -i, sh -i, a1 * 64, a2 * 64);
+        { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), pixmap, nb->notebook.frame_gc) ;
+  _XmPlatDrawArc (_c, sx +i, sy +i, sw -i, sh -i, a1 * 64, a2 * 64) ;
+  _XmPlatCtxFree (_c) ;
+  }
     XSetLineAttributes(XtDisplay(nb), nb->notebook.frame_gc, MAX(0,sd -2),
                 LineSolid, CapRound, JoinMiter);
-    XDrawArc(XtDisplay(nb), pixmap, nb->notebook.frame_gc,
-                sx +(sd/2), sy +(sd/2), sw, sh, a3 * 64, a4 * 64);
-    XDrawArc(XtDisplay(nb), pixmap, nb->manager.top_shadow_GC,
-                sx, sy, sw, sh, a1 * 64, a2 * 64);
-    XDrawArc(XtDisplay(nb), pixmap, nb->manager.bottom_shadow_GC,
-                sx +sd, sy +sd, sw -sd, sh -sd, a1 * 64, a2 * 64);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), pixmap, nb->notebook.frame_gc) ;
+  _XmPlatDrawArc (_c, sx +(sd/2), sy +(sd/2), sw, sh, a3 * 64, a4 * 64) ;
+  _XmPlatCtxFree (_c) ;
+  }
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), pixmap, nb->manager.top_shadow_GC) ;
+  _XmPlatDrawArc (_c, sx, sy, sw, sh, a1 * 64, a2 * 64) ;
+  _XmPlatCtxFree (_c) ;
+  }
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), pixmap, nb->manager.bottom_shadow_GC) ;
+  _XmPlatDrawArc (_c, sx +sd, sy +sd, sw -sd, sh -sd, a1 * 64, a2 * 64) ;
+  _XmPlatCtxFree (_c) ;
+  }
 }
 
 
@@ -4466,8 +4477,7 @@ DrawBinding (
 	    case XmSOLID:
 	        XSetForeground(XtDisplay(nb), nb->notebook.frame_gc,
 			       nb->manager.foreground);
-		XFillRectangle(XtDisplay(nb), XtWindow(nb),
-			       nb->notebook.frame_gc, x, y, width, height);
+		_XmPlatFillOneRect (XtDisplay (nb), XtWindow (nb), nb->notebook.frame_gc, x, y, width, height);
 	        break;
 	    case XmSPIRAL:
                 MakeSpiralPixmap (nb, width, height);
@@ -4528,7 +4538,10 @@ DrawPixmapBinding (
 	values.fill_style = FillTiled;
 	values.tile = pixmap;
 	}
-    XChangeGC(XtDisplay(nb), nb->notebook.binding_gc, mask, &values);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay(nb), 0, nb->notebook.binding_gc) ;
+  _XmPlatChangeGCValues (_c, mask, &values) ;
+  _XmPlatCtxFree (_c) ;
+  }
     
     /*
      * set TSOrigin 
@@ -4543,8 +4556,7 @@ DrawPixmapBinding (
     XSetTSOrigin(XtDisplay(nb), nb->notebook.binding_gc, x_origin, y_origin);
 
     /* display the pixmap binding */
-    XFillRectangle(XtDisplay(nb), XtWindow(nb), nb->notebook.binding_gc,
-		    x, y, width -1, height - 1);
+    _XmPlatFillOneRect (XtDisplay (nb), XtWindow (nb), nb->notebook.binding_gc, x, y, width -1, height - 1);
 }
 
 
@@ -4601,8 +4613,7 @@ DrawFrameShadow (
 	rect.y = y;
 	rect.width = width;
 	rect.height = height;
-	XFillRectangle(XtDisplay(nb), XtWindow(nb), nb->notebook.frame_gc,
-			x, y, width + 1, height + 1);
+	_XmPlatFillOneRect (XtDisplay (nb), XtWindow (nb), nb->notebook.frame_gc, x, y, width + 1, height + 1);
 	XUnionRectWithRegion(&rect, shadow_region, shadow_region);
 
 	/* adding the top major tab area to the shadow region */
@@ -4674,12 +4685,13 @@ DrawFrameShadow (
     }
     else
     {
-	XFillRectangle(XtDisplay(nb), XtWindow(nb), nb->notebook.frame_gc,
-			x, y, width, height);
+	_XmPlatFillOneRect (XtDisplay (nb), XtWindow (nb), nb->notebook.frame_gc, x, y, width, height);
 	XSetForeground(XtDisplay(nb), nb->notebook.frame_gc,
 		       nb->manager.foreground);
-	XDrawRectangle(XtDisplay(nb), XtWindow(nb), nb->notebook.frame_gc,
-			x, y, width, height);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), XtWindow(nb), nb->notebook.frame_gc) ;
+  _XmPlatDrawRect (_c, x, y, width, height) ;
+  _XmPlatCtxFree (_c) ;
+}
 	if (nb->notebook.top_major
 	    && NB_IS_VISIBLE(nb->notebook.top_major)
 	    && !NB_IS_CHILD_JOINSIDE(nb->notebook.top_major))
@@ -4702,8 +4714,10 @@ DrawFrameShadow (
                 rect.y = 0;
                 }
 	
-	XDrawRectangle(XtDisplay(nb), XtWindow(nb), nb->notebook.frame_gc,
-			rect.x, rect.y, rect.width, rect.height);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), XtWindow(nb), nb->notebook.frame_gc) ;
+  _XmPlatDrawRect (_c, rect.x, rect.y, rect.width, rect.height) ;
+  _XmPlatCtxFree (_c) ;
+}
 	}
 
 	/* adding the top minor tab area to the shadow region */
@@ -4728,8 +4742,10 @@ DrawFrameShadow (
                 rect.height -= rect.y;
                 rect.y = 0;
                 }
-	XDrawRectangle(XtDisplay(nb), XtWindow(nb), nb->notebook.frame_gc,
-			rect.x, rect.y, rect.width, rect.height);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), XtWindow(nb), nb->notebook.frame_gc) ;
+  _XmPlatDrawRect (_c, rect.x, rect.y, rect.width, rect.height) ;
+  _XmPlatCtxFree (_c) ;
+}
 	}
     }
 
@@ -4949,8 +4965,14 @@ DrawBackPages (
     /* set the clipping region if necessary */
     XSetRegion(XtDisplay(nb), nb->notebook.foreground_gc, region);
     XSetRegion(XtDisplay(nb), nb->notebook.background_gc, region);
-    XSetClipOrigin(XtDisplay(nb), nb->notebook.foreground_gc, 0, 0);
-    XSetClipOrigin(XtDisplay(nb), nb->notebook.background_gc, 0, 0);
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), 0, nb->notebook.foreground_gc) ;
+  _XmPlatSetClipOrigin (_c, 0, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
+    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), 0, nb->notebook.background_gc) ;
+  _XmPlatSetClipOrigin (_c, 0, 0) ;
+  _XmPlatCtxFree (_c) ;
+  }
 
     /* draw the first page outline */
     XSetLineAttributes(XtDisplay(nb), nb->notebook.foreground_gc, 1,
@@ -4974,17 +4996,19 @@ DrawBackPages (
 	{
 	    ADJUST_NEGATIVE_DIMENSION(p[1].x, p[2].x, x, width);
 	    ADJUST_NEGATIVE_DIMENSION(p[1].y, p[3].y, y, height);
-	    XDrawRectangle(XtDisplay(nb), XtWindow(nb),
-			   nb->notebook.foreground_gc,
-			   x, y, width, height);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), XtWindow(nb), nb->notebook.foreground_gc) ;
+  _XmPlatDrawRect (_c, x, y, width, height) ;
+  _XmPlatCtxFree (_c) ;
+}
 	}
 	else
 	{
 	    ADJUST_NEGATIVE_DIMENSION(p[1].x, p[3].x, x, width);
 	    ADJUST_NEGATIVE_DIMENSION(p[1].y, p[2].y, y, height);
-	    XDrawRectangle(XtDisplay(nb), XtWindow(nb),
-			   nb->notebook.foreground_gc,
-			   x, y, width, height);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), XtWindow(nb), nb->notebook.foreground_gc) ;
+  _XmPlatDrawRect (_c, x, y, width, height) ;
+  _XmPlatCtxFree (_c) ;
+}
 	}
     }
 
@@ -5000,8 +5024,16 @@ DrawBackPages (
 	while (limit > 0)
 	{
 	    /* draw backpage foreground */
-	    XDrawLines(XtDisplay(nb), XtWindow(nb), nb->notebook.foreground_gc,
-			&(p[1]), 4, CoordModePrevious);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), XtWindow(nb), nb->notebook.foreground_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(4) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(4) ; _pi++) {
+    _pp[_pi].x = p[1 + _pi].x ; _pp[_pi].y = p[1 + _pi].y ;
+  }
+  _XmPlatDrawLines (_c, _pp, 4, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+}
 
 	    /* draw backpage background */
 	    if (delta >= 2 && limit > delta - 2)
@@ -5019,9 +5051,16 @@ DrawBackPages (
 		if (q[2].y) q[2].y += dy;
 		while (back > 0)
 		{
-		    XDrawLines(XtDisplay(nb), XtWindow(nb),
-				nb->notebook.background_gc,
-				q, 3, CoordModePrevious);
+		    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), XtWindow(nb), nb->notebook.background_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(3) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(3) ; _pi++) {
+    _pp[_pi].x = q[_pi].x ; _pp[_pi].y = q[_pi].y ;
+  }
+  _XmPlatDrawLines (_c, _pp, 3, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+}
 		    q[0].y += NB_ENFORCE_SIGN(dy, 1);
 		    q[0].x += NB_ENFORCE_SIGN(dx, 1);
 		    if (q[2].x) q[2].x -= NB_ENFORCE_SIGN(dx, 1);
@@ -5041,8 +5080,16 @@ DrawBackPages (
 	p[1].y = my;
 	XSetLineAttributes(XtDisplay(nb), nb->notebook.foreground_gc, 2,
 			LineSolid, CapButt, JoinMiter);
-	XDrawLines(XtDisplay(nb), XtWindow(nb), nb->notebook.foreground_gc,
-			p, 5, CoordModePrevious);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), XtWindow(nb), nb->notebook.foreground_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(5) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(5) ; _pi++) {
+    _pp[_pi].x = p[_pi].x ; _pp[_pi].y = p[_pi].y ;
+  }
+  _XmPlatDrawLines (_c, _pp, 5, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+}
     }
 
     /* for XmNONE and XmSPIRAL */
@@ -5057,8 +5104,16 @@ DrawBackPages (
 	while (limit > 0)
 	{
 	    /* draw backpage foreground */
-	    XDrawLines(XtDisplay(nb), XtWindow(nb), nb->notebook.foreground_gc,
-			p, 5, CoordModePrevious);
+	    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), XtWindow(nb), nb->notebook.foreground_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(5) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(5) ; _pi++) {
+    _pp[_pi].x = p[_pi].x ; _pp[_pi].y = p[_pi].y ;
+  }
+  _XmPlatDrawLines (_c, _pp, 5, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+}
 
 	    /* draw backpage background */
 	    if (delta >= 2 && limit > delta - 2)
@@ -5086,9 +5141,16 @@ DrawBackPages (
 		if (q[2].y) q[2].y += dy;
 		while (back > 0)
 		{
-		    XDrawLines(XtDisplay(nb), XtWindow(nb),
-				nb->notebook.background_gc,
-				q, 3, CoordModePrevious);
+		    { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), XtWindow(nb), nb->notebook.background_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(3) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(3) ; _pi++) {
+    _pp[_pi].x = q[_pi].x ; _pp[_pi].y = q[_pi].y ;
+  }
+  _XmPlatDrawLines (_c, _pp, 3, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+}
 		    if (q[1].x)
 			{
 			q[0].y += NB_ENFORCE_SIGN(dy, 1);
@@ -5114,8 +5176,16 @@ DrawBackPages (
 	p[0].y = y + my;
 	XSetLineAttributes(XtDisplay(nb), nb->notebook.foreground_gc, 2,
 			LineSolid, CapButt, JoinMiter);
-	XDrawLines(XtDisplay(nb), XtWindow(nb), nb->notebook.foreground_gc,
-			p, 5, CoordModePrevious);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (nb), XtWindow(nb), nb->notebook.foreground_gc) ;
+  XmPlatPoint *_pp = (XmPlatPoint *) XtMalloc ((size_t)(5) * sizeof (XmPlatPoint)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(5) ; _pi++) {
+    _pp[_pi].x = p[_pi].x ; _pp[_pi].y = p[_pi].y ;
+  }
+  _XmPlatDrawLines (_c, _pp, 5, 1) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _pp) ;
+}
     }
 
 }
@@ -5974,7 +6044,7 @@ GotoPage(
 	{
         LayoutChildren(nb, NULL);
 	if (XtIsRealized((Widget)nb))
-            XClearArea(XtDisplay(nb),XtWindow(nb),0,0,0,0,True);
+            _XmPlatClearOneRect (XtDisplay (nb), XtWindow (nb), 0, 0, 0, 0);
 	}
     /* Otherwise just relayout children */
     else
@@ -6117,9 +6187,9 @@ HideShadowedTab (
         width = child->core.width + nb->notebook.shadow_thickness * 2 + 1;
         height = child->core.height + nb->notebook.shadow_thickness * 2 + 1;
 	if ( nb->notebook.shadow_thickness )
-          XClearArea(XtDisplay(nb), XtWindow(nb), x, y, width, height, True);
+          _XmPlatClearOneRect (XtDisplay (nb), XtWindow (nb), x, y, width, height);
 	else
-          XClearArea(XtDisplay(nb), XtWindow(nb), x - 1 , y - 1, width + 1, height + 1, True);
+          _XmPlatClearOneRect (XtDisplay (nb), XtWindow (nb), x - 1 , y - 1, width + 1, height + 1);
     }
 }
 

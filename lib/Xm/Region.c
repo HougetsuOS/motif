@@ -58,6 +58,7 @@ static char rcsid[] = "$XConsortium: Region.c /main/10 1995/07/13 17:46:45 drk $
 
 #include <Xm/XmosP.h>  /* for memmove */
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 #include "RegionI.h"
 #include "MessagesI.h"
 
@@ -2364,8 +2365,28 @@ _XmRegionDrawShadow(
 	}
     }
 
-    XDrawSegments (display, d, top_gc, topSegms, curTopSeg);
-    XDrawSegments (display, d, bottom_gc, botSegms, curBotSeg);
+    { XmPlatDrawCtx _c = _XmPlatCtx (display, d, top_gc) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(curTopSeg) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(curTopSeg) ; _pi++) {
+    _ps[_pi].x1 = topSegms[_pi].x1 ; _ps[_pi].y1 = topSegms[_pi].y1 ;
+    _ps[_pi].x2 = topSegms[_pi].x2 ; _ps[_pi].y2 = topSegms[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, curTopSeg) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+  }
+    { XmPlatDrawCtx _c = _XmPlatCtx (display, d, bottom_gc) ;
+  XmPlatSegment *_ps = (XmPlatSegment *) XtMalloc ((size_t)(curBotSeg) * sizeof (XmPlatSegment)) ;
+  int _pi ;
+  for (_pi = 0 ; _pi < (int)(curBotSeg) ; _pi++) {
+    _ps[_pi].x1 = botSegms[_pi].x1 ; _ps[_pi].y1 = botSegms[_pi].y1 ;
+    _ps[_pi].x2 = botSegms[_pi].x2 ; _ps[_pi].y2 = botSegms[_pi].y2 ;
+  }
+  _XmPlatDrawSegments (_c, _ps, curBotSeg) ;
+  _XmPlatCtxFree (_c) ;
+  XtFree ((char *) _ps) ;
+  }
 
     XtFree((char *) botSegms);
     XtFree((char *) topSegms);
