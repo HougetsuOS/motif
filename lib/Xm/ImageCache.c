@@ -38,7 +38,8 @@ static char rcsid[] = "$TOG: ImageCache.c /main/44 1998/10/06 17:26:25 samborn $
 #include "ImageCachI.h"		/* for DIRECT_PIXMAP_CACHED */
 #include "ReadImageI.h"		/* for read xbm stuff */
 #include <Xm/AccColorT.h>       /* for new _XmGetColoredPixmap API */
-#include <Xm/ColorObjP.h>       /* for Xme Color Obj access API */
+#include <Xm/ColorObjP.h>
+#include "XmPlat/XmPlatP.h"       /* for Xme Color Obj access API */
 #include <Xm/IconFile.h>        /* XmGetIconFileName */
 #ifdef PRINTING_SUPPORTED
 #include <Xm/PrintSP.h>         /* for pixmap resolution */
@@ -1526,7 +1527,8 @@ _XmGetScaledPixmap(
     /* Destroy non-cached XImage now that we've cached the pixmap. */
     if (ret == NOT_CACHED)
       {
-	XDestroyImage(image) ;
+	{ XmPlatImage _t = _XmPlatImageTokenOf (image) ;
+	  _XmPlatImageFree (_t) ; }
 	if (old_image_data)
 	  XtFree(image->data);
       }
@@ -2058,8 +2060,12 @@ void _XmPutScaledImage (
 
     if (dest_width == src_width && dest_height == src_height) {
 	/* same for x and y, just send it out */
-	XPutImage(display, d, gc, src_image, src_x, src_y, 
-		  dest_x, dest_y, dest_width, dest_height); 
+	{ XmPlatDrawCtx _c = _XmPlatCtx (display, d, gc) ;
+	XmPlatImage _img = _XmPlatImageTokenOf (src_image) ;
+	_XmPlatPutImage (_c, _img, src_x, src_y, dest_x, dest_y,
+			 dest_width, dest_height) ;
+	_XmPlatImageTokenFree (_img) ;
+	_XmPlatCtxFree (_c) ; }
 	return;
     }
 
@@ -2094,8 +2100,12 @@ void _XmPutScaledImage (
 		int prev_res;
 		if (XpSetImageResolution(display, pcontext,
 					 image_res, &prev_res)) {
-		    XPutImage(display, d, gc, src_image, src_x, src_y,
-			      dest_x, dest_y, src_width, src_height);
+		    { XmPlatDrawCtx _c = _XmPlatCtx (display, d, gc) ;
+		    XmPlatImage _img = _XmPlatImageTokenOf (src_image) ;
+		    _XmPlatPutImage (_c, _img, src_x, src_y, dest_x, dest_y,
+				     src_width, src_height) ;
+		    _XmPlatImageTokenFree (_img) ;
+		    _XmPlatCtxFree (_c) ; }
 		    XpSetImageResolution(display, pcontext, prev_res, NULL);
 		    return;
 		}
@@ -2113,13 +2123,12 @@ void _XmPutScaledImage (
 	strip_height = dest_height;
 
     h = strip_height + roundint(ratio_y);
-    dest_image = XCreateImage(display,
+    dest_image = _XmPlatImageRawCreate (display,
 			      DefaultVisualOfScreen(
 					     DefaultScreenOfDisplay(display)),
-			      src_image->depth, src_image->format, 
-			      0, NULL,
+			      src_image->depth, src_image->format,
 			      dest_width, h,
-			      src_image->bitmap_pad, 0);
+			      src_image->bitmap_pad) ;
     dest_image->data = XtMalloc(dest_image->bytes_per_line * h);
     fast8 = (src_image->depth == 8 && src_image->bits_per_pixel == 8 &&
 	     dest_image->bits_per_pixel == 8 && src_image->format == ZPixmap);
@@ -2162,20 +2171,28 @@ void _XmPutScaledImage (
 		    }
 		}
 	    } else {
+		XmPlatImage _st = _XmPlatImageTokenOf (src_image) ;
+		XmPlatImage _dt = _XmPlatImageTokenOf (dest_image) ;
 		for (x = src_x; x < src_max_x; x++) {
-		    pixel = XGetPixel(src_image, x, y);
+		    pixel = _XmPlatImageGetPixel (_st, x, y);
 		    for (h = 0; h < table.height[y]; h++) {
 			for (w = 0; w < table.width[x]; w++)
-			    XPutPixel(dest_image,
+			    _XmPlatImagePutPixel (_dt,
 				      table.x[x] + w,
 				      table.y[y] + h - min_y,
 				      pixel);
 		    }
 		}
+		_XmPlatImageTokenFree (_st) ;
+		_XmPlatImageTokenFree (_dt) ;
 	    }
 	}
-	XPutImage(display, d, gc, dest_image, dest_x, 0,
-		  dest_x, dest_y + min_y, dest_width, table.y[y] - min_y);
+	{ XmPlatDrawCtx _c = _XmPlatCtx (display, d, gc) ;
+	XmPlatImage _img = _XmPlatImageTokenOf (dest_image) ;
+	_XmPlatPutImage (_c, _img, dest_x, 0, dest_x, dest_y + min_y,
+			 dest_width, table.y[y] - min_y) ;
+	_XmPlatImageTokenFree (_img) ;
+	_XmPlatCtxFree (_c) ; }
 	if (y >= src_image->height)
 	    break;
     }
@@ -2185,7 +2202,8 @@ void _XmPutScaledImage (
     XtFree((char *)table.width);
     XtFree((char *)table.height);
 
-    XDestroyImage(dest_image);
+    { XmPlatImage _t = _XmPlatImageTokenOf (dest_image) ;
+      _XmPlatImageFree (_t) ; }
 }
 
 

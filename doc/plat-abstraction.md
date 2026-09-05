@@ -280,23 +280,24 @@ tools/gate/p2-font-gate.sh (0 violations).  Details: doc/phase2-notes.md.
 Total at baseline: 197 lines in 26 files.
 
 ```
-[ ] lib/Xm/Xpmcreate.c    63     [ ] lib/Xm/XpmWrFFrP.c      2
-[ ] lib/Xm/TabBox.c       38     [ ] lib/Xm/XpmWrFFrI.c      2
-[ ] lib/Xm/ImageCache.c   33     [ ] lib/Xm/XpmCrPFrI.c      2
-[ ] lib/Xm/Xpmscan.c      16     [ ] lib/Xm/XpmCrIFrP.c      2
-[ ] lib/Xm/MessageB.c      4     [ ] lib/Xm/XpmCrIFrDat.c    2
-[ ] lib/Xm/DragIcon.c      4     [ ] lib/Xm/XpmCrDatFrP.c    2
-[ ] lib/Xm/XpmRdFToI.c     3     [ ] lib/Xm/XpmCrDatFrI.c    2
-[ ] lib/Xm/XpmCrIFrBuf.c   3     [ ] lib/Xm/XpmCrBufFrP.c    2
-[ ] lib/Xm/Png.c           3     [ ] lib/Xm/XpmCrBufFrI.c    2
-[ ] lib/Xm/DataF.c         3     [ ] lib/Xm/ReadImage.c      2
-                                  [ ] lib/Xm/Obso2_0.c        2
-[ ] lib/Xm/XpmRdFToP.c     1     [ ] lib/Xm/XpmCrPFrDat.c    1
-[ ] lib/Xm/XpmCrPFrBuf.c   1     [ ] lib/Xm/Region.c         1
-[ ] lib/Xm/Jpeg.c          1
+[X] lib/Xm/Xpmcreate.c    63     [X] lib/Xm/XpmWrFFrP.c      2
+[X] lib/Xm/TabBox.c       38     [X] lib/Xm/XpmWrFFrI.c      2
+[X] lib/Xm/ImageCache.c   33     [X] lib/Xm/XpmCrPFrI.c      2
+[X] lib/Xm/Xpmscan.c      16     [X] lib/Xm/XpmCrIFrP.c      2
+[X] lib/Xm/MessageB.c      4     [X] lib/Xm/XpmCrIFrDat.c    2
+[X] lib/Xm/DragIcon.c      4     [X] lib/Xm/XpmCrDatFrP.c    2
+[X] lib/Xm/XpmRdFToI.c     3     [X] lib/Xm/XpmCrDatFrI.c    2
+[X] lib/Xm/XpmCrIFrBuf.c   3     [X] lib/Xm/XpmCrBufFrP.c    2
+[X] lib/Xm/Png.c           3     [X] lib/Xm/XpmCrBufFrI.c    2
+[X] lib/Xm/DataF.c         3     [X] lib/Xm/ReadImage.c      2
+                                  [X] lib/Xm/Obso2_0.c        2
+[X] lib/Xm/XpmRdFToP.c     1     [X] lib/Xm/XpmCrPFrDat.c    1
+[X] lib/Xm/XpmCrPFrBuf.c   1     [X] lib/Xm/Region.c         1
+[X] lib/Xm/Jpeg.c          1
 ```
-(The Xpm* support files — XpmAttrib/Xpmdata/Xpmhashtab/Xpmmisc/Xpmparse/
-Xpmrgb/Xpms_popen — collapse together with Xpmcreate.)
+[X] = done 2026-09-06.  Xpm* = exempt (pixel engine, Phase-6 collapse;
+gate excludes; X11 bridge points on the contract).  Details:
+doc/phase3-notes.md.  Gate: tools/gate/p3-image-gate.sh (0 violations).
 
 ### Phase 4 — events (XEvent; raw line counts, field access is the real metric)
 
@@ -383,6 +384,22 @@ font:    23 lines / 2 files outside XmPlat:
          XmbTextListToTextProperty (38, selection) deferred to Phase 5;
          XmIm.c XFontSet (XIM input) deferred to Phase 5.
 draw:      0 (unchanged); image/event/atoms unchanged.
+
+# after Phase 3 — 2026-09-06
+image:    26 lines / 7 files outside XmPlat, all in the documented
+          exemptions:
+            Xpm* subsystem (Xpmcreate pixel engine, Xpmscan, converters):
+            self-contained parse/pixel loops scheduled for the Phase-6
+            collapse; their X11 bridge points (XGetImage / XPutImage /
+            XCreateGC) are already on the contract (XpmCrIFrP,
+            XpmCrPFrI).
+            ImageCache.c: XImage field bookkeeping for the cache's
+            depth-fixup; its X calls (XPutImage x3, XGetPixel/PutPixel
+            in the strip scaler) are on the contract.
+          zero XImage in widget code: TabBox rotate pipeline, DataF
+          stipple copy, DragIcon mask->region, MessageB builtin icons,
+          ReadImage/Obso2_0, Region all on XmPlatImage tokens.
+draw/font: 0 (unchanged); event/atoms unchanged.
 ```
 
 Phase-1 exit criterion met: zero `XDraw*`/`XFill*`/`XCreateGC`/`XChangeGC`/

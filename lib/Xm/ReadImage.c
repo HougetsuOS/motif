@@ -33,6 +33,7 @@ static char rcsid[] = "$XConsortium: ReadImage.c /main/15 1996/10/21 11:40:15 cd
 
 #include "XmI.h"		/* for _XmCreateImage() */
 #include "ReadImageI.h"
+#include "XmPlat/XmPlatP.h"
 
 /************************************************************************
  *
@@ -54,8 +55,14 @@ _XmReadImageAndHotSpotFromFile(
    if (BitmapSuccess == XReadBitmapFileData(filename, &width, &height, &data,
 			       hot_x, hot_y))
    {
-      XImage * image;
-      _XmCreateImage(image, display, (char*)data, width, height, LSBFirst);
+      XmPlatImage token;
+      XImage *image;
+
+      token = _XmPlatImageBitmapOf (display, (char *) data, width, height) ;
+      image = _XmPlatImageXImage (token) ;
+      /* the token is a thin wrapper; ownership of the XImage passes to
+         the caller via the frozen XImage*-returning API */
+      XtFree ((char *) token) ;
 
       return (image);
    }

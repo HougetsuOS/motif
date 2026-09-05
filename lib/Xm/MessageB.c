@@ -56,6 +56,7 @@ static char rcsid[] = "$TOG: MessageB.c /main/18 1999/10/13 16:17:09 mgreess $"
 #include "RepTypeI.h"
 #include "TraversalI.h"
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 #include "ScreenI.h"
 
 /* convenience macros */
@@ -415,18 +416,17 @@ static XmConst unsigned char workingBits[] = {
 /****************************************************************
  * Create a default images for symbol... used in ClassInitialize.
  ****************/
-static XImage * 
+static XImage *
 CreateDefaultImage(
         char *bits,
         unsigned int width,
         unsigned int height )
 {
-    XImage *        image ;
+    XmPlatImage token ;
     Display * display = _XmGetDefaultDisplay() ; /* we don't have one here */
 
-    _XmCreateImage(image, display, bits, width, height, LSBFirst);
-
-    return( image) ;
+    token = _XmPlatImageBitmapOf (display, bits, width, height) ;
+    return _XmPlatImageXImage (token) ;   /* ownership passes to caller */
 }
 /****************************************************************/
 static void 

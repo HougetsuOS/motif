@@ -11,6 +11,7 @@
 typedef struct _XmPlatSurfaceRec   *XmPlatSurface ;
 typedef struct _XmPlatDrawCtxRec   *XmPlatDrawCtx ;
 typedef struct _XmPlatFontRec      *XmPlatFont ;
+typedef struct _XmPlatImageRec     *XmPlatImage ;
 
 typedef unsigned long XmPlatPixel ;
 typedef int           XmPlatAngle ;	/* 64ths of a degree, X11 units */

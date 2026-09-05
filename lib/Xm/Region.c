@@ -2405,7 +2405,7 @@ _XmRegionDrawShadow(
 
 XmRegion
 _XmRegionFromImage(
-    XImage	*image)
+    XmPlatImage	image)
 {
     register XmRegion	pReg;
     register int	width, x1, x2, y1, crects;
@@ -2420,20 +2420,20 @@ _XmRegionFromImage(
 	return NULL;
     FirstRect = REGION_BOXPTR(pReg);
     rects = FirstRect;
-    width = image->width;
+    width = _XmPlatImageWidth (image);
     pReg->extents.x1 = width - 1;
     pReg->extents.x2 = 0;
     irectPrevStart = -1;
     x1 = 0;
     fInBox = False;
-    for(y1 = 0; y1 < image->height; y1++)
+    for(y1 = 0; y1 < _XmPlatImageHeight (image); y1++)
     {
 	irectLineStart = rects - FirstRect;
 	/* If the Screen left most bit of the word is set, we're starting in
 	 * a box */
 	for (x2 = 0; x2 < width; x2++)
 	{
-	    if (XGetPixel(image, x2, y1))
+	    if (_XmPlatImageGetPixel (image, x2, y1))
 	    {
 		if(!fInBox)
 		{

@@ -15,6 +15,11 @@
 
 #include "XmPlatP.h"
 
+/* The X11 backend stores the XImage pointer directly in the token. */
+struct _XmPlatImageRec {
+    XImage *ximage ;
+} ;
+
 /* --- construction (migration seam) --------------------------------- */
 
 XmPlatSurface
@@ -250,8 +255,8 @@ void
 _XmPlatPutImage (XmPlatDrawCtx ctx, XmPlatImage image, int src_x, int src_y,
 		 int dst_x, int dst_y, unsigned int w, unsigned int h)
 {
-    XPutImage (ctx->dpy, ctx->surface->d, ctx->gc,
-	       (XImage *) image, src_x, src_y, dst_x, dst_y, w, h) ;
+    XPutImage (ctx->dpy, ctx->surface->d, ctx->gc, image->ximage,
+	       src_x, src_y, dst_x, dst_y, w, h) ;
 }
 
 /* --- draw primitives ----------------------------------------------- */
@@ -1097,4 +1102,214 @@ _XmPlatTextExtents (XmPlatFont font, int kind, const void *text, int len,
 	overall->ascent = overall->descent = overall->attributes = 0 ;
 	break ;
     }
+}
+
+/* ---- image contract (Phase 3) --------------------------------------- */
+
+/*
+ * The X11 backend stores the XImage pointer directly in the token (the
+ * Phase-1 seam cast did the same); struct _XmPlatImageRec lives here.
+ */
+XmPlatImage
+_XmPlatImageCreate (XmPlatDrawCtx ctx, int depth,
+		    unsigned int width, unsigned int height)
+{
+    Display *dpy = ctx->dpy ;
+    XImage *xi ;
+    XmPlatImage img ;
+
+    xi = XCreateImage (dpy,
+		       DefaultVisual (dpy, DefaultScreen (dpy)),
+		       depth, (depth == 1) ? XYBitmap : ZPixmap,
+		       0, NULL, width, height, 8, 0) ;
+    if (xi == NULL) return NULL ;
+    /* XCreateImage left data NULL; allocate it ourselves. */
+    xi->data = XtMalloc (xi->bytes_per_line * (int) height) ;
+    memset (xi->data, 0, (size_t) (xi->bytes_per_line * (int) height)) ;
+
+    img = (XmPlatImage) XtMalloc (sizeof (struct _XmPlatImageRec)) ;
+    img->ximage = xi ;
+    return img ;
+}
+
+XmPlatImage
+_XmPlatImageCreateOnVisual (XmPlatDrawCtx ctx, const void *visual,
+			    int depth, unsigned int width,
+			    unsigned int height)
+{
+    Display *dpy = ctx->dpy ;
+    XImage *xi ;
+    XmPlatImage img ;
+
+    xi = XCreateImage (dpy, (Visual *) visual,
+		       depth, (depth == 1) ? XYBitmap : ZPixmap,
+		       0, NULL, width, height, 8, 0) ;
+    if (xi == NULL) return NULL ;
+    xi->data = XtMalloc (xi->bytes_per_line * (int) height) ;
+    memset (xi->data, 0, (size_t) (xi->bytes_per_line * (int) height)) ;
+
+    img = (XmPlatImage) XtMalloc (sizeof (struct _XmPlatImageRec)) ;
+    img->ximage = xi ;
+    return img ;
+}
+
+XmPlatImage
+_XmPlatImageCreateBitmap (void *display, char *data,
+			  unsigned int width, unsigned int height)
+{
+    Display *dpy = (Display *) display ;
+    XImage *xi ;
+    XmPlatImage img ;
+
+    /* the seam always supplies the display; no default-display fallback
+       exists inside XmPlat (Xt stays at the caller side) */
+    xi = XCreateImage (dpy,
+		       DefaultVisual (dpy, DefaultScreen (dpy)),
+		       1, XYBitmap, 0, data, width, height,
+		       8, (int) ((width + 7) >> 3)) ;
+    if (xi == NULL) return NULL ;
+    /* match the _XmCreateImage macro's client-specific fields (BUG 4262) */
+    xi->byte_order = LSBFirst ;
+    xi->bitmap_unit = 8 ;
+    xi->bitmap_bit_order = LSBFirst ;
+
+    img = (XmPlatImage) XtMalloc (sizeof (struct _XmPlatImageRec)) ;
+    img->ximage = xi ;
+    return img ;
+}
+
+void
+_XmPlatImageFree (XmPlatImage image)
+{
+    if (image == NULL) return ;
+    if (image->ximage != NULL)
+	XDestroyImage (image->ximage) ;
+    XtFree ((char *) image) ;
+}
+
+unsigned int
+_XmPlatImageWidth (XmPlatImage image)
+{
+    return (unsigned int) image->ximage->width ;
+}
+
+unsigned int
+_XmPlatImageHeight (XmPlatImage image)
+{
+    return (unsigned int) image->ximage->height ;
+}
+
+int
+_XmPlatImageDepth (XmPlatImage image)
+{
+    return image->ximage->depth ;
+}
+
+char *
+_XmPlatImageData (XmPlatImage image)
+{
+    return image->ximage->data ;
+}
+
+int
+_XmPlatImageBytesPerLine (XmPlatImage image)
+{
+    return image->ximage->bytes_per_line ;
+}
+
+unsigned long
+_XmPlatImageGetPixel (XmPlatImage image, int x, int y)
+{
+    return XGetPixel (image->ximage, x, y) ;
+}
+
+void
+_XmPlatImagePutPixel (XmPlatImage image, int x, int y, unsigned long pixel)
+{
+    XPutPixel (image->ximage, x, y, pixel) ;
+}
+
+XmPlatImage
+_XmPlatImageSub (XmPlatImage image, int x, int y,
+		 unsigned int w, unsigned int h)
+{
+    XImage *xi = XSubImage (image->ximage, x, y, (unsigned) w, (unsigned) h) ;
+    XmPlatImage img ;
+
+    if (xi == NULL) return NULL ;
+    img = (XmPlatImage) XtMalloc (sizeof (struct _XmPlatImageRec)) ;
+    img->ximage = xi ;
+    return img ;
+}
+
+XmPlatImage
+_XmPlatImageFromSurface (XmPlatDrawCtx ctx, XmPlatSurface src,
+			 int src_x, int src_y,
+			 unsigned int w, unsigned int h)
+{
+    XImage *xi ;
+    XmPlatImage img ;
+
+    xi = XGetImage (ctx->dpy, src->d, src_x, src_y,
+		    (int) w, (int) h, AllPlanes, ZPixmap) ;
+    if (xi == NULL) return NULL ;
+    img = (XmPlatImage) XtMalloc (sizeof (struct _XmPlatImageRec)) ;
+    img->ximage = xi ;
+    return img ;
+}
+
+/* Phase-1 seam inverse (XmPlatP.h declares; transitional). */
+XImage *
+_XmPlatImageXImage (XmPlatImage image)
+{
+    return image->ximage ;
+}
+
+/* Token builder from an existing XImage (frozen-API boundary use). */
+XmPlatImage
+_XmPlatImageTokenOf (XImage *ximage)
+{
+    XmPlatImage img ;
+
+    if (ximage == NULL) return NULL ;
+    img = (XmPlatImage) XtMalloc (sizeof (struct _XmPlatImageRec)) ;
+    img->ximage = ximage ;
+    return img ;
+}
+
+void
+_XmPlatImageTokenFree (XmPlatImage image)
+{
+    if (image) XtFree ((char *) image) ;
+}
+
+/* Typed bitmap creator (seam). */
+XmPlatImage
+_XmPlatImageBitmapOf (Display *dpy, char *data,
+		      unsigned int width, unsigned int height)
+{
+    return _XmPlatImageCreateBitmap ((void *) dpy, data, width, height) ;
+}
+
+XmPlatImage
+_XmPlatImageFromSurface2 (Display *dpy, Drawable d, int src_x, int src_y,
+			  unsigned int w, unsigned int h)
+{
+    XImage *xi ;
+    XmPlatImage img ;
+
+    xi = XGetImage (dpy, d, src_x, src_y, (int) w, (int) h,
+		    AllPlanes, ZPixmap) ;
+    if (xi == NULL) return NULL ;
+    img = (XmPlatImage) XtMalloc (sizeof (struct _XmPlatImageRec)) ;
+    img->ximage = xi ;
+    return img ;
+}
+
+XImage *
+_XmPlatImageRawCreate (Display *dpy, Visual *visual, int depth, int format,
+		       unsigned int w, unsigned int h, int bitmap_pad)
+{
+    return XCreateImage (dpy, visual, depth, format, 0, NULL,
+			 (unsigned) w, (unsigned) h, bitmap_pad, 0) ;
 }

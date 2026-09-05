@@ -32,6 +32,7 @@ static char rcsid[] = "$XConsortium: DragIcon.c /main/17 1996/10/14 10:44:37 pas
 
 
 #include <Xm/Xm.h>		/* To make cpp on Sun happy. CR 5943 */
+#include "XmPlat/XmPlatP.h"
 #include <Xm/DisplayP.h>
 #include <Xm/DragIconP.h>
 #include "TextDIconI.h"
@@ -864,7 +865,7 @@ DragIconInitialize(
 
 	XmCursorData	cursorData = NULL;
 	Cardinal	i = 0;
-	XImage 		*image = NULL;
+	XmPlatImage	image = NULL;
 	Dimension	maxW, maxH;
 
 	/*
@@ -929,22 +930,27 @@ DragIconInitialize(
 	    dragIcon->drag.offset_x = cursorData->offset_x;
 	    dragIcon->drag.offset_y = cursorData->offset_y;
 
-	    _XmCreateImage(image, display, (char *)cursorData->data,
-			dragIcon->drag.width, dragIcon->drag.height, 
-			LSBFirst);
-    
-	    _XmInstallImage(image, cursorData->dataName, 	
+	    image = _XmPlatImageBitmapOf (display, (char *)cursorData->data,
+					  dragIcon->drag.width,
+					  dragIcon->drag.height) ;
+
+	    /* _XmInstallImage keeps the XImage; drop only the token */
+	    _XmInstallImage(_XmPlatImageXImage (image), cursorData->dataName, 	
 		            (int)dragIcon->drag.hot_x, 
 		            (int)dragIcon->drag.hot_y);
+	    _XmPlatImageTokenFree (image) ;
 	    dragIcon->drag.pixmap =
 		XmGetPixmapByDepth (screen, cursorData->dataName, 1, 0, 1);
     
 	    if (cursorData->maskData) {
-		_XmCreateImage(image, display, (char *)cursorData->maskData,
-			    dragIcon->drag.width, dragIcon->drag.height, 
-			    LSBFirst);
-	
-		_XmInstallImage (image, cursorData->maskDataName, 0, 0);
+		image = _XmPlatImageBitmapOf (display,
+					       (char *)cursorData->maskData,
+					       dragIcon->drag.width,
+					       dragIcon->drag.height) ;
+
+		_XmInstallImage (_XmPlatImageXImage (image),
+				 cursorData->maskDataName, 0, 0);
+		_XmPlatImageTokenFree (image) ;
 	
 		dragIcon->drag.mask =
 		    XmGetPixmapByDepth(screen, cursorData->maskDataName, 
@@ -981,16 +987,18 @@ DragIconInitialize(
 	    }
 	}
         if (dragIcon->drag.mask != XmUNSPECIFIED_PIXMAP) {
-           XImage * image;
+           XmPlatImage image;
 
            if (dragIcon->drag.width > 0 && dragIcon->drag.height > 0) {
-                image = XGetImage(display, (Drawable) dragIcon->drag.mask,
-				  0, 0, dragIcon->drag.width,
-				  dragIcon->drag.height, 1L, XYPixmap);
+                image = _XmPlatImageFromSurface2 (display,
+						  (Drawable) dragIcon->drag.mask,
+						  0, 0,
+						  dragIcon->drag.width,
+						  dragIcon->drag.height);
 
 	        dragIcon->drag.region = (Region) _XmRegionFromImage(image);
 		if (image)
-		    XDestroyImage(image);
+		    _XmPlatImageFree (image);
             } else
 	        dragIcon->drag.region = NULL;
 	   
@@ -1123,17 +1131,19 @@ SetValues(
 
     if (newIcon->drag.mask != oldIcon->drag.mask) {
        if (newIcon->drag.mask != XmUNSPECIFIED_PIXMAP) {
-	   XImage * image;
+	   XmPlatImage image;
 
 	   if (newIcon->drag.width > 0 && newIcon->drag.height > 0) {
-		image = XGetImage(XtDisplay(new_w),
-				  (Drawable) newIcon->drag.mask,
-				  0, 0, newIcon->drag.width,
-				  newIcon->drag.height, 1L, XYPixmap);
+		image = _XmPlatImageFromSurface2 (XtDisplay(new_w),
+						  (Drawable) newIcon->drag.mask,
+						  0, 0,
+						  newIcon->drag.width,
+						  newIcon->drag.height) ;
 
-		newIcon->drag.region = (Region) _XmRegionFromImage(image);
+		newIcon->drag.region =
+		    (Region) _XmRegionFromImage(image);
 		if (image)
-		    XDestroyImage(image);
+		    _XmPlatImageFree (image);
 	    }
 	    else
 		newIcon->drag.region = NULL;
@@ -1204,7 +1214,7 @@ XmeGetTextualDragIcon(
     int n = 0;
     Pixmap icon, icon_mask;
     Screen *screen = XtScreen(w);
-    XImage *image = NULL;
+    XmPlatImage image = NULL;
     Window      root;
     Widget screen_object;
     XmDisplay dpy;
@@ -1266,14 +1276,18 @@ XmeGetTextualDragIcon(
 	 }
        }
 
-       _XmCreateImage(image, XtDisplay(w), (char *)icon_bits, 
-		width, height, LSBFirst);
-       _XmInstallImage(image, "XmTextualDragIcon", x_hot, y_hot);
+       image = _XmPlatImageBitmapOf (XtDisplay (w), (char *)icon_bits,
+				     width, height) ;
+       _XmInstallImage(_XmPlatImageXImage (image), "XmTextualDragIcon",
+		       x_hot, y_hot);
+       _XmPlatImageTokenFree (image) ;
        icon = XmGetPixmapByDepth(screen, "XmTextualDragIcon", 1, 0, 1);
 
-       _XmCreateImage(image, XtDisplay(w), (char *)icon_mask_bits, 
-		   width, height, LSBFirst);
-       _XmInstallImage(image, "XmTextualDragIconMask", x_hot, y_hot);
+       image = _XmPlatImageBitmapOf (XtDisplay (w), (char *)icon_mask_bits,
+				     width, height) ;
+       _XmInstallImage(_XmPlatImageXImage (image), "XmTextualDragIconMask",
+		       x_hot, y_hot);
+       _XmPlatImageTokenFree (image) ;
        icon_mask = XmGetPixmapByDepth(screen, "XmTextualDragIconMask", 
 				      1, 0, 1);
        screen_object = XmGetXmScreen(XtScreen(w));

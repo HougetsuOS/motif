@@ -9667,7 +9667,7 @@ df_MakeAddModeCursor(
       unsigned int pix_width, pix_height, unused;
       Display *dpy = XtDisplay(tf);
       Pixmap stipple;
-      XImage *image;
+      XmPlatImage image;
       Pixmap pixmap;
       int unused_origin;
       Window	root;
@@ -9679,13 +9679,11 @@ df_MakeAddModeCursor(
       	XGetGeometry(XtDisplay(tf), pixmap, &root, &unused_origin, 
 		     &unused_origin, &pix_width, &pix_height, 
 		     &unused, &unused);
-      	image = XGetImage(XtDisplay(tf), (Drawable)pixmap, 0, 0,
-			  pix_width, pix_height, AllPlanes,
-			  XYPixmap);
-			
-
+      	image = _XmPlatImageFromSurface2 (dpy, (Drawable) pixmap, 0, 0,
+					  pix_width, pix_height) ;
       	stipple = XCreatePixmap(dpy, XtWindow(tf), 
-				image->width, image->height,1);
+				_XmPlatImageWidth (image),
+				_XmPlatImageHeight (image), 1);
 
         XmTextF_add_mode_cursor(tf) =  XCreatePixmap(dpy, XtWindow(tf),
 						     XmTextF_cursor_width(tf),
@@ -9700,7 +9698,8 @@ df_MakeAddModeCursor(
   }
 
         { XmPlatDrawCtx _c = _XmPlatCtx (dpy, stipple, fillGC) ;
-  _XmPlatPutImage (_c, _XmPlatImageOf (image), 0, 0, 0, 0, image->width, image->height) ;
+  _XmPlatPutImage (_c, image, 0, 0, 0, 0,
+		   _XmPlatImageWidth (image), _XmPlatImageHeight (image)) ;
   _XmPlatCtxFree (_c) ;
   }
 
@@ -9732,7 +9731,7 @@ df_MakeAddModeCursor(
 
         XFreePixmap(dpy, stipple);
         XFreeGC(dpy, fillGC);
-        XDestroyImage(image);
+        _XmPlatImageFree (image) ;
      }
   }
 }

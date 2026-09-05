@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "XmPlat/XmPlatP.h"
 #include <stdlib.h>
 
 #include <png.h>
@@ -65,9 +66,9 @@ _XmPngGetImage(Screen *screen, FILE *infile, Pixel background,
         return 4;
 
     *ximage =
-        XCreateImage(screen->display, screen->root_visual,
-                     screen->root_depth, ZPixmap, 0, (char *) xdata,
-                     image_width, image_height, pad, 0);
+        _XmPlatImageRawCreate (screen->display, screen->root_visual,
+                     screen->root_depth, ZPixmap,
+                     image_width, image_height, pad) ;
 
     if (!*ximage) {
         free(xdata);

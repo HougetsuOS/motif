@@ -1,4 +1,5 @@
 #include "JpegI.h"
+#include "XmPlat/XmPlatP.h"
 #include <jerror.h>
 #include <stdlib.h>
 #include <X11/Intrinsic.h>
@@ -138,9 +139,9 @@ _XmJpegGetImage(Screen * screen, FILE * infile, XImage ** ximage)
         return 4;
 
     *ximage =
-        XCreateImage(screen->display, screen->root_visual,
-                     screen->root_depth, ZPixmap, 0, (char *) xdata,
-                     image_width, image_height, pad, 0);
+        _XmPlatImageRawCreate (screen->display, screen->root_visual,
+                     screen->root_depth, ZPixmap,
+                     image_width, image_height, pad) ;
     if (!*ximage) {
         free(xdata);
         return 4;

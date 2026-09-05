@@ -70,8 +70,8 @@ typedef struct _XmTabRect {
 } XiTabRect;
 
 typedef struct _XmCache {
-    XImage *pixmap;
-    XImage *label;
+    XmPlatImage pixmap;
+    XmPlatImage label;
     Boolean sensitive;
 } XiCache;
 
@@ -180,7 +180,7 @@ static void XiDrawCorner _ARGS((Display*, Drawable, GC, GC, int, int,
 static void HorizontalBasicRedisplay _ARGS((XmTabBoxWidget));
 static void VerticalBasicRedisplay _ARGS((XmTabBoxWidget));
 
-static XImage *XiRotateImage _ARGS((XmTabBoxWidget, XImage*, int));
+static XmPlatImage XiRotateImage _ARGS((XmTabBoxWidget, XmPlatImage, int));
 
 static void CalcCornerSize _ARGS((XmTabBoxWidget));
 static int XiXYtoTab _ARGS((XmTabBoxWidget, int, int));
@@ -245,9 +245,9 @@ static void CheckSetRenderTable(Widget wid, int offs, XrmValue *value);
 				   XRectInRegion(r,x,y,w,h))
 #define XiCanvas(x) (XtWindow(XmTabBox__canvas((x))))
 #define XiTabParent(x) ((XmTabBoxWidget) XtParent(x))
-#define XImageWidth(i) (i)->width
-#define XImageHeight(i) (i)->height
-#define XImageDepth(i) (i)->depth;
+#define XImageWidth(i)  _XmPlatImageWidth (i)
+#define XImageHeight(i) _XmPlatImageHeight (i)
+#define XImageDepth(i)  _XmPlatImageDepth (i)
 #define XiTabDegree(x) ((x) == XmTABS_RIGHT_TO_LEFT ? 180 \
 			: ((x) == XmTABS_TOP_TO_BOTTOM ? 90 \
 			   : ((x) == XmTABS_BOTTOM_TO_TOP ? 270 : 0)))
@@ -4990,19 +4990,30 @@ VerticalBasicRedisplay(tab)
  * Output:
  *	XImage* - and new allocated, rotated copy of the image
  */
-static XImage*
+/* Build a stack draw ctx for image creation on the tab's shell visual. */
+static XmPlatDrawCtx
+XiImageCtx(XmTabBoxWidget tab)
+{
+    Visual *visual = GetShellVisual((Widget) tab) ;
+
+    if( visual == NULL )
+	return _XmPlatCtx (XtDisplay (tab), 0, NULL) ;
+    return _XmPlatCtx (XtDisplay (tab), 0, NULL) ;	/* same; visual is
+							   passed separately */
+}
+
+static XmPlatImage
 #ifndef _NO_PROTO
-XiRotateImage(XmTabBoxWidget tab, XImage *src, int degree)
+XiRotateImage(XmTabBoxWidget tab, XmPlatImage src, int degree)
 #else
 XiRotateImage(tab, src, degree)
     XmTabBoxWidget tab;
-    XImage         *src;
+    XmPlatImage    src;
     int            degree;
 #endif
 {
-    XImage *dst;
-    char   *data;
-    int    x, y, width, height, depth, tmp;
+    XmPlatImage dst;
+    int    x, y, width, height, depth;
 
     if( src == NULL ) return( NULL );
 
@@ -5010,34 +5021,12 @@ XiRotateImage(tab, src, degree)
     height = XImageHeight(src);
     depth = XImageDepth(src);
 
-    if( depth < 8 )
-    {
-	int cnt = 8/depth;
-
-	if( degree == 0 || degree == 180 )
-	{
-	    tmp = (width/cnt) + ((width % cnt != 0) ? 1 : 0);
-	    tmp = tmp * height;
-	}
-	else
-	{
-	    tmp = (height/cnt) + ((height % cnt != 0) ? 1 : 0);
-	    tmp = tmp * width;
-	}
-    }
-    else
-    {
-	tmp = width * height * depth;
-    }
-    data = (char*) XtMalloc(tmp);
-
     if( degree == 0 || degree == 180 )
     {
-	dst = XCreateImage(XtDisplay(tab),
-			   GetShellVisual((Widget)tab),
-			   depth, (depth == 1 ? XYBitmap : XYPixmap),
-			   0, data, width, height,
-			   8, 0);
+	/* the backend allocates the pixel buffer */
+	dst = _XmPlatImageCreateOnVisual (XiImageCtx (tab),
+					  GetShellVisual ((Widget) tab),
+					  depth, width, height) ;
 
 	if( degree == 180 )
 	{
@@ -5045,8 +5034,8 @@ XiRotateImage(tab, src, degree)
 	    {
 		for( x = 0; x < width; ++x )
 		{
-		    XPutPixel(dst, (width-1-x), (height-1-y),
-			      XGetPixel(src, x, y));
+		    _XmPlatImagePutPixel (dst, (width-1-x), (height-1-y),
+					  _XmPlatImageGetPixel (src, x, y)) ;
 		}
 	    }
 	}
@@ -5056,17 +5045,17 @@ XiRotateImage(tab, src, degree)
 	    {
 		for( x = 0; x < width; ++x )
 		{
-		    XPutPixel(dst, x, y, XGetPixel(src, x, y));
+		    _XmPlatImagePutPixel (dst, x, y,
+					  _XmPlatImageGetPixel (src, x, y)) ;
 		}
 	    }
 	}
     }
     else
     {
-	dst = XCreateImage(XtDisplay(tab),
-			   GetShellVisual((Widget)tab),
-			   depth, (depth == 1 ? XYBitmap : XYPixmap),
-			   0, data, height, width, 8, 0);
+	dst = _XmPlatImageCreateOnVisual (XiImageCtx (tab),
+					  GetShellVisual ((Widget) tab),
+					  depth, height, width) ;
 
 	if( degree == 90 )
 	{
@@ -5074,8 +5063,8 @@ XiRotateImage(tab, src, degree)
 	    {
 		for( x = 0; x < width; ++x )
 		{
-		    XPutPixel(dst, (height-1-y), x,
-			      XGetPixel(src, x, y));
+		    _XmPlatImagePutPixel (dst, (height-1-y), x,
+					  _XmPlatImageGetPixel (src, x, y)) ;
 		}
 	    }
 	}
@@ -5085,8 +5074,8 @@ XiRotateImage(tab, src, degree)
 	    {
 		for( x = 0; x < width; ++x )
 		{
-		    XPutPixel(dst, y, (width-1-x),
-			      XGetPixel(src, x, y));
+		    _XmPlatImagePutPixel (dst, y, (width-1-x),
+					  _XmPlatImageGetPixel (src, x, y)) ;
 		}
 	    }
 	}
@@ -5983,7 +5972,7 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
     XRectangle draw;
     XmFontList font_list = XmTabBox_font_list(tab);
     int        x, y, tmp, spacing = XmTabBox_tab_label_spacing(tab);
-    XImage     *src_ximage, *dst_ximage;
+    XmPlatImage src_ximage, dst_ximage;
     Pixmap     bitmap;
     Boolean    sensitive;
 
@@ -6007,9 +5996,8 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	if( !XmTabBox_use_image_cache(tab) ||
 	    (dst_ximage = CachePixmap(tab,info)) == NULL )
 	{
-	    src_ximage = XGetImage(XtDisplay(tab), info->label_pixmap,
-				   0, 0, pix_width, pix_height,
-				   AllPlanes, XYPixmap);
+	    src_ximage = _XmPlatImageFromSurface2 (XtDisplay (tab), info->label_pixmap,
+							 0, 0, pix_width, pix_height) ;
 	    dst_ximage = XiRotateImage(tab, src_ximage,
 				    XiTabDegree(XmTabBox_tab_orientation(tab)));
 	    if( XmTabBox_use_image_cache(tab) )
@@ -6166,7 +6154,7 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * draw the thing.
 	 */
 	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
-  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, pix_width, pix_height) ;
+  _XmPlatPutImage (_c, dst_ximage, 0, 0, x, y, pix_width, pix_height) ;
   _XmPlatCtxFree (_c) ;
   }
 
@@ -6188,10 +6176,10 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * We are done with the XImages now so lets destroy the
 	 * ximages we used to rotate the pixmap.
 	 */
-	if( src_ximage != NULL ) XDestroyImage(src_ximage);
+	if( src_ximage != NULL ) _XmPlatImageFree(src_ximage);
 	if( !XmTabBox_use_image_cache(tab) && dst_ximage != NULL )
 	{
-	    XDestroyImage(dst_ximage);
+	    _XmPlatImageFree(dst_ximage);
 	}
     }
 
@@ -6334,8 +6322,9 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * Now that the label string is rendered we need to grab it back
 	 * into an XImage so that we can rotate it.
 	 */
-	src_ximage = XGetImage(XtDisplay(tab), bitmap, 0, 0, label_width, 
-			       label_height, 1, XYPixmap);
+	src_ximage = _XmPlatImageFromSurface2 (XtDisplay (tab), bitmap,
+					       0, 0, label_width,
+					       label_height) ;
 	dst_ximage = XiRotateImage(tab, src_ximage,
 				   XiTabDegree(XmTabBox_tab_orientation(tab)));
 
@@ -6415,7 +6404,7 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 */
 	_XmPlatFillOneRect (XtDisplay (tab), pix, XmTabBox__zero_GC(tab), 0, 0, label_width, label_height) ;
 	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), pix, XmTabBox__one_GC(tab)) ;
-  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, 0, 0, label_width, label_height) ;
+  _XmPlatPutImage (_c, dst_ximage, 0, 0, 0, 0, label_width, label_height) ;
   _XmPlatCtxFree (_c) ;
   }
 
@@ -6435,7 +6424,7 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
   _XmPlatCtxFree (_c) ;
   }
 	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
-  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, label_width, label_height) ;
+  _XmPlatPutImage (_c, dst_ximage, 0, 0, x, y, label_width, label_height) ;
   _XmPlatCtxFree (_c) ;
   }
 
@@ -6447,7 +6436,7 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
     else
     {
 	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
-  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, label_width, label_height) ;
+  _XmPlatPutImage (_c, dst_ximage, 0, 0, x, y, label_width, label_height) ;
   _XmPlatCtxFree (_c) ;
   }
     }
@@ -6456,10 +6445,10 @@ DrawRightToLeftTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
      * Now that we are done with the XImages used for rotating the
      * text lets delete them.
      */
-    if( src_ximage != NULL ) XDestroyImage(src_ximage);
+    if( src_ximage != NULL ) _XmPlatImageFree(src_ximage);
     if( !XmTabBox_use_image_cache(tab) && dst_ximage != NULL )
     {
-	XDestroyImage(dst_ximage);
+	_XmPlatImageFree(dst_ximage);
     }
 }
 
@@ -6565,7 +6554,7 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
     XRectangle draw;
     XmFontList font_list = XmTabBox_font_list(tab);
     int        x, y, tmp, spacing = XmTabBox_tab_label_spacing(tab);
-    XImage     *src_ximage, *dst_ximage;
+    XmPlatImage src_ximage, dst_ximage;
     Pixmap     bitmap;
     Boolean    sensitive;
 
@@ -6589,9 +6578,8 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	if( !XmTabBox_use_image_cache(tab) ||
 	    (dst_ximage = CachePixmap(tab,info)) == NULL )
 	{
-	    src_ximage = XGetImage(XtDisplay(tab), info->label_pixmap,
-				   0, 0, pix_width, pix_height,
-				   AllPlanes, XYPixmap);
+	    src_ximage = _XmPlatImageFromSurface2 (XtDisplay (tab), info->label_pixmap,
+							 0, 0, pix_width, pix_height) ;
 	    dst_ximage = XiRotateImage(tab, src_ximage,
 				  XiTabDegree(XmTabBox_tab_orientation(tab)));
 	    
@@ -6793,7 +6781,7 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * draw the thing.
 	 */
 	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
-  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, pix_width, pix_height) ;
+  _XmPlatPutImage (_c, dst_ximage, 0, 0, x, y, pix_width, pix_height) ;
   _XmPlatCtxFree (_c) ;
   }
 
@@ -6815,10 +6803,10 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * We are done with the XImages now so lets destroy the
 	 * ximages we used to rotate the pixmap.
 	 */
-	if( src_ximage != NULL ) XDestroyImage(src_ximage);
+	if( src_ximage != NULL ) _XmPlatImageFree(src_ximage);
 	if( !XmTabBox_use_image_cache(tab) && dst_ximage != NULL )
 	{
-	    XDestroyImage(dst_ximage);
+	    _XmPlatImageFree(dst_ximage);
 	}
     }
 
@@ -6969,8 +6957,9 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 * Now that the label string is rendered we need to grab it back
 	 * into an XImage so that we can rotate it.
 	 */
-	src_ximage = XGetImage(XtDisplay(tab), bitmap, 0, 0, label_width, 
-			       label_height, 1, XYPixmap);
+	src_ximage = _XmPlatImageFromSurface2 (XtDisplay (tab), bitmap,
+					       0, 0, label_width,
+					       label_height) ;
 	dst_ximage = XiRotateImage(tab, src_ximage,
 				   XiTabDegree(XmTabBox_tab_orientation(tab)));
 
@@ -7072,7 +7061,7 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
 	 */
 	_XmPlatFillOneRect (XtDisplay (tab), pix, XmTabBox__zero_GC(tab), 0, 0, label_width, label_height) ;
 	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), pix, XmTabBox__one_GC(tab)) ;
-  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, 0, 0, label_width, label_height) ;
+  _XmPlatPutImage (_c, dst_ximage, 0, 0, 0, 0, label_width, label_height) ;
   _XmPlatCtxFree (_c) ;
   }
 
@@ -7092,7 +7081,7 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
   _XmPlatCtxFree (_c) ;
   }
 	{ XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
-  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, label_width, label_height) ;
+  _XmPlatPutImage (_c, dst_ximage, 0, 0, x, y, label_width, label_height) ;
   _XmPlatCtxFree (_c) ;
   }
 
@@ -7105,7 +7094,7 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
     {
         if (dst_ximage)
             { XmPlatDrawCtx _c = _XmPlatCtx (XtDisplay (tab), XiCanvas(tab), gc) ;
-  _XmPlatPutImage (_c, _XmPlatImageOf (dst_ximage), 0, 0, x, y, label_width, label_height) ;
+  _XmPlatPutImage (_c, dst_ximage, 0, 0, x, y, label_width, label_height) ;
   _XmPlatCtxFree (_c) ;
   }
     }
@@ -7114,10 +7103,10 @@ DrawVerticalTab(XmTabBoxWidget tab, XmTabAttributes info, GC gc,
      * Now that we are done with the XImages used for rotating the
      * text lets delete them.
      */
-    if( src_ximage != NULL ) XDestroyImage(src_ximage);
+    if( src_ximage != NULL ) _XmPlatImageFree(src_ximage);
     if( !XmTabBox_use_image_cache(tab) && dst_ximage != NULL )
     {
-	XDestroyImage(dst_ximage);
+	_XmPlatImageFree(dst_ximage);
     }
 }
 
@@ -9670,11 +9659,11 @@ ResetImageCache(tab)
 	{
 	    if( XmTabBox__cache(tab)[i].pixmap != NULL )
 	    {
-		XDestroyImage(XmTabBox__cache(tab)[i].pixmap);
+		_XmPlatImageFree(XmTabBox__cache(tab)[i].pixmap);
 	    }
 	    if( XmTabBox__cache(tab)[i].label != NULL )
 	    {
-		XDestroyImage(XmTabBox__cache(tab)[i].label);
+		_XmPlatImageFree(XmTabBox__cache(tab)[i].label);
 	    }
 	}
     }
@@ -9732,11 +9721,11 @@ FreeImageCache(tab)
 	{
 	    if( XmTabBox__cache(tab)[i].pixmap != NULL )
 	    {
-		XDestroyImage(XmTabBox__cache(tab)[i].pixmap);
+		_XmPlatImageFree(XmTabBox__cache(tab)[i].pixmap);
 	    }
 	    if( XmTabBox__cache(tab)[i].label != NULL )
 	    {
-		XDestroyImage(XmTabBox__cache(tab)[i].label);
+		_XmPlatImageFree(XmTabBox__cache(tab)[i].label);
 	    }
 	}
     }

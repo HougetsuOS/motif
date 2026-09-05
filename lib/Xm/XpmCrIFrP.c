@@ -39,6 +39,7 @@
 
 
 #include "XpmI.h"
+#include "XmPlat/XmPlatP.h"
 
 void
 xpmCreateImageFromPixmap(display, pixmap, ximage_return, width, height)
@@ -56,6 +57,8 @@ xpmCreateImageFromPixmap(display, pixmap, ximage_return, width, height)
 	XGetGeometry(display, pixmap, &win, &dummy, &dummy,
 		     width, height, &dum, &dum);
 
-    *ximage_return = XGetImage(display, pixmap, 0, 0, *width, *height,
-			       AllPlanes, ZPixmap);
+    { XmPlatImage _t = _XmPlatImageFromSurface2 (display, pixmap, 0, 0,
+						 *width, *height) ;
+    *ximage_return = _XmPlatImageXImage (_t) ;
+    _XmPlatImageTokenFree (_t) ; }
 }

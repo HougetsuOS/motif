@@ -275,7 +275,7 @@ phases land.
 |---|---|---|---|
 | 0–1 | done (`0451e00`) | nothing (apps); §4 (custom drawing) | §4 |
 | 2 — fonts | done | switch `_XmPlatFontOfGC` text sites to font tokens (`_XmPlatFontOf*D`); metrics via `_XmPlatTextWidth`/`Extents` | §4.4 |
-| 3 — images | after 2 | replace `_XmPlatImageOf`/`XPutImage` sites with `XmImage` | §4 table update |
+| 3 — images | done | hold `XmPlatImage` tokens; draw via `_XmPlatPutImage`; build via `_XmPlatImageCreate`/`BitmapOf`; screen reads via `_XmPlatImageFromSurface2`; pixel access via `Get/PutPixel` prims | §4 table update |
 | 4 — events | after 3 | nothing yet (XEvent handling unchanged) | new section |
 | 5 — atoms/DnD/mwm | after 4 | nothing for apps | new section |
 | 6 — cairo backend | after 5 | custom widgets must be on the contract by now (**hard deadline**) | §4 rewrite |

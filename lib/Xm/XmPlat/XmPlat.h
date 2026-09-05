@@ -61,13 +61,73 @@ extern void _XmPlatFlush (XmPlatDrawCtx ctx) ;
 /* Clear the whole surface (expose-erase semantics). */
 extern void _XmPlatClearWindow (XmPlatSurface surface) ;
 
-/* Put an XImage-derived buffer (Phase 1: opaque image token built at the
-   seam; Phase 3 replaces with XmImage). */
-typedef struct _XmPlatImageRec *XmPlatImage ;
+/* Put an image token into a surface (Phase-1 prim). */
 extern void _XmPlatPutImage (XmPlatDrawCtx ctx, XmPlatImage img,
 			     int src_x, int src_y,
 			     int dst_x, int dst_y,
 			     unsigned int w, unsigned int h) ;
+
+/* ---- Image contract (Phase 3) --------------------------------------- */
+
+/*
+ * An image token is a client-side pixel buffer (in the X11 backend:
+ * an XImage; in the cairo backend: an image surface).  Created once
+ * by decoders/converters, drawn with _XmPlatPutImage, read/written
+ * pixel-by-pixel with the prims below, freed when done.
+ */
+
+/*
+ * Create an empty image of the given depth.  ctx supplies display,
+ * visual and byte order.  The backend allocates the pixel buffer;
+ * access it via _XmPlatImageData (packed rows, stride =
+ * _XmPlatImageBytesPerLine) or write pixels via _XmPlatImagePutPixel.
+ */
+extern XmPlatImage  _XmPlatImageCreate (XmPlatDrawCtx ctx, int depth,
+					unsigned int width,
+					unsigned int height) ;
+
+/* Variant with explicit visual (shells on non-default visuals). */
+extern XmPlatImage  _XmPlatImageCreateOnVisual (XmPlatDrawCtx ctx,
+						const void *visual,
+						int depth,
+						unsigned int width,
+						unsigned int height) ;
+
+/*
+ * 1-bit bitmap from packed bit data (MSB-first scanlines, pad to byte
+ * boundary), the classic "built-in bitmap" format.  data is owned by
+ * the image afterwards.  Replaces the _XmCreateImage macro.  The
+ * Display comes from the seam constructor (XmPlatP.h), which casts.
+ */
+extern XmPlatImage  _XmPlatImageCreateBitmap (void *display, char *data,
+					      unsigned int width,
+					      unsigned int height) ;
+
+extern void         _XmPlatImageFree (XmPlatImage image) ;
+
+/* Geometry + byte access. */
+extern unsigned int _XmPlatImageWidth  (XmPlatImage image) ;
+extern unsigned int _XmPlatImageHeight (XmPlatImage image) ;
+extern int          _XmPlatImageDepth  (XmPlatImage image) ;
+extern char *       _XmPlatImageData   (XmPlatImage image) ;
+extern int          _XmPlatImageBytesPerLine (XmPlatImage image) ;
+
+/* Pixel access. */
+extern unsigned long _XmPlatImageGetPixel (XmPlatImage image, int x, int y) ;
+extern void          _XmPlatImagePutPixel (XmPlatImage image, int x, int y,
+					   unsigned long pixel) ;
+
+/* Sub-image (shared scanline copy; free when done, not when parent is). */
+extern XmPlatImage   _XmPlatImageSub (XmPlatImage image, int x, int y,
+				      unsigned int w, unsigned int h) ;
+
+/* Screen-to-image (replaces XGetImage).  ctx carries display + GC
+   (plane mask); src is a window or pixmap surface. */
+extern XmPlatImage   _XmPlatImageFromSurface (XmPlatDrawCtx ctx,
+					      XmPlatSurface src,
+					      int src_x, int src_y,
+					      unsigned int w,
+					      unsigned int h) ;
 
 /* Clip against a mask surface and restore. */
 extern void _XmPlatSetClipMaskSurf (XmPlatDrawCtx ctx, XmPlatSurface mask,

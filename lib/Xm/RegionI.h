@@ -25,6 +25,7 @@
 #define _XmRegionI_h
 
 #include <Xm/XmP.h>
+#include "XmPlat/XmPlatTypes.h"		/* XmPlatImage */
 
 #ifdef __cplusplus
 extern "C" {
@@ -224,7 +225,7 @@ extern void _XmRegionDrawShadow(
 			unsigned int shadow_type ) ;
 
 extern XmRegion _XmRegionFromImage(
-			XImage *image );
+			XmPlatImage image );
 
 /********    End Private Function Declarations    ********/
 

@@ -151,12 +151,41 @@ _XmPlatGcOf (XmPlatDrawCtx c)
     return c->gc ;
 }
 
-/* image seam (Phase 1 escape hatch; Phase 3 replaces with XmImage) */
-static XmPlatImage
-_XmPlatImageOf (XImage *ximage)
-{
-    return (XmPlatImage) ximage ;
-}
+/*
+ * Image seam (Phase 3): the token is a struct; the static Phase-1 cast
+ * is gone.  Use _XmPlatImageTokenOf at frozen-API boundaries; widget
+ * code should hold XmPlatImage end-to-end.
+ */
+extern XmPlatImage _XmPlatImageTokenOf (XImage *ximage) ;
+extern XImage *    _XmPlatImageXImage (XmPlatImage image) ;
+/*
+ * Release the token without destroying the underlying XImage (for
+ * tokens built with _XmPlatImageTokenOf whose XImage outlives them).
+ */
+extern void        _XmPlatImageTokenFree (XmPlatImage image) ;
+/* typed bitmap creator (the contract entry takes void* for X-freedom) */
+extern XmPlatImage _XmPlatImageBitmapOf (Display *dpy, char *data,
+					 unsigned int width,
+					 unsigned int height) ;
+
+/*
+ * One-shot screen-to-image (XGetImage replacement for sites that hold
+ * display + drawable, all planes, ZPixmap/XYBitmap by depth).  The
+ * caller frees with _XmPlatImageFree.
+ */
+extern XmPlatImage _XmPlatImageFromSurface2 (Display *dpy, Drawable d,
+					     int src_x, int src_y,
+					     unsigned int w,
+					     unsigned int h) ;
+
+/*
+ * Raw XImage constructor (ImageCache strip-scaler needs format + pad
+ * control and then manages ->data itself).  Transitional seam.
+ */
+extern XImage *    _XmPlatImageRawCreate (Display *dpy, Visual *visual,
+					  int depth, int format,
+					  unsigned int w, unsigned int h,
+					  int bitmap_pad) ;
 
 /* font seam (Phase 1 escape hatch; Phase 2 replaces) */
 extern XmPlatFont _XmPlatFontOfFontStruct (XFontStruct *fs) ;
