@@ -372,7 +372,7 @@ phases land.
 | 3 — images | done | hold `XmPlatImage` tokens; draw via `_XmPlatPutImage`; build via `_XmPlatImageCreate`/`BitmapOf`; screen reads via `_XmPlatImageFromSurface2`; pixel access via `Get/PutPixel` prims | §4.5 |
 | 4 — events | done | wrap once per handler (`_XmPlatEventOf`), read `_XmPlatEvent*` prims; raw `XEvent*` stays in frozen Xt/gadget/callback signatures as opaque plumbing | §4.6 |
 | 5 — atoms+DnD+mwm | done | apps: nothing; XmInternAtom/XmGetAtomName are now wrappers over the contract (same signatures). lib/Xm and clients/mwm: interning via `_XmPlatInternAtomRaw`, property I/O via `_XmPlatChange/Get/DeleteProperty`, WM/DnD messages via `_XmPlatSendClientMessage` | §4.8 |
-| 6 — cairo backend | after 5 | custom widgets must be on the contract by now (**hard deadline**) | §4 rewrite |
+| 6 — cairo backend | done (default; `--disable-cairo-render` keeps core-Xlib) | apps: nothing — the render backend swapped under the frozen contract; custom drawing done against `_XmPlatDraw*` prims keeps working on both render variants | §4 rewrite |
 
 ## 8. FAQ
 

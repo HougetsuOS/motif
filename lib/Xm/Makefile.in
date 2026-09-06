@@ -177,6 +177,7 @@ am__libXm_la_SOURCES_DIST = XmStrDefs.c ArrowB.c ArrowBG.c BulletinB.c \
 	FontS.c IconBox.c IconButton.c xmlist.c Hierarchy.c Outline.c \
 	TabBox.c TabList.c TabStack.c DrawUtils.c Tree.c DropDown.c \
 	XmPlat/XmPlat.c XmPlat/XmPlatDraw.c \
+	XmPlat/XmPlatDrawCairo.c \
 	XmStrDefs.ht XmStrDefs22.ht XmStrDefs23.ht XmStrDefsI.ht \
 	Jpeg.c Png.c
 am__objects_1 = XmStrDefs.lo ArrowB.lo ArrowBG.lo BulletinB.lo \
@@ -231,7 +232,8 @@ am__objects_10 = XmExtUtil.lo Column.lo ButtonBox.lo ColorS.lo \
 	DrawUtils.lo Tree.lo DropDown.lo
 @OM_LIBJPEG_TRUE@am__objects_11 = Jpeg.lo
 @OM_LIBPNG_TRUE@am__objects_12 = Png.lo
-am__objects_13 = XmPlat/XmPlat.lo XmPlat/XmPlatDraw.lo
+am__objects_13 = XmPlat/XmPlat.lo XmPlat/XmPlatDraw.lo \
+	XmPlat/XmPlatDrawCairo.lo
 am_libXm_la_OBJECTS = $(am__objects_1) $(am__objects_3) \
 	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
 	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
@@ -418,6 +420,8 @@ VERSION = @VERSION@
 XMBINDDIR_FALLBACK = @XMBINDDIR_FALLBACK@
 XMKMF = @XMKMF@
 XMTHEME_DIST = @XMTHEME_DIST@
+CAIRO_CFLAGS = @CAIRO_CFLAGS@
+CAIRO_LIBS = @CAIRO_LIBS@
 XRENDER_CFLAGS = @XRENDER_CFLAGS@
 XRENDER_LIBS = @XRENDER_LIBS@
 X_CFLAGS = @X_CFLAGS@
@@ -537,7 +541,7 @@ SLIDE_SRCS = SlideC.c
 @OM_LIBPNG_TRUE@PNG_HDRS = PngI.h
 @PRINTING_FALSE@PRINTS_SRC = 
 @PRINTING_TRUE@PRINTS_SRC = PrintS.c
-libXm_la_LIBADD = ${X_LIBS} ${X_XMU} -lXt -lXext ${LIB_XP} -lX11 ${X_EXTRA_LIBS}
+libXm_la_LIBADD = ${X_LIBS} ${X_XMU} -lXt -lXext ${LIB_XP} -lX11 ${X_EXTRA_LIBS} ${CAIRO_LIBS}
 noinst_HEADERS = BaseClassI.h \
 BitmapsI.h \
 BulletinBI.h \

@@ -54,10 +54,13 @@ selected at link time; there is exactly one backend of each kind at any moment.
 
 ### 2.2 Rules
 
-1. **X11 is the only backend.** One render implementation (core Xlib now,
-   cairo-Xlib in the final phase), one event source (Xt). When Phase 6 lands,
-   the cairo implementation *replaces* the core-Xlib one inside the same
-   backend directory — never two live implementations.
+1. **X11 is the only backend.** One render implementation per binary, one
+   event source (Xt).  Phase 6 made cairo-Xlib the *default* render
+   implementation; the core-Xlib implementation stays available behind
+   `--disable-cairo-render` (amended 2026-09-07 from the original
+   "cairo replaces, core-Xlib deleted" rule: pixel-identical regression
+   bisects and minimal-target builds need the fallback, and only one
+   implementation is ever compiled into libXm).
 2. **No API break for users.** Public `Xm.h` signatures are frozen.
    `Xme*` functions become internal consumers of `XmPlat` (their signatures
    include `Display *`/`Drawable` and cannot change; internally they translate
@@ -134,16 +137,22 @@ each phase and paste the numbers here as the record.
 - *Exit:* zero `XInternAtom`/`XChangeProperty`/`XGetWindowProperty`/
   `XSendEvent` outside `lib/XmPlat`.
 
-**Phase 6 — Modern rendering *on X11***
-- New implementation of the `XmDrawCtx` prims using cairo-Xlib (or XRender):
-  ARGB visuals, offscreen double-buffering per toplevel, alpha shadows/gradient
-  fills, SVG icons via `XmImage` loader extension.
-- The Motif look upgrades without touching a single widget — every widget
-  already speaks `XmDrawCtx` by this point.
-- cairo implementation *replaces* the core-Xlib implementation inside
-  `lib/XmPlat/x11/`; core-Xlib code is deleted, not kept as a second backend.
-- *Exit:* screenshot suite passes; the tree has exactly one render
-  implementation.
+**Phase 6 — Modern rendering *on X11***  [X] done 2026-09-07
+- New implementation of the `XmDrawCtx` vector prims using cairo-Xlib:
+  `lib/Xm/XmPlat/XmPlatDrawCairo.c` (default build).  The GC riding in the
+  draw context stays the attribute source; each prim mirrors GC state into
+  cairo at draw time.  Non-GXcopy (drag XOR) and GC clip-mask-pixmap prims
+  take a core-Xlib path inside the backend — cairo has no raster logical
+  ops.
+- Data movement (`PutImage`, `Blit`, `BlitMask`, `ClearArea`), text (Xft),
+  images, events and atoms are shared code in `XmPlatDraw.c` used by both
+  render variants; the tiled/stippled special fills stay on core X (rare
+  tab-decoration paths; cairo xlib-surface-of-pixmap is visual-fragile).
+- Amended: core-Xlib is *not* deleted — it is the `--disable-cairo-render`
+  fallback (pixel-identical bisects, minimal builds).  Only one variant is
+  compiled into libXm per build; selection is a compile-time #ifdef.
+- *Exit:* screenshot suite passes; exactly one render implementation per
+  binary.
 
 **Phase 7 — Test backend (optional, no display server involved)**
 - A memory-surface `XmPlat` implementation (same contract, no X11 at all) for

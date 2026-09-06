@@ -639,6 +639,8 @@ OM_LIBJPEG_TRUE
 FONTCONFIG_LIBS
 FONTCONFIG_CFLAGS
 fc_config
+CAIRO_CFLAGS
+CAIRO_LIBS
 XRENDER_LIBS
 XRENDER_CFLAGS
 CONFDIR
@@ -15610,6 +15612,33 @@ CFLAGS="$CFLAGS `pkg-config xft --cflags`"
 LIBS="$LIBS `pkg-config xft --libs`"
 
 
+
+fi
+
+# --- Phase-6 render backend selection (cairo-Xlib default, core-Xlib
+# fallback selectable via --disable-cairo-render; see doc/phase6-notes.md).
+
+# Check whether --enable-cairo-render was given.
+if test "${enable_cairo_render+set}" = set; then :
+  enableval=$enable_cairo_render;
+else
+  enable_cairo_render=yes
+fi
+
+if test x$enable_cairo_render = xyes; then
+	if pkg-config --exists cairo-xlib; then :
+		CAIRO_CFLAGS="`pkg-config cairo-xlib --cflags`"
+		CAIRO_LIBS="`pkg-config cairo-xlib --libs`"
+		CPPFLAGS="$CPPFLAGS $CAIRO_CFLAGS"
+		$as_echo "#define XMPLAT_CAIRO_RENDER 1" >>confdefs.h
+
+	else
+		as_fn_error $? "cairo-xlib (pkg-config) not found; install cairo or re-run configure with --disable-cairo-render to use the core-Xlib render backend" "$LINENO" 5
+	fi
+else
+	CAIRO_CFLAGS=""
+	CAIRO_LIBS=""
+	$as_echo "/* #undef XMPLAT_CAIRO_RENDER */" >>confdefs.h
 
 fi
 

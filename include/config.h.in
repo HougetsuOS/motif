@@ -366,6 +366,10 @@
 /* This means we will be using the Xft library */
 #undef USE_XFT
 
+/* Render backend: cairo-Xlib (Phase 6).  Undefined builds the core-Xlib
+   render backend (--disable-cairo-render). */
+#undef XMPLAT_CAIRO_RENDER
+
 /* "Use XmThemes" */
 #undef USE_XMTHEMES
 

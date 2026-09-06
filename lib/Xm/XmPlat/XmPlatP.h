@@ -15,6 +15,9 @@
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
 #include <X11/Xft/Xft.h>
+#ifdef XMPLAT_CAIRO_RENDER
+#include <cairo.h>
+#endif
 #include "XmPlat/XmPlatTypes.h"
 #include "XmPlat/XmPlat.h"
 #include "XmPlat/XmPlatAtoms.h"
@@ -22,6 +25,18 @@
 /* lifecycle (internal) */
 extern void _XmPlatSurfaceFree (XmPlatSurface surface) ;
 extern void _XmPlatDrawCtxFree (XmPlatDrawCtx ctx) ;
+
+/* cairo backend entry points (XmPlatDrawCairo.c; compiled only under
+   XMPLAT_CAIRO_RENDER).  The shared constructor below forwards to these
+   so the two render variants plug in at one seam. */
+#ifdef XMPLAT_CAIRO_RENDER
+extern void _XmPlatCairoCtxInit (XmPlatDrawCtx c) ;
+extern void _XmPlatCairoCtxFini (XmPlatDrawCtx c) ;
+extern void _XmPlatCairoCtxDashes (XmPlatDrawCtx c, const unsigned char *l,
+				   int n, unsigned int off) ;
+extern void _XmPlatCairoClipRect (XmPlatDrawCtx c, int x, int y,
+				  unsigned int w, unsigned int h) ;
+#endif
 
 struct _XmPlatSurfaceRec {
     Display     *dpy ;
@@ -48,6 +63,15 @@ struct _XmPlatDrawCtxRec {
     /* cached GC state; setters push lazily */
     unsigned long cached_mask ;
     XGCValues    cached ;
+    /* cairo render backend (XMPLAT_CAIRO_RENDER; NULL otherwise).  The
+       cairo_t is created lazily against the surface's drawable and
+       destroyed with the ctx. */
+    void        *cr ;
+    /* dash pattern captured from _XmPlatSetDashes (cairo needs the
+       pattern as data; the X11 GC keeps it server-side). */
+    unsigned char dash[36] ;
+    int           ndash ;
+    double        dash_offset ;
 };
 
 /* Constructors for migration (Phase 1).  Not part of the contract. */
@@ -83,13 +107,23 @@ _XmPlatCtx (Display *dpy, Drawable d, GC gc)
     XmPlatDrawCtx c = (XmPlatDrawCtx) XtMalloc (sizeof (struct _XmPlatDrawCtxRec)) ;
     c->dpy = dpy ; c->gc = gc ; c->surface = _XmPlatSurface (dpy, d) ;
     c->cached_mask = 0 ;
+    c->cr = NULL ; c->ndash = 0 ; c->dash_offset = 0 ;
+#ifdef XMPLAT_CAIRO_RENDER
+    _XmPlatCairoCtxInit (c) ;
+#endif
     return c ;
 }
 
 static void
 _XmPlatCtxFree (XmPlatDrawCtx c)
 {
-    if (c) { if (c->surface) XtFree ((char *) c->surface) ; XtFree ((char *) c) ; }
+    if (c) {
+#ifdef XMPLAT_CAIRO_RENDER
+	_XmPlatCairoCtxFini (c) ;
+#endif
+	if (c->surface) XtFree ((char *) c->surface) ;
+	XtFree ((char *) c) ;
+    }
 }
 
 static XmPlatSurface
@@ -136,6 +170,7 @@ _XmPlatClrClip (Display *dpy, GC gc)
 {
     XmPlatDrawCtx c = (XmPlatDrawCtx) XtMalloc (sizeof (struct _XmPlatDrawCtxRec)) ;
     c->dpy = dpy ; c->gc = gc ; c->surface = NULL ; c->cached_mask = 0 ;
+    c->cr = NULL ; c->ndash = 0 ; c->dash_offset = 0 ;
     XSetClipMask (dpy, gc, None) ;
     XtFree ((char *) c) ;
 }

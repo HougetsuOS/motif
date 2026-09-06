@@ -45,6 +45,12 @@ _XmPlatDrawCtxOf (Display *dpy, GC gc)
     c->gc = gc ;
     c->surface = NULL ;
     c->cached_mask = 0 ;
+    c->cr = NULL ;
+    c->ndash = 0 ;
+    c->dash_offset = 0 ;
+#ifdef XMPLAT_CAIRO_RENDER
+    _XmPlatCairoCtxInit (c) ;
+#endif
     return c ;
 }
 
@@ -128,6 +134,9 @@ _XmPlatSetDashes (XmPlatDrawCtx ctx, const unsigned char *dash_list,
 		  int ndash, unsigned int offset)
 {
     XSetDashes (ctx->dpy, ctx->gc, (int)offset, (const char *) dash_list, ndash) ;
+#ifdef XMPLAT_CAIRO_RENDER
+    _XmPlatCairoCtxDashes (ctx, dash_list, ndash, offset) ;
+#endif
 }
 
 void
@@ -139,11 +148,17 @@ _XmPlatSetClipRect (XmPlatDrawCtx ctx, int x, int y,
     if (ctx->gc == NULL) return ;	/* Xft-draw-only ctx */
     if (w == 0 || h == 0) {
 	XSetClipMask (ctx->dpy, ctx->gc, None) ;
+#ifdef XMPLAT_CAIRO_RENDER
+	_XmPlatCairoClipRect (ctx, 0, 0, 0, 0) ;
+#endif
 	return ;
     }
     r.x = (short)x ; r.y = (short)y ;
     r.width = (unsigned short)w ; r.height = (unsigned short)h ;
     XSetClipRectangles (ctx->dpy, ctx->gc, 0, 0, &r, 1, Unsorted) ;
+#ifdef XMPLAT_CAIRO_RENDER
+    _XmPlatCairoClipRect (ctx, x, y, w, h) ;
+#endif
 }
 
 void
@@ -259,6 +274,7 @@ _XmPlatPutImage (XmPlatDrawCtx ctx, XmPlatImage image, int src_x, int src_y,
 	       src_x, src_y, dst_x, dst_y, w, h) ;
 }
 
+#ifndef XMPLAT_CAIRO_RENDER
 /* --- draw primitives ----------------------------------------------- */
 
 void
@@ -423,6 +439,7 @@ _XmPlatFillRectangleStippled (XmPlatDrawCtx ctx, int x, int y,
     XChangeGC (ctx->dpy, ctx->gc, mask, &v) ;
 }
 
+#endif /* XMPLAT_CAIRO_RENDER */
 void
 _XmPlatBlit (XmPlatDrawCtx ctx, XmPlatSurface src, int src_x, int src_y,
 	     int dst_x, int dst_y, unsigned int w, unsigned int h)
