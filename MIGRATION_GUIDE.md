@@ -195,7 +195,80 @@ computed; custom widgets doing glyph-table math should call
 Loading a core font by name: `_XmPlatFontLoad` / `_XmPlatFontUnload`
 (replaces `XLoadQueryFont`/`XFreeFont`).
 
-### 4.5 Checklist
+### 4.5 Images
+
+Phase 3 has landed.  Client-side pixel buffers are `XmPlatImage` tokens
+(lib/Xm/XmPlat/XmPlat.h "Image contract"):
+
+```c
+/* create / destroy */
+XmPlatImage img = _XmPlatImageCreate (ctx, depth, w, h);
+/* or from built-in bitmap data */
+XmPlatImage bmp = _XmPlatImageBitmapOf (XtDisplay (w), bits, w, h);
+/* read the screen */
+XmPlatImage scr = _XmPlatImageFromSurface2 (XtDisplay (w), XtWindow (w),
+                                            x, y, w, h);
+
+/* blit */
+_XmPlatPutImage (ctx, img, 0, 0, dx, dy, w, h);
+
+/* pixel access */
+unsigned long px = _XmPlatImageGetPixel (img, x, y);
+_XmPlatImagePutPixel (img, x, y, px);
+
+/* geometry/data */
+_XmPlatImageWidth (img);  _XmPlatImageHeight (img);
+_XmPlatImageDepth (img);  _XmPlatImageBytesPerLine (img);
+unsigned char *d = _XmPlatImageData (img);
+
+_XmPlatImageFree (img);   /* token + buffer */
+```
+
+If your widget installs images through the public `XmInstallImage`
+(frozen `XImage*` signature) the token wraps the record; disown it with
+`_XmPlatImageTokenFree` — never `_XmPlatImageFree` — because the cache
+keeps the XImage alive.
+
+### 4.6 Events
+
+Phase 4 has landed.  Handler bodies (Xt action procs, event handlers,
+gadget `input_dispatch`) receive `XEvent*` as before — those signatures
+are frozen — but wrap once at the top and read fields through prims:
+
+```c
+static void
+MyArm (Widget w, XEvent *event, String *params, Cardinal *n)
+{
+  XmPlatEvent ev = _XmPlatEventOf (event);
+
+  if (_XmPlatEventIsButtonPress (ev) &&
+      _XmPlatEventButton (ev) == Button1)
+    arm_at (_XmPlatEventX (ev), _XmPlatEventY (ev),
+            _XmPlatEventTime (ev));
+}
+```
+
+Common reads:
+
+| You used to read | Prim |
+|---|---|
+| `event->xany.type` / `event->type` | `_XmPlatEventKind`, `_XmPlatEventIsType`, `_XmPlatEventIsButtonPress/Release`, `_XmPlatEventIsKeyPress/Release`, `_XmPlatEventIsMotion` |
+| `.time` (any family) | `_XmPlatEventTime` |
+| `.x/.y` (button/key/motion/crossing/expose) | `_XmPlatEventX` / `_XmPlatEventY` |
+| `.x_root/.y_root` | `_XmPlatEventRootX` / `_XmPlatEventRootY` |
+| `.button`, `.state`, `.keycode` | `_XmPlatEventButton`, `_XmPlatEventState`, `_XmPlatEventKeycode` |
+| `xany.window` compare | `_XmPlatEventWindow (ev) == _XmPlatWindowOf (w)` |
+| crossing `.focus/.mode/.detail` | `_XmPlatEventFocus`, `_XmPlatEventMode`, `_XmPlatEventDetail` |
+| expose `.width/.height` | `_XmPlatEventWidth` / `_XmPlatEventHeight` |
+
+Rules: never mutate the raw record (the only sanctioned writes are the
+`_XmPlatEventSetX/SetY` clamp helpers); to stash an event for later
+replay, hold an owning token (`_XmPlatEventCopy` / `_XmPlatEventFreeCopy`)
+or the widget-record `XEvent*` you already own; pass raw `XEvent*` through
+frozen signatures (callbacks, `XtCallActionProc`, `XtDispatchEvent`)
+unchanged — `_XmPlatEventRaw` unwraps a token where needed.
+
+### 4.7 Checklist
 
 ```
 [ ] No XDraw* / XFill* / XCopy* / XPutImage / XCreateGC / XChangeGC /
@@ -203,7 +276,9 @@ Loading a core font by name: `_XmPlatFontLoad` / `_XmPlatFontUnload`
 [ ] All clip changes via _XmPlatSetClipRect / _XmPlatSetClipMaskSurf /
     _XmPlatClrClip
 [ ] Every _XmPlatCtx / _XmPlatSurface creation has a matching free
-[ ] Text prims flagged for the Phase-2 font-token change (§4.4)
+[ ] Text prims on font tokens (§4.4)
+[ ] Image buffers held as XmPlatImage tokens (§4.5)
+[ ] Event handlers read XmPlatEvent prims; no `event->x*` field reads (§4.6)
 [ ] Widget compiles against the c89 and c99 gates (see §5.2)
 ```
 
@@ -275,8 +350,8 @@ phases land.
 |---|---|---|---|
 | 0–1 | done (`0451e00`) | nothing (apps); §4 (custom drawing) | §4 |
 | 2 — fonts | done | switch `_XmPlatFontOfGC` text sites to font tokens (`_XmPlatFontOf*D`); metrics via `_XmPlatTextWidth`/`Extents` | §4.4 |
-| 3 — images | done | hold `XmPlatImage` tokens; draw via `_XmPlatPutImage`; build via `_XmPlatImageCreate`/`BitmapOf`; screen reads via `_XmPlatImageFromSurface2`; pixel access via `Get/PutPixel` prims | §4 table update |
-| 4 — events | done | wrap once per handler (`_XmPlatEventOf`), read `_XmPlatEvent*` prims; raw `XEvent*` stays in frozen Xt/gadget/callback signatures as opaque plumbing | §4 table update |
+| 3 — images | done | hold `XmPlatImage` tokens; draw via `_XmPlatPutImage`; build via `_XmPlatImageCreate`/`BitmapOf`; screen reads via `_XmPlatImageFromSurface2`; pixel access via `Get/PutPixel` prims | §4.5 |
+| 4 — events | done | wrap once per handler (`_XmPlatEventOf`), read `_XmPlatEvent*` prims; raw `XEvent*` stays in frozen Xt/gadget/callback signatures as opaque plumbing | §4.6 |
 | 5 — atoms/DnD/mwm | after 4 | nothing for apps | new section |
 | 6 — cairo backend | after 5 | custom widgets must be on the contract by now (**hard deadline**) | §4 rewrite |
 
