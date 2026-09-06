@@ -82,6 +82,9 @@ extern Cursor _XmGetMenuCursorByScreen(
                         Screen *screen) ;
 extern Boolean _XmGetMoveOpaqueByScreen( 
                         Screen *screen) ;
+/* HiDPI scale factor in permille (plan section 7.2). */
+extern int _XmGetScreenScale(
+                        Screen *screen) ;
 extern unsigned char _XmGetUnpostBehavior( 
                         Widget wid) ;
 extern int _XmGetFontUnit( 

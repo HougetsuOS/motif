@@ -33,8 +33,16 @@ static char rcsid[] = "$TOG: Screen.c /main/16 1997/06/18 17:41:50 samborn $"
 
 #include "XmPlat/XmPlatP.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <X11/Xatom.h>
 #include <Xm/Xm.h>		/* To make cpp on Sun happy. CR 5943 */
+
+#ifndef XmNscaleFactor
+#define XmNscaleFactor		"scaleFactor"
+#endif
+#ifndef XmCScaleFactor
+#define XmCScaleFactor		"ScaleFactor"
+#endif
 #include <Xm/AtomMgr.h>
 #include <Xm/DisplayP.h>
 #include "DragIconI.h"
@@ -178,6 +186,11 @@ static XtResource resources[] = {
         XmNcolorAllocationProc, XmCColorAllocationProc, XmRProc,
         sizeof(XtProc), Offset(screen.color_alloc_proc),
         XmRImmediate, (XtPointer) NULL,
+    },
+    {
+        XmNscaleFactor, XmCScaleFactor, XmRInt,
+        sizeof(int), Offset(screen.scale_factor),
+        XmRImmediate, (XtPointer) 0,	/* 0 = not set: MOTIF_SCALE/xft.dpi */
     },
     {
         XmNbitmapConversionModel, XmCBitmapConversionModel, 
@@ -439,6 +452,27 @@ Initialize(
     xmScreen->desktop.num_children = 0;
     xmScreen->desktop.children = NULL;
     xmScreen->desktop.num_slots = 0;
+
+    /* HiDPI scale factor (plan section 7.2): resource, MOTIF_SCALE env
+       fallback, xft.dpi heuristic.  Permille; 1000 = 1x. */
+    if (xmScreen->screen.scale_factor <= 0) {
+	const char *env = getenv ("MOTIF_SCALE") ;
+
+	if (env != NULL && env[0] != '\0')
+	    xmScreen->screen.scale_factor = atoi (env) ;
+    }
+    if (xmScreen->screen.scale_factor <= 0) {
+	double dpi = 0.0 ;
+	char *end = NULL ;
+	const char *v = XGetDefault (display, "Xft", "dpi") ;
+
+	if (v != NULL) dpi = strtod (v, &end) ;
+	if (end == v || dpi <= 0.0) dpi = 0.0 ;
+	xmScreen->screen.scale_factor =
+		(dpi > 0.0) ? (int) (dpi * 1000.0 / 72.0 + 0.5) : 1000 ;
+    }
+    if (xmScreen->screen.scale_factor <= 0)
+	xmScreen->screen.scale_factor = 1000 ;
 
     if(!XmRepTypeValidValue(XmRID_UNPOST_BEHAVIOR,
                           xmScreen->screen.unpostBehavior,
@@ -1206,6 +1240,17 @@ _XmGetMoveOpaqueByScreen(
 
    xmScreen = (XmScreen) XmGetXmScreen(screen);
    return(xmScreen->screen.moveOpaque);
+}
+
+/* HiDPI scale factor in permille (plan section 7.2); consumed at the
+   font seam (XmRenderT) so text metrics scale. */
+int
+_XmGetScreenScale(
+        Screen *screen )
+{
+   XmScreen	xmScreen = (XmScreen) XmGetXmScreen(screen);
+
+   return(xmScreen->screen.scale_factor);
 }
 
 /* a convenience for RowColumn */

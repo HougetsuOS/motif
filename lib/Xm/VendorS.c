@@ -55,6 +55,8 @@ static char rcsid[] = "$TOG: VendorS.c /main/21 1999/08/09 10:49:41 mgreess $"
 #endif
 #include "BaseClassI.h"
 #include "CallbackI.h"
+#include "ThemeI.h"
+#include "XmA11yI.h"
 #include "ExtObjectI.h"
 #include "MenuShellI.h"
 #include "MessagesI.h"
@@ -1926,6 +1928,9 @@ InitializePosthook(
 	 _XmProcessUnlock();
 	 /* extData gets freed at destroy */
     }
+
+    _XmThemeEnvInit (new_w) ;
+    _XmA11yInit (XtDisplay (new_w)) ;
 }
 
 

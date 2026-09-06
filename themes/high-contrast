@@ -1,0 +1,4 @@
+! Motif theme profile: high-contrast — maximum legibility, dark on light.
+*background: #ffffff
+*foreground: #000000
+*fontList: -adobe-helvetica-bold-r-*-*-*-160-*-*-p-*-iso8859-1

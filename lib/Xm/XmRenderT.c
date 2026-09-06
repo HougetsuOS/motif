@@ -57,6 +57,7 @@ extern "C" { /* some 'locale.h' do not have prototypes (sun) */
 #include <Xm/Display.h>		/* For XmGetXmDisplay */
 #include <Xm/DisplayP.h>	/* For direct access to callback fields */
 #include "MessagesI.h"
+#include "ScreenI.h"
 #include "XmI.h"
 #include "XmRenderTI.h"
 #include "XmStringI.h"
@@ -2030,6 +2031,7 @@ ValidateAndLoadFont(XmRendition rend, Display *display)
   XrmValue         	fromVal;
   XrmValue         	toVal;
   Boolean		result = False;
+  int			scale = 1000;
 
   _XmRendDisplay(rend) = display;
   
@@ -2109,12 +2111,20 @@ ValidateAndLoadFont(XmRendition rend, Display *display)
 		    if (_XmRendFontStyle(rend))
 		      FcPatternAddString(_XmRendPattern(rend), FC_STYLE,
 		                         (XftChar8 *)_XmRendFontStyle(rend));
+		    /* HiDPI scale (plan section 7.2): the rendition's
+		       point/pixel sizes are scaled at the single font
+		       seam so every text metric follows the factor. */
+		    scale = _XmGetScreenScale (ScreenOfDisplay (
+				_XmRendDisplay (rend),
+				DefaultScreen (_XmRendDisplay (rend)))) ;
 		    if (_XmRendFontSize(rend))
 		      FcPatternAddInteger(_XmRendPattern(rend), FC_SIZE,
-		                         _XmRendFontSize(rend));
+		                         _XmRendFontSize(rend) * scale
+					 / 1000);
 		    if (_XmRendPixelSize(rend))
 		      FcPatternAddInteger(_XmRendPattern(rend), FC_PIXEL_SIZE,
-		                         _XmRendPixelSize(rend));
+		                         _XmRendPixelSize(rend) * scale
+					 / 1000);
 		    if (_XmRendFontSlant(rend))
 		      FcPatternAddInteger(_XmRendPattern(rend), FC_SLANT,
 		                         _XmRendFontSlant(rend));

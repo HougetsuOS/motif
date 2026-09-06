@@ -1664,6 +1664,15 @@ extern void XmChangeColor(
                         Widget widget,
                         Pixel background) ;
 
+/********    Public Function Declarations for Theme.c    ********/
+
+/* Merge a named theme profile (an Xrm resource file from the XDG theme
+   search path) into the shell's screen database and re-apply the
+   color/font resources to the shell subtree (plan section 7.1). */
+extern void XmLoadTheme(
+                        Widget shell,
+                        const char *name) ;
+
 /********    End Public Function Declarations    ********/
 
 /********    Public Function Declarations for XmString.c    ********/

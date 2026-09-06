@@ -162,7 +162,8 @@ am__libXm_la_SOURCES_DIST = XmStrDefs.c ArrowB.c ArrowBG.c BulletinB.c \
 	IsMwmRun.c MenuProc.c MenuState.c TextFind.c TextFunc.c \
 	ColorObj.c IconFile.c RCHook.c GetRes.c BBUtil.c ChColor.c \
 	ColObjFunc.c DrTog.c DrArrow.c DrPoly.c DrHiDash.c ValTime.c \
-	FocusAct.c CvtUnit.c ScalTics.c ScroVis.c WidGet.c PrintS.c \
+	FocusAct.c CvtUnit.c ScalTics.c ScroVis.c WidGet.c Theme.c \
+	XmA11y.c PrintS.c \
 	Obso1_2.c ObsoStr.c ObsoXme.c Obso2_0.c XpmAttrib.c \
 	XpmCrIFrDat.c XpmInfo.c XpmWrFFrDat.c Xpmmisc.c XpmCrBufFrI.c \
 	XpmCrIFrP.c XpmRdFToBuf.c XpmWrFFrI.c Xpmparse.c XpmCrBufFrP.c \
@@ -209,7 +210,7 @@ am__objects_3 = Desktop.lo Messages.lo Transltns.lo RepType.lo Xmos.lo \
 	IconFile.lo RCHook.lo GetRes.lo BBUtil.lo ChColor.lo \
 	ColObjFunc.lo DrTog.lo DrArrow.lo DrPoly.lo DrHiDash.lo \
 	ValTime.lo FocusAct.lo CvtUnit.lo ScalTics.lo ScroVis.lo \
-	WidGet.lo $(am__objects_2)
+	WidGet.lo Theme.lo XmA11y.lo $(am__objects_2)
 am__objects_4 = Obso1_2.lo ObsoStr.lo ObsoXme.lo Obso2_0.lo
 am__objects_5 = XpmAttrib.lo XpmCrIFrDat.lo XpmInfo.lo XpmWrFFrDat.lo \
 	Xpmmisc.lo XpmCrBufFrI.lo XpmCrIFrP.lo XpmRdFToBuf.lo \

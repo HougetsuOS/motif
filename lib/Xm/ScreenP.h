@@ -86,6 +86,7 @@ typedef struct {
     int			v_unit;
     XtPointer		scratchPixmaps;
     unsigned char       moveOpaque;
+    int			scale_factor;	/* permille, HiDPI (plan 7.2) */
     XmScreenColorProc   color_calc_proc;
     XmAllocColorProc    color_alloc_proc;
     XtEnum              bitmap_conversion_model;

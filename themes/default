@@ -1,0 +1,4 @@
+! Motif theme profile: default (plan 7.1) — matches the toolkit's
+! computed palette; provided so theme switching has an explicit base.
+*background: #d4d0c8
+*fontList: -adobe-helvetica-medium-r-*-*-*-140-*-*-p-*-iso8859-1

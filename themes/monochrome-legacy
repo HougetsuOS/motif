@@ -1,0 +1,4 @@
+! Motif theme profile: monochrome-legacy — the 1-bit-era look.
+*background: #b8b8b8
+*foreground: #000000
+*fontList: fixed
