@@ -39,6 +39,7 @@ static char rcsid[] = "$TOG: SelectioB.c /main/19 1997/06/18 17:42:11 samborn $"
 */
 
 #ifndef X_NOT_STDC_ENV
+#include "XmPlat/XmPlatP.h"
 #include <stdlib.h>
 #endif
 
@@ -1380,7 +1381,7 @@ ListCallback(
         *  Key press events are handled through the ParentProcess routine.
         */
 	if(    (callback->reason == XmCR_DEFAULT_ACTION)
-            && (callback->event->type != KeyPress)
+            && (! _XmPlatEventIsKeyPress (_XmPlatEventOf (callback->event)))
             && dbutton  &&  XtIsManaged((Widget)dbutton)
             && XtIsSensitive((Widget)dbutton)  &&  XmIsGadget( dbutton)    )
 	 {

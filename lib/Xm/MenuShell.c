@@ -32,6 +32,7 @@ static char rcsid[] = "$TOG: MenuShell.c /main/24 1999/07/08 16:49:59 vipin $"
 #endif
 
 #include <X11/IntrinsicP.h>
+#include "XmPlat/XmPlatP.h"
 #include <X11/Composite.h>
 #include <X11/ShellP.h>
 #include <X11/VendorP.h>
@@ -1198,8 +1199,8 @@ PopupSharedMenuShell(
          }
 
 	 /* Remember the time in case this is just a BSelect Click */
-	 if ((event->type == ButtonPress) || (event->type == ButtonRelease))
-	    mst->MS_LastManagedMenuTime = event->xbutton.time;
+	 if ((_XmPlatEventIsButtonPress (_XmPlatEventOf (event)) || _XmPlatEventIsButtonRelease (_XmPlatEventOf (event))))
+	    mst->MS_LastManagedMenuTime = _XmPlatEventTime (_XmPlatEventOf (event));
 
          PostMenuShell(popup, XtGrabExclusive, True);
          _XmFastExpose((XmManagerWidget) submenu);
@@ -2024,8 +2025,8 @@ PopdownDone(
      */
      if (RC_popupMenuClick(rowcol) &&
 	 event &&
-	 ((event->type == ButtonPress) || (event->type == ButtonRelease)) &&
-	 ((event->xbutton.time - mst->MS_LastManagedMenuTime) < 
+	 ((_XmPlatEventIsButtonPress (_XmPlatEventOf (event)) || _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))) &&
+	 ((_XmPlatEventTime (_XmPlatEventOf (event)) - mst->MS_LastManagedMenuTime) < 
 	  XtGetMultiClickTime(XtDisplay(ms))))	/* or 150 ms? */
      {
 	if (RC_Type(rowcol) == XmMENU_OPTION)

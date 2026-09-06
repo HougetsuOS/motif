@@ -1313,3 +1313,559 @@ _XmPlatImageRawCreate (Display *dpy, Visual *visual, int depth, int format,
     return XCreateImage (dpy, visual, depth, format, 0, NULL,
 			 (unsigned) w, (unsigned) h, bitmap_pad, 0) ;
 }
+
+/* ---- Event contract (Phase 4) ------------------------------------------ */
+
+/*
+ * The X11 event token wraps the XEvent record without copying it.
+ * Handler code reads fields through the prims; the raw pointer stays
+ * reachable for frozen Xt signatures (_XmPlatEventRaw).  Copy/synth
+ * tokens own a heap XEvent and free it in _XmPlatEventFreeCopy.
+ */
+struct _XmPlatEventRec {
+    XEvent *ev ;		/* NULL for None tokens */
+    Boolean owned ;		/* XtFree the record in FreeCopy */
+} ;
+
+static struct _XmPlatEventRec _XmPlatEventNoneRec = { NULL, False } ;
+
+XmPlatEvent
+_XmPlatEventOf (const void *raw_event)
+{
+    XmPlatEvent pev ;
+
+    if (raw_event == NULL)
+	return (XmPlatEvent) &_XmPlatEventNoneRec ;
+    pev = (XmPlatEvent) XtMalloc (sizeof (struct _XmPlatEventRec)) ;
+    pev->ev = (XEvent *) raw_event ;
+    pev->owned = False ;
+    return pev ;
+}
+
+XmPlatEvent
+_XmPlatEventCopy (XmPlatEvent ev)
+{
+    XmPlatEvent copy ;
+
+    if (ev == NULL || ev->ev == NULL)
+	return (XmPlatEvent) &_XmPlatEventNoneRec ;
+    copy = (XmPlatEvent) XtMalloc (sizeof (struct _XmPlatEventRec)) ;
+    copy->ev = (XEvent *) XtMalloc (sizeof (XEvent)) ;
+    memcpy ((void *) copy->ev, (void *) ev->ev, sizeof (XEvent)) ;
+    copy->owned = True ;
+    return copy ;
+}
+
+void
+_XmPlatEventFreeCopy (XmPlatEvent ev)
+{
+    if (ev == NULL || ev == (XmPlatEvent) &_XmPlatEventNoneRec) return ;
+    if (ev->owned) XtFree ((char *) (void *) ev->ev) ;
+    XtFree ((char *) ev) ;
+}
+
+XmPlatEvent
+_XmPlatEventSynth (XmPlatEvent ev, XmPlatEventKind kind)
+{
+    XmPlatEvent synth ;
+    XEvent *se ;
+    int x11type ;
+
+    if (ev == NULL || ev->ev == NULL)
+	return (XmPlatEvent) &_XmPlatEventNoneRec ;
+    synth = _XmPlatEventCopy (ev) ;
+    se = (XEvent *) synth->ev ;
+    switch (kind) {
+    case XmPlatEventPointer:
+	/* Keep press/release vs motion split; default to motion. */
+	if (se->type != ButtonPress && se->type != ButtonRelease)
+	    x11type = MotionNotify ;
+	else
+	    x11type = se->type ;
+	break ;
+    case XmPlatButtonPress:	x11type = ButtonPress ;	 break ;
+    case XmPlatButtonRelease:	x11type = ButtonRelease ; break ;
+    case XmPlatEventKey:	x11type = KeyPress ;	 break ;
+    case XmPlatEventCrossing:	x11type = EnterNotify ;	 break ;
+    case XmPlatEventFocus:	x11type = FocusIn ;	 break ;
+    case XmPlatEventExpose:	x11type = Expose ;	 break ;
+    case XmPlatEventConfigure:	x11type = ConfigureNotify ; break ;
+    case XmPlatEventMap:	x11type = MapNotify ;	 break ;
+    case XmPlatEventUnmap:	x11type = UnmapNotify ;	 break ;
+    default:			x11type = se->type ;	 break ;
+    }
+    se->type = x11type ;
+    return synth ;
+}
+
+void *
+_XmPlatEventRaw (XmPlatEvent ev)
+{
+    if (ev == NULL || ev->ev == NULL) return NULL ;
+    return (void *) ev->ev ;
+}
+
+#define EV (ev->ev)
+
+XmPlatEventKind
+_XmPlatEventKind (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return XmPlatEventNone ;
+    switch (EV->type) {
+    case ButtonPress:
+    case ButtonRelease:
+    case MotionNotify:		return XmPlatEventPointer ;
+    case KeyPress:
+    case KeyRelease:		return XmPlatEventKey ;
+    case EnterNotify:
+    case LeaveNotify:		return XmPlatEventCrossing ;
+    case FocusIn:
+    case FocusOut:		return XmPlatEventFocus ;
+    case Expose:		return XmPlatEventExpose ;
+    case GraphicsExpose:	return XmPlatEventGraphicsExpose ;
+    case NoExpose:		return XmPlatEventNoExpose ;
+    case ConfigureNotify:	return XmPlatEventConfigure ;
+    case MapNotify:		return XmPlatEventMap ;
+    case UnmapNotify:		return XmPlatEventUnmap ;
+    case VisibilityNotify:	return XmPlatEventVisibility ;
+    case ReparentNotify:	return XmPlatEventReparent ;
+    case PropertyNotify:	return XmPlatEventProperty ;
+    case ClientMessage:		return XmPlatEventClientMessage ;
+    case SelectionNotify:	return XmPlatEventSelection ;
+    case SelectionRequest:	return XmPlatEventSelectionRequest ;
+    case SelectionClear:	return XmPlatEventSelectionClear ;
+    case ColormapNotify:	return XmPlatEventColormap ;
+    case CirculateNotify:	return XmPlatEventCirculate ;
+    default:			return XmPlatEventOther ;
+    }
+}
+
+XmPlatBoolean
+_XmPlatEventIsType (XmPlatEvent ev, XmPlatEventKind kind)
+{
+    return _XmPlatEventKind (ev) == kind ;
+}
+
+unsigned long
+_XmPlatEventSerial (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    return EV->xany.serial ;
+}
+
+XmPlatBoolean
+_XmPlatEventSendEvent (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return False ;
+    return (XmPlatBoolean) EV->xany.send_event ;
+}
+
+XmPlatTime
+_XmPlatEventTime (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case ButtonPress:
+    case ButtonRelease:		return EV->xbutton.time ;
+    case KeyPress:
+    case KeyRelease:		return EV->xkey.time ;
+    case MotionNotify:		return EV->xmotion.time ;
+    case EnterNotify:
+    case LeaveNotify:		return EV->xcrossing.time ;
+    case PropertyNotify:	return EV->xproperty.time ;
+    case SelectionNotify:	return EV->xselection.time ;
+    case SelectionRequest:	return EV->xselectionrequest.time ;
+    case SelectionClear:	return EV->xselectionclear.time ;
+    default:			return 0 ;
+    }
+}
+
+XmPlatWindow
+_XmPlatEventWindow (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return XmPlatWindowNone ;
+    return (XmPlatWindow) EV->xany.window ;
+}
+
+int
+_XmPlatEventX (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case ButtonPress:
+    case ButtonRelease:		return EV->xbutton.x ;
+    case MotionNotify:		return EV->xmotion.x ;
+    case EnterNotify:
+    case LeaveNotify:		return EV->xcrossing.x ;
+    case KeyPress:
+    case KeyRelease:		return EV->xkey.x ;
+    case Expose:		return EV->xexpose.x ;
+    case ConfigureNotify:	return EV->xconfigure.x ;
+    case ReparentNotify:	return EV->xreparent.x ;
+    default:			return 0 ;
+    }
+}
+
+int
+_XmPlatEventY (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case ButtonPress:
+    case ButtonRelease:		return EV->xbutton.y ;
+    case MotionNotify:		return EV->xmotion.y ;
+    case EnterNotify:
+    case LeaveNotify:		return EV->xcrossing.y ;
+    case KeyPress:
+    case KeyRelease:		return EV->xkey.y ;
+    case Expose:		return EV->xexpose.y ;
+    case ConfigureNotify:	return EV->xconfigure.y ;
+    case ReparentNotify:	return EV->xreparent.y ;
+    default:			return 0 ;
+    }
+}
+
+int
+_XmPlatEventRootX (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case ButtonPress:
+    case ButtonRelease:		return EV->xbutton.x_root ;
+    case MotionNotify:		return EV->xmotion.x_root ;
+    case EnterNotify:
+    case LeaveNotify:		return EV->xcrossing.x_root ;
+    case KeyPress:
+    case KeyRelease:		return EV->xkey.x_root ;
+    default:			return 0 ;
+    }
+}
+
+int
+_XmPlatEventRootY (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case ButtonPress:
+    case ButtonRelease:		return EV->xbutton.y_root ;
+    case MotionNotify:		return EV->xmotion.y_root ;
+    case EnterNotify:
+    case LeaveNotify:		return EV->xcrossing.y_root ;
+    case KeyPress:
+    case KeyRelease:		return EV->xkey.y_root ;
+    default:			return 0 ;
+    }
+}
+
+unsigned int
+_XmPlatEventButton (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case ButtonPress:
+    case ButtonRelease:		return EV->xbutton.button ;
+    default:			return 0 ;
+    }
+}
+
+unsigned int
+_XmPlatEventState (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case ButtonPress:
+    case ButtonRelease:		return EV->xbutton.state ;
+    case MotionNotify:		return EV->xmotion.state ;
+    case KeyPress:
+    case KeyRelease:		return EV->xkey.state ;
+    case EnterNotify:
+    case LeaveNotify:		return EV->xcrossing.state ;
+    default:			return 0 ;
+    }
+}
+
+XmPlatBoolean
+_XmPlatEventIsHint (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return False ;
+    if (EV->type == MotionNotify) return (XmPlatBoolean) EV->xmotion.is_hint ;
+    return False ;
+}
+
+int
+_XmPlatEventPointerKind (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case ButtonPress:		return XmPlatButtonPress ;
+    case ButtonRelease:		return XmPlatButtonRelease ;
+    case MotionNotify:		return XmPlatPointerMotion ;
+    default:			return 0 ;
+    }
+}
+
+void
+_XmPlatEventSetX (XmPlatEvent ev, int x)
+{
+    if (ev == NULL || ev->ev == NULL) return ;
+    switch (ev->ev->type) {
+    case ButtonPress:
+    case ButtonRelease:	ev->ev->xbutton.x = x ;	break ;
+    case MotionNotify:	ev->ev->xmotion.x = x ;	break ;
+    case EnterNotify:
+    case LeaveNotify:	ev->ev->xcrossing.x = x ; break ;
+    case KeyPress:
+    case KeyRelease:	ev->ev->xkey.x = x ;	break ;
+    case Expose:	ev->ev->xexpose.x = x ;	break ;
+    default:					break ;
+    }
+}
+
+void
+_XmPlatEventSetY (XmPlatEvent ev, int y)
+{
+    if (ev == NULL || ev->ev == NULL) return ;
+    switch (ev->ev->type) {
+    case ButtonPress:
+    case ButtonRelease:	ev->ev->xbutton.y = y ;	break ;
+    case MotionNotify:	ev->ev->xmotion.y = y ;	break ;
+    case EnterNotify:
+    case LeaveNotify:	ev->ev->xcrossing.y = y ; break ;
+    case KeyPress:
+    case KeyRelease:	ev->ev->xkey.y = y ;	break ;
+    case Expose:	ev->ev->xexpose.y = y ;	break ;
+    default:					break ;
+    }
+}
+
+unsigned int
+_XmPlatEventKeycode (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case KeyPress:
+    case KeyRelease:		return EV->xkey.keycode ;
+    default:			return 0 ;
+    }
+}
+
+unsigned long
+_XmPlatEventKeysym (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return NoSymbol ;
+    switch (EV->type) {
+    case KeyPress:
+    case KeyRelease:
+	return XLookupKeysym ((XKeyEvent *) (void *) EV, 0) ;
+    default:
+	return NoSymbol ;
+    }
+}
+
+XmPlatBoolean
+_XmPlatEventFocus (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return False ;
+    if (EV->type == EnterNotify || EV->type == LeaveNotify)
+	return (XmPlatBoolean) EV->xcrossing.focus ;
+    return False ;
+}
+
+int
+_XmPlatEventMode (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return XmPlatNotifyNormal ;
+    switch (EV->type) {
+    case EnterNotify:
+    case LeaveNotify:		return EV->xcrossing.mode ;
+    case FocusIn:
+    case FocusOut:		return EV->xfocus.mode ;
+    default:			return XmPlatNotifyNormal ;
+    }
+}
+
+int
+_XmPlatEventDetail (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case EnterNotify:
+    case LeaveNotify:		return EV->xcrossing.detail ;
+    case FocusIn:
+    case FocusOut:		return EV->xfocus.detail ;
+    default:			return 0 ;
+    }
+}
+
+XmPlatWindow
+_XmPlatEventSubwindow (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return XmPlatWindowNone ;
+    switch (EV->type) {
+    case EnterNotify:
+    case LeaveNotify:		return (XmPlatWindow) EV->xcrossing.subwindow ;
+    case MotionNotify:		return (XmPlatWindow) EV->xmotion.subwindow ;
+    default:			return XmPlatWindowNone ;
+    }
+}
+
+XmPlatBoolean
+_XmPlatEventIsKeyPress (XmPlatEvent ev)
+{
+    if (ev == NULL || ev->ev == NULL) return False ;
+    return (XmPlatBoolean) (ev->ev->type == KeyPress) ;
+}
+
+XmPlatBoolean
+_XmPlatEventIsKeyRelease (XmPlatEvent ev)
+{
+    if (ev == NULL || ev->ev == NULL) return False ;
+    return (XmPlatBoolean) (ev->ev->type == KeyRelease) ;
+}
+
+XmPlatBoolean
+_XmPlatEventIsEnter (XmPlatEvent ev)
+{
+    if (ev == NULL || ev->ev == NULL) return False ;
+    return (XmPlatBoolean) (ev->ev->type == EnterNotify) ;
+}
+
+XmPlatBoolean
+_XmPlatEventIsLeave (XmPlatEvent ev)
+{
+    if (ev == NULL || ev->ev == NULL) return False ;
+    return (XmPlatBoolean) (ev->ev->type == LeaveNotify) ;
+}
+
+XmPlatBoolean
+_XmPlatEventIsFocusIn (XmPlatEvent ev)
+{
+    if (ev == NULL || ev->ev == NULL) return False ;
+    return (XmPlatBoolean) (ev->ev->type == FocusIn) ;
+}
+
+XmPlatBoolean
+_XmPlatEventIsFocusOut (XmPlatEvent ev)
+{
+    if (ev == NULL || ev->ev == NULL) return False ;
+    return (XmPlatBoolean) (ev->ev->type == FocusOut) ;
+}
+
+unsigned int
+_XmPlatEventWidth (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case Expose:		return EV->xexpose.width ;
+    case GraphicsExpose:	return EV->xgraphicsexpose.width ;
+    case ConfigureNotify:	return EV->xconfigure.width ;
+    case ResizeRequest:		return EV->xresizerequest.width ;
+    default:			return 0 ;
+    }
+}
+
+unsigned int
+_XmPlatEventHeight (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case Expose:		return EV->xexpose.height ;
+    case GraphicsExpose:	return EV->xgraphicsexpose.height ;
+    case ConfigureNotify:	return EV->xconfigure.height ;
+    case ResizeRequest:		return EV->xresizerequest.height ;
+    default:			return 0 ;
+    }
+}
+
+unsigned int
+_XmPlatEventCount (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    if (EV->type == Expose) return EV->xexpose.count ;
+    if (EV->type == GraphicsExpose) return EV->xgraphicsexpose.count ;
+    return 0 ;
+}
+
+unsigned int
+_XmPlatEventBorderWidth (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return 0 ;
+    switch (EV->type) {
+    case ConfigureNotify:	return EV->xconfigure.border_width ;
+    case CreateNotify:		return EV->xcreatewindow.border_width ;
+    default:			return 0 ;
+    }
+}
+
+int
+_XmPlatEventVisibilityState (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return XmPlatVisibilityUnobscured ;
+    if (EV->type == VisibilityNotify) return EV->xvisibility.state ;
+    return XmPlatVisibilityUnobscured ;
+}
+
+const char *
+_XmPlatEventPropertyName (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return NULL ;
+    switch (EV->type) {
+    case PropertyNotify:
+	return XGetAtomName (EV->xproperty.display, EV->xproperty.atom) ;
+    case SelectionRequest:
+	return XGetAtomName (EV->xselectionrequest.display,
+			     EV->xselectionrequest.property) ;
+    case SelectionNotify:
+	return XGetAtomName (EV->xselection.display,
+			     EV->xselection.property) ;
+    case SelectionClear:
+	return XGetAtomName (EV->xselectionclear.display,
+			     EV->xselectionclear.selection) ;
+    default:
+	return NULL ;
+    }
+}
+
+XmPlatWindow
+_XmPlatEventRequestor (XmPlatEvent ev)
+{
+    if (ev == NULL || EV == NULL) return XmPlatWindowNone ;
+    if (EV->type == SelectionRequest)
+	return (XmPlatWindow) EV->xselectionrequest.requestor ;
+    return XmPlatWindowNone ;
+}
+
+#undef EV
+
+Display *
+_XmPlatEventDisplayOf (XmPlatEvent ev)
+{
+    if (ev == NULL || ev->ev == NULL) return NULL ;
+    return ev->ev->xany.display ;
+}
+
+/* Migration glue: see XmPlatP.h (Phase 4). */
+extern Boolean _XmGetPointVisibility (Widget w, int root_x, int root_y) ;
+
+Boolean
+_XmPlatGetPointVisibilityX (Widget w, XmPlatEvent ev)
+{
+    return _XmGetPointVisibility (w,
+				  _XmPlatEventRootX (ev),
+				  _XmPlatEventRootY (ev)) ;
+}
+
+Boolean
+_XmPlatGetPointVisibilityIsButton (Widget w, XEvent *event)
+{
+    XmPlatEvent pev ;
+
+    if (event == NULL) return False ;
+    pev = _XmPlatEventOf (event) ;
+    if (! (_XmPlatEventIsButtonPress (pev) ||
+	   _XmPlatEventIsButtonRelease (pev)))
+	return False ;
+    return _XmGetPointVisibility (w,
+				  _XmPlatEventRootX (pev),
+				  _XmPlatEventRootY (pev)) ;
+}

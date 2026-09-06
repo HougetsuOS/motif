@@ -1076,13 +1076,20 @@ Redisplay(widget, event, region)
     if( XmTabBox_tab_mode(tab) != XmTABS_STACKED &&
         XmTabBox_tab_mode(tab) != XmTABS_STACKED_STATIC )
     {
-	if( event == NULL || event->xany.type != Expose )
+	if( event == NULL ||
+	    ! _XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventExpose) )
 	{
 	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, 0, 0, XtWidth(widget), XtHeight(widget)) ;
 	}
 	else
 	{
-	    _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc, event->xexpose.x, event->xexpose.y, event->xexpose.width, event->xexpose.height) ;
+	    {
+	      XmPlatEvent pev = _XmPlatEventOf (event) ;
+	      _XmPlatFillOneRect (XtDisplay (tab), XiCanvas(tab), gc,
+				  _XmPlatEventX (pev), _XmPlatEventY (pev),
+				  _XmPlatEventWidth (pev),
+				  _XmPlatEventHeight (pev)) ;
+	    }
 	}
     }
 
@@ -1762,10 +1769,12 @@ XmTabBoxArmTab(widget, event, params, num_params)
 
     XmProcessTraversal(widget, XmTRAVERSE_CURRENT);
 
-    if( event == NULL || event->xany.type != ButtonPress ) return;
+    if( event == NULL ||
+	! _XmPlatEventIsButtonPress (_XmPlatEventOf (event)) ) return;
 
-    idx = XmTabBox__armed_tab(tab) = XiXYtoTab(tab, event->xbutton.x,
-					      event->xbutton.y);
+    idx = XmTabBox__armed_tab(tab) =
+      XiXYtoTab(tab, _XmPlatEventX (_XmPlatEventOf (event)),
+		_XmPlatEventY (_XmPlatEventOf (event)));
 
     if( !IsTabSensitive(tab, idx) ) return;
 
@@ -1814,14 +1823,16 @@ XmTabBoxSelectTab(widget, event, params, num_params)
      * First lets do a quick check to make sure that we have an event we
      * can deal with and that we have an armed tab.
      */
-    if( event == NULL || event->xany.type != ButtonRelease ||
+    if( event == NULL ||
+	! _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)) ||
         XmTabBox__armed_tab(tab) == -1 ) return;
 
     /*
      * Lets find out which tab was activated by converting the event
      * x, y to a tab index.
      */
-    idx = XiXYtoTab(tab, event->xbutton.x, event->xbutton.y);
+    idx = XiXYtoTab(tab, _XmPlatEventX (_XmPlatEventOf (event)),
+		    _XmPlatEventY (_XmPlatEventOf (event)));
 
     /*
      * First lets make sure that we are trying to select the right tab

@@ -27,6 +27,7 @@ static char rcsid[] = "$RCSfile: DataFSel.c,v $ $Revision: 1.6 $ $Date: 2003/10/
 #endif
 #endif
 
+#include "XmPlat/XmPlatP.h"
 #include <Xm/Ext.h>
 #include <Xm/DataFSelP.h>
 #include <Xm/DataFP.h>
@@ -257,18 +258,18 @@ InsertSelection(
 				       False, True);
        }
        (void) _XmDataFielddf_SetDestination(w, TextF_CursorPosition(tf),
-					 insert_select->event->time);
+					 _XmPlatEventTime (_XmPlatEventOf (insert_select->event)));
        if (insert_select->select_type == XmDEST_SELECT) {
           if (left != right) {
              if (!dest_disjoint) {
                 _XmDataFieldStartSelection(tf, TextF_CursorPosition(tf),
 					   TextF_CursorPosition(tf),
-                                           insert_select->event->time);
+                                           _XmPlatEventTime (_XmPlatEventOf (insert_select->event)));
              } else {
                 if (!XmTextF_add_mode(tf)) {
                    _XmDataFieldStartSelection(tf, TextF_CursorPosition(tf),
 				  	      TextF_CursorPosition(tf),
-                                  	      insert_select->event->time);
+                                  	      _XmPlatEventTime (_XmPlatEventOf (insert_select->event)));
                 }
              }
           }
@@ -332,7 +333,7 @@ HandleInsertTargets(
    XtGetSelectionValue(w, *seltype, target,
                        InsertSelection,
                        (XtPointer) insert_select,
-                       insert_select->event->time);
+                       _XmPlatEventTime (_XmPlatEventOf (insert_select->event)));
 
 }
 

@@ -31,6 +31,7 @@ static char rcsid[] = "$TOG: FileSB.c /main/21 1997/09/26 13:38:52 bill $"
 #endif
 
 
+#include "XmPlat/XmPlatP.h"
 #include <Xm/XmosP.h>
 
 #include "XmI.h"
@@ -2505,7 +2506,7 @@ ListCallback(
             /* Catch only double-click default action here.
             *  Key press events are handled through the ParentProcess routine.
             */
-            if(    (callback->event->type != KeyPress)
+            if(    (! _XmPlatEventIsKeyPress (_XmPlatEventOf (callback->event)))
                 && dbutton  &&  XtIsManaged((Widget)dbutton)
                 && XtIsSensitive((Widget)dbutton)  &&  XmIsGadget( dbutton)
 	        && (    !(FS_StateFlags(fsb) & XmFS_NO_MATCH)

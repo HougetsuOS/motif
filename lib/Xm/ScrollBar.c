@@ -2801,7 +2801,7 @@ Release(
 	{
 	    sbw->scrollBar.sliding_on = False;
 	    ScrollCallback (sbw, XmCR_VALUE_CHANGED, sbw->scrollBar.value, 
-			    event->xbutton.x, event->xbutton.y, event);
+			    _XmPlatEventX (_XmPlatEventOf (event)), _XmPlatEventY (_XmPlatEventOf (event)), event);
 	}
     
 #ifdef FUNKY_INSENSITIVE_VISUAL
@@ -3017,7 +3017,7 @@ TopOrBottom(
     if (! (sbw->scrollBar.flags & SLIDER_AVAILABLE))
 	return;
     
-    if (event->type == KeyPress) {
+    if (_XmPlatEventIsKeyPress (_XmPlatEventOf (event))) {
 	Modifiers junk;
 	KeySym key_sym;
 	XKeyPressedEvent *keyEvent = (XKeyPressedEvent *) event;
@@ -3389,7 +3389,7 @@ IncrementUpOrLeft(
 		RedrawSliderWindow (sbw);
 
 		ScrollCallback (sbw, XmCR_DECREMENT, sbw->scrollBar.value,
-                        event->xbutton.x, event->xbutton.y, event);
+                        _XmPlatEventX (_XmPlatEventOf (event)), _XmPlatEventY (_XmPlatEventOf (event)), event);
 	}
 }
 
@@ -3487,7 +3487,7 @@ IncrementDownOrRight(
 		RedrawSliderWindow (sbw);
 
 		ScrollCallback (sbw, XmCR_INCREMENT, sbw->scrollBar.value,
-                                    event->xbutton.x, event->xbutton.y, event);
+                                    _XmPlatEventX (_XmPlatEventOf (event)), _XmPlatEventY (_XmPlatEventOf (event)), event);
 	}
 }
 
@@ -3584,7 +3584,7 @@ PageUpOrLeft(
 
 		ScrollCallback (sbw, XmCR_PAGE_DECREMENT, 
 				sbw->scrollBar.value,
-				event->xbutton.x, event->xbutton.y, event);
+				_XmPlatEventX (_XmPlatEventOf (event)), _XmPlatEventY (_XmPlatEventOf (event)), event);
 	}
 }
 
@@ -3681,7 +3681,7 @@ PageDownOrRight(
 		RedrawSliderWindow (sbw);
 
 		ScrollCallback (sbw, XmCR_PAGE_INCREMENT, sbw->scrollBar.value,
-                                    event->xbutton.x, event->xbutton.y, event);
+                                    _XmPlatEventX (_XmPlatEventOf (event)), _XmPlatEventY (_XmPlatEventOf (event)), event);
 	}
 }
 

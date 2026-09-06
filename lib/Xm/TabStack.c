@@ -1263,13 +1263,22 @@ Redisplay(widget, event, region)
 	}
 	else
 	{
-	    if( event == NULL || event->xany.type != Expose )
+	    if( event == NULL ||
+		! _XmPlatEventIsType (_XmPlatEventOf (event),
+				      XmPlatEventExpose) )
 	    {
 		_XmPlatFillOneRect (XtDisplay (tab), XtWindow(tab), gc, 0, 0, XtWidth(tab), XtHeight(tab)) ;
 	    }
 	    else
 	    {
-		_XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc, event->xexpose.x, event->xexpose.y, event->xexpose.width, event->xexpose.height);
+		{
+		  XmPlatEvent pev = _XmPlatEventOf (event) ;
+		  _XmPlatFillOneRect (XtDisplay (tab), XtWindow (tab), gc,
+				      _XmPlatEventX (pev),
+				      _XmPlatEventY (pev),
+				      _XmPlatEventWidth (pev),
+				      _XmPlatEventHeight (pev)) ;
+		}
 	    }
 	}
     }
@@ -4735,8 +4744,9 @@ XmTabStackMenu(widget, event, params, num_params)
      * Lets start by finding out if we are popping this menu up from
      * a tab.
      */
-    child = XmTabStackXYToWidget((Widget) tab, event->xbutton.x,
-				 event->xbutton.y);
+    child = XmTabStackXYToWidget((Widget) tab,
+				 _XmPlatEventX (_XmPlatEventOf (event)),
+				 _XmPlatEventY (_XmPlatEventOf (event)));
 
     /*
      * If we are not popping this menu up, and we are not in a tab
@@ -4773,10 +4783,13 @@ XmTabBoxDragTab(widget, event, params, num_params)
 
 #ifdef TEAR_OFF_TABS
     if( !XmTabStack_allow_tear_offs(tab) ||
-        event == NULL || event->xany.type != ButtonPress ||
+        event == NULL ||
+	! _XmPlatEventIsButtonPress (_XmPlatEventOf (event)) ||
         (child = IndexToTab(tab,
-			    XmTabBoxGetIndex(parent, event->xbutton.x,
-					     event->xbutton.y))) == NULL ||
+			    XmTabBoxGetIndex(parent,
+				_XmPlatEventX (_XmPlatEventOf (event)),
+				_XmPlatEventY (_XmPlatEventOf (event))))) ==
+	NULL ||
         !XmTabStackC_tear_off_enabled(child) )
     {
 	return;

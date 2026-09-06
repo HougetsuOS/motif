@@ -893,7 +893,8 @@ Leave(
   if (Lab_IsMenupane(w))
     {
       if (_XmGetInDragMode((Widget)w) && w->toggle.Armed &&
-	  (/* !ActiveTearOff || */ event->xcrossing.mode == NotifyNormal))
+	  (/* !ActiveTearOff || */ _XmPlatEventMode (_XmPlatEventOf (event)) ==
+	   XmPlatNotifyNormal))
 	{
 	  XmDisplay dpy = (XmDisplay) XmGetXmDisplay(XtDisplay(wid));
 	  Boolean etched_in = dpy->display.enable_etched_in_menu;
@@ -1106,11 +1107,12 @@ Select(
   /* CR 8068: Verify that this is in fact a button event. */
   /* CR 9181: Consider clipping when testing visibility. */
   /* Check to see if BtnUp is inside the widget */
-  hit = ((event->xany.type == ButtonPress || 
-	  event->xany.type == ButtonRelease) &&
-	 _XmGetPointVisibility(wid, 
-			       event->xbutton.x_root, 
-			       event->xbutton.y_root));
+  {
+    XmPlatEvent pev = _XmPlatEventOf (event) ;
+    hit = ((_XmPlatEventIsButtonPress (pev) ||
+	    _XmPlatEventIsButtonRelease (pev)) &&
+	   _XmPlatGetPointVisibilityX (wid, pev));
+  }
   
   if (hit)
     {
@@ -1393,7 +1395,7 @@ BtnDown(
   
   tb->toggle.Armed = TRUE;
   
-  if (event && (event->type == ButtonPress))
+  if (event && _XmPlatEventIsButtonPress (_XmPlatEventOf (event)))
     {
 	XmDisplay dpy = (XmDisplay) XmGetXmDisplay(XtDisplay(wid));
 	Boolean etched_in = dpy->display.enable_etched_in_menu;
@@ -1489,7 +1491,7 @@ BtnUp(
   
   if (menuSTrait == NULL) return;
   
-  if (event && (event->type == ButtonRelease))
+  if (event && _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
     validButton = menuSTrait->verifyButton(XtParent(tb), event);
   
   if (!validButton || (tb->toggle.Armed == FALSE))
@@ -1509,8 +1511,7 @@ BtnUp(
   
   /* Check to see if BtnUp is inside the widget */
   /* CR 9181: Consider clipping when testing visibility. */
-  if ((event->xany.type == ButtonPress || event->xany.type == ButtonRelease) &&
-      _XmGetPointVisibility(wid, event->xbutton.x_root, event->xbutton.y_root))
+  if (_XmPlatGetPointVisibilityIsButton (wid, event))
     {
       if (tb->toggle.toggle_mode == XmTOGGLE_INDETERMINATE)
 	{

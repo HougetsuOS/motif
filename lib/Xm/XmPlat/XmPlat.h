@@ -289,3 +289,167 @@ extern void _XmPlatDrawStringColored (XmPlatDrawCtx ctx, XmPlatFont font,
 				      int kind, const void *text, int len,
 				      int x, int y, int image,
 				      const XmPlatColor *color) ;
+
+/* ---- Event contract (Phase 4) ---------------------------------------- */
+
+/*
+ * An event token wraps the platform event record for handler bodies.
+ * In the X11/Xt backend it wraps an XEvent (identity on the record —
+ * no copy) so that frozen Xt/gadget signatures can keep receiving
+ * XEvent* while widget code reads only these prims.  A token is valid
+ * for the duration of the handler call unless it is an *owning* token
+ * made with _XmPlatEventCopy (used for event replay records).
+ *
+ * Event kinds mirror the platform's event families.  Field prims are
+ * valid only for their family; "Other" events expose only the common
+ * fields (kind, serial, send_event, time, window).
+ */
+enum {
+    XmPlatEventNone,
+    XmPlatEventPointer,		/* motion / button press / release */
+    XmPlatEventKey,		/* key press / release */
+    XmPlatEventCrossing,	/* enter / leave */
+    XmPlatEventFocus,		/* focus in / out */
+    XmPlatEventExpose,
+    XmPlatEventGraphicsExpose,
+    XmPlatEventNoExpose,
+    XmPlatEventConfigure,
+    XmPlatEventMap,
+    XmPlatEventUnmap,
+    XmPlatEventVisibility,
+    XmPlatEventReparent,
+    XmPlatEventProperty,
+    XmPlatEventClientMessage,
+    XmPlatEventSelection,
+    XmPlatEventSelectionRequest,
+    XmPlatEventSelectionClear,
+    XmPlatEventColormap,
+    XmPlatEventCirculate,
+    XmPlatEventOther
+} ;
+
+typedef int XmPlatEventKind ;
+
+/* Pointer sub-kind (X11: ButtonPress/ButtonRelease/MotionNotify).
+   Values are disjoint from the XmPlatEventKind enum (base 100) so a
+   single int can carry either without ambiguity. */
+enum {
+    XmPlatPointerMotion = 100,
+    XmPlatButtonPress,
+    XmPlatButtonRelease
+} ;
+
+/* Crossing / focus detail (X11 Notify* values). */
+enum {
+    XmPlatNotifyAncestor = 0,
+    XmPlatNotifyVirtual,
+    XmPlatNotifyInferior,
+    XmPlatNotifyNonlinear,
+    XmPlatNotifyNonlinearVirtual,
+    XmPlatNotifyPointer,
+    XmPlatNotifyPointerRoot,
+    XmPlatNotifyDetailNone
+} ;
+
+/* Crossing modes. */
+enum {
+    XmPlatNotifyNormal = 0,
+    XmPlatNotifyGrab,
+    XmPlatNotifyUngrab
+} ;
+
+/* Visibility states. */
+enum {
+    XmPlatVisibilityUnobscured = 0,
+    XmPlatVisibilityPartiallyObscured,
+    XmPlatVisibilityFullyObscured
+} ;
+
+/* --- construction (migration seam) ----------------------------------- */
+
+/* Wrap the raw event record for reading.  Never freed; dies with the
+   raw record.  NULL raw event yields a token whose Kind is None. */
+extern XmPlatEvent _XmPlatEventOf (const void *raw_event) ;
+
+/* Owning copy for event replay records; release with
+   _XmPlatEventFreeCopy.  NULL yields a None token. */
+extern XmPlatEvent _XmPlatEventCopy (XmPlatEvent ev) ;
+extern void        _XmPlatEventFreeCopy (XmPlatEvent ev) ;
+
+/* Fabricate a token of the given kind carrying the field data of ev
+   (gadget input-dispatch rewrite: same fields, new type).  The result
+   is an owning copy; free with _XmPlatEventFreeCopy. */
+extern XmPlatEvent _XmPlatEventSynth (XmPlatEvent ev, XmPlatEventKind kind) ;
+
+/* The raw record behind a token, for passing through frozen Xt
+   signatures (XtDispatchEvent, XmImMbLookupString, ...).  X11: XEvent*.
+   Only meaningful on non-None tokens built from real records. */
+extern void *_XmPlatEventRaw (XmPlatEvent ev) ;
+
+/* --- common fields ---------------------------------------------------- */
+
+extern XmPlatEventKind _XmPlatEventKind (XmPlatEvent ev) ;
+extern XmPlatBoolean        _XmPlatEventIsType (XmPlatEvent ev,
+					   XmPlatEventKind kind) ;
+extern unsigned long   _XmPlatEventSerial (XmPlatEvent ev) ;
+extern XmPlatBoolean        _XmPlatEventSendEvent (XmPlatEvent ev) ;
+extern XmPlatTime      _XmPlatEventTime (XmPlatEvent ev) ;
+extern XmPlatWindow    _XmPlatEventWindow (XmPlatEvent ev) ;
+
+/* --- pointer family (motion / button) --------------------------------- */
+
+extern int          _XmPlatEventX (XmPlatEvent ev) ;
+extern int          _XmPlatEventY (XmPlatEvent ev) ;
+extern int          _XmPlatEventRootX (XmPlatEvent ev) ;
+extern int          _XmPlatEventRootY (XmPlatEvent ev) ;
+extern unsigned int _XmPlatEventButton (XmPlatEvent ev) ;	/* 0 = none */
+extern unsigned int _XmPlatEventState (XmPlatEvent ev) ;
+extern XmPlatBoolean     _XmPlatEventIsHint (XmPlatEvent ev) ;
+/* The sub-kind (motion/press/release); 0 for non-pointer events. */
+extern int          _XmPlatEventPointerKind (XmPlatEvent ev) ;
+
+/* Writable coordinate mutation (replay-prep clamping; e.g. TextIn
+   DoGrabFocus).  Valid on pointer/key/crossing events. */
+extern void _XmPlatEventSetX (XmPlatEvent ev, int x) ;
+extern void _XmPlatEventSetY (XmPlatEvent ev, int y) ;
+
+/* --- key family -------------------------------------------------------- */
+
+extern unsigned int _XmPlatEventKeycode (XmPlatEvent ev) ;
+/* Keysym for the keycode (X11: XLookupKeysym, col 0); NoSymbol when
+   unmapped.  Phase-2 note: text translation stays with the IM layer. */
+extern unsigned long _XmPlatEventKeysym (XmPlatEvent ev) ;
+
+/* --- crossing family ---------------------------------------------------- */
+
+extern XmPlatBoolean     _XmPlatEventFocus (XmPlatEvent ev) ;	/* has focus */
+extern int          _XmPlatEventMode (XmPlatEvent ev) ;
+extern int          _XmPlatEventDetail (XmPlatEvent ev) ;
+extern XmPlatWindow _XmPlatEventSubwindow (XmPlatEvent ev) ;
+
+/* Key direction (press vs release); False on non-key events. */
+extern XmPlatBoolean _XmPlatEventIsKeyPress (XmPlatEvent ev) ;
+extern XmPlatBoolean _XmPlatEventIsKeyRelease (XmPlatEvent ev) ;
+
+/* Crossing direction (enter vs leave); False on non-crossing events. */
+extern XmPlatBoolean _XmPlatEventIsEnter (XmPlatEvent ev) ;
+extern XmPlatBoolean _XmPlatEventIsLeave (XmPlatEvent ev) ;
+/* Focus direction (in vs out); False on non-focus events. */
+extern XmPlatBoolean _XmPlatEventIsFocusIn (XmPlatEvent ev) ;
+extern XmPlatBoolean _XmPlatEventIsFocusOut (XmPlatEvent ev) ;
+
+/* --- expose / configure family ------------------------------------------ */
+
+extern unsigned int _XmPlatEventWidth (XmPlatEvent ev) ;
+extern unsigned int _XmPlatEventHeight (XmPlatEvent ev) ;
+extern unsigned int _XmPlatEventCount (XmPlatEvent ev) ;	/* expose */
+extern unsigned int _XmPlatEventBorderWidth (XmPlatEvent ev) ;
+extern int          _XmPlatEventVisibilityState (XmPlatEvent ev) ;
+
+/* --- property / client-message family (opaque payloads; Phase 5) -------- */
+
+/* Property atom as a string (backend interns the name); NULL when the
+   event carries none. */
+extern const char *_XmPlatEventPropertyName (XmPlatEvent ev) ;
+/* Selection requestor window (XSelectionRequestEvent). */
+extern XmPlatWindow _XmPlatEventRequestor (XmPlatEvent ev) ;

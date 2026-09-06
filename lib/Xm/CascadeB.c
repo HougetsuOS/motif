@@ -996,7 +996,8 @@ CheckDisarm(
    XEnterWindowEvent * entEvent = (XEnterWindowEvent *) event;
 
    if (_XmGetInDragMode((Widget) cb) &&
-       (/* !ActiveTearOff || */ event->xcrossing.mode == NotifyNormal))
+       (/* !ActiveTearOff || */ _XmPlatEventMode (_XmPlatEventOf (event)) ==
+	XmPlatNotifyNormal))
    {
       if ((CB_IsArmed(cb)) && 
           (CB_Submenu(cb)))
@@ -1185,8 +1186,8 @@ DoSelect(
    /* To support menu replay, keep the pointer in sync mode */
    XAllowEvents(XtDisplay(cb), SyncPointer, CurrentTime);
 
-   if (event && event -> type == ButtonRelease &&
-       event -> xbutton.button == 2)
+   if (event && _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)) &&
+       _XmPlatEventButton (_XmPlatEventOf (event)) == 2)
      return;
 
    if (!CB_IsArmed(cb))

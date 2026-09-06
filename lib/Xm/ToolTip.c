@@ -25,6 +25,7 @@
 #include <config.h>
 #endif
 
+#include "XmPlat/XmPlatP.h"
 #include <Xm/LabelP.h>
 #include <Xm/VendorSEP.h>
 #include <Xm/GadgetP.h>
@@ -253,7 +254,7 @@ _XmToolTipEnter (Widget wid,
          unsigned long delay;
 
          if (event &&
-             (event->xcrossing.time - ttp->leave_time < ttp->post_delay))
+             (_XmPlatEventTime (_XmPlatEventOf (event)) - ttp->leave_time < ttp->post_delay))
          {
             delay = 0;
          }
@@ -297,7 +298,7 @@ _XmToolTipLeave (Widget w,
    {
       if (event && (ttp->duration_timer || ttp->post_duration == 0))
       {
-         ttp->leave_time = event->xcrossing.time;
+         ttp->leave_time = _XmPlatEventTime (_XmPlatEventOf (event));
       }
       ToolTipUnpost (ttp, NULL);
    }

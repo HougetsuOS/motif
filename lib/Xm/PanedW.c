@@ -1397,23 +1397,29 @@ HandleSash(
 				     call_data->params[0],
 				     False, &action_param);
 
-    switch (call_data->event->xany.type)
     {
-      case ButtonPress:
-      case ButtonRelease:
-	pos = Major(pw, call_data->event->xbutton.x_root,
-		    call_data->event->xbutton.y_root);
-	break;
-	
-      case KeyRelease:
-	return;
-	
-      case KeyPress:
-	if (call_data->num_params < 3)
+      XmPlatEvent pev = _XmPlatEventOf (call_data->event) ;
+      switch (_XmPlatEventKind (pev))
 	{
-	    XmeWarning( (Widget) pw, MESSAGE8);
+	case XmPlatEventPointer:
+	  pos = Major(pw, _XmPlatEventRootX (pev),
+		      _XmPlatEventRootY (pev));
+	  break;
+	
+	default:
+	  if (! _XmPlatEventIsType (pev, XmPlatEventKey))
+	    {
+	      pos = PaneStartPos(pw);
+	      break ;
+	    }
+	  if (_XmPlatEventIsKeyRelease (pev))
 	    return;
-	}
+	
+	  if (call_data->num_params < 3)
+	    {
+	      XmeWarning( (Widget) pw, MESSAGE8);
+	      return;
+	    }
 	
 	/* Verify that we have a KEY action */
 	if (action_param == _KEY)
@@ -1455,14 +1461,7 @@ HandleSash(
 	    else pw->paned_window.increment_count += increment;
 	}
 	return;
-	
-      case MotionNotify:
-	pos = Major(pw, call_data->event->xmotion.x_root,
-		    call_data->event->xmotion.y_root);
-	break;
-	
-      default:
-	pos = PaneStartPos(pw);
+	}
     }
     
     switch (action_param)

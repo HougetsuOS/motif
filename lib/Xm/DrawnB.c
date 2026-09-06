@@ -36,6 +36,7 @@ static char rcsid[] = "$TOG: DrawnB.c /main/20 1999/04/29 13:05:14 samborn $"
 
 #include <stdio.h>
 #include <X11/X.h>
+#include "XmPlat/XmPlatP.h"
 #include <Xm/ActivatableT.h>
 #include <Xm/DisplayP.h>
 #include <Xm/DrawP.h>   
@@ -462,8 +463,8 @@ Arm(
     (void) XmProcessTraversal((Widget) db, XmTRAVERSE_CURRENT);
 
     db -> drawnbutton.armed = TRUE;
-    if (event && (event->type == ButtonPress))
-	db -> drawnbutton.armTimeStamp = buttonEvent->time;
+    if (event && _XmPlatEventIsButtonPress (_XmPlatEventOf (event)))
+	db -> drawnbutton.armTimeStamp = _XmPlatEventTime (_XmPlatEventOf (buttonEvent)) ;
     
     if (db->drawnbutton.pushbutton_enabled)
 	DrawPushButton(db, db->drawnbutton.armed);
@@ -532,8 +533,9 @@ MultiActivate(
     * new/separate activate.
     */
   if (db->drawnbutton.multiClick == XmMULTICLICK_KEEP)  
-  { if ((buttonEvent->xbutton.time - db->drawnbutton.armTimeStamp) >
-	   XtGetMultiClickTime(XtDisplay(db)))
+  { if ((_XmPlatEventTime (_XmPlatEventOf (buttonEvent)) -
+	 db->drawnbutton.armTimeStamp) >
+	 XtGetMultiClickTime(XtDisplay(db)))
      db->drawnbutton.click_count = 1;
    else
      db->drawnbutton.click_count++;
@@ -557,7 +559,7 @@ ActivateCommon(
    menuSTrait = (XmMenuSystemTrait) 
      XmeTraitGet((XtPointer) XtClass(XtParent(wid)), XmQTmenuSystem);
       
-   if (event && (event->xbutton.type != ButtonRelease))
+   if (event && ! _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
        return;
       
    db -> drawnbutton.armed = FALSE;
@@ -567,9 +569,7 @@ ActivateCommon(
 
   /* CR 9181: Consider clipping when testing visibility. */
   if ((db->drawnbutton.activate_callback) &&
-      ((event->xany.type == ButtonPress) || 
-       (event->xany.type == ButtonRelease)) &&
-      _XmGetPointVisibility(wid, event->xbutton.x_root, event->xbutton.y_root))
+      _XmPlatGetPointVisibilityIsButton (wid, event))
    {
       XFlush(XtDisplay (db));
 
@@ -779,7 +779,7 @@ BtnDown(
   if (menuSTrait == NULL) 
     return;
   
-  if (event && (event->type == ButtonPress))
+  if (event && _XmPlatEventIsButtonPress (_XmPlatEventOf (event)))
     validButton = menuSTrait->verifyButton(XtParent(db), event);
   
   if (!validButton)
@@ -861,7 +861,7 @@ BtnUp(
   if (menuSTrait == NULL) 
     return;
   
-  if (event && (event->type == ButtonRelease))
+  if (event && _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
     validButton = menuSTrait->verifyButton(parent, event);
   
   if (!validButton || (db->drawnbutton.armed == FALSE))
@@ -1051,7 +1051,8 @@ Leave(
 
   if (Lab_IsMenupane(db)) {
     if (_XmGetInDragMode((Widget)db) && db->drawnbutton.armed &&
-	(/* !ActiveTearOff || */ event->xcrossing.mode == NotifyNormal))
+	(/* !ActiveTearOff || */ _XmPlatEventMode (_XmPlatEventOf (event)) ==
+	 XmPlatNotifyNormal))
       {
 	XmDisplay dpy = (XmDisplay) XmGetXmDisplay(XtDisplay(wid));
 

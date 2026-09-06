@@ -34,6 +34,7 @@ static char rcsid[] = "$TOG: MenuUtil.c /main/16 1999/05/13 15:57:21 mgreess $"
 #include <stdio.h>
 #include <ctype.h>
 #include <X11/IntrinsicP.h>
+#include "XmPlat/XmPlatP.h"
 #include <X11/ShellP.h>
 #include <Xm/CascadeBGP.h>
 #include <Xm/CascadeBP.h>
@@ -286,7 +287,9 @@ _XmMenuHelp(
    else
    {
      if ((gadget = (XmGadget) 
-	  XmObjectAtPoint((Widget) rc, event->xkey.x, event->xkey.y)) != NULL)
+	  XmObjectAtPoint((Widget) rc,
+			  _XmPlatEventX (_XmPlatEventOf (event)),
+			  _XmPlatEventY (_XmPlatEventOf (event)))) != NULL)
         _XmDispatchGadgetInput( (Widget) gadget, event, XmHELP_EVENT);
      else
      {

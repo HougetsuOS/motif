@@ -31,6 +31,7 @@
 #endif
 #include <stdio.h>
 #include <string.h>
+#include "XmPlat/XmPlatP.h"
 #include <Xm/XmP.h>
 #include <Xm/XmosP.h>		/* for bzero et al */
 #include <X11/Shell.h>
@@ -1544,8 +1545,8 @@ ListSelectionCB(Widget widget,	/* unused */
   CallSelectionCallbacks((Widget)cb, cb_data->event);
 
   if (cb_data->event &&
-      (cb_data->event->type == ButtonPress ||
-       cb_data->event->type == ButtonRelease))
+      (_XmPlatEventIsButtonPress (_XmPlatEventOf (cb_data->event)) ||
+       _XmPlatEventIsButtonRelease (_XmPlatEventOf (cb_data->event))))
     {
       if (CB_Type(cb) != XmCOMBO_BOX)
 	{
@@ -1707,7 +1708,8 @@ CBArmAndDropDownList(Widget widget,
   XmGrabShellWidget gs = (XmGrabShellWidget)CB_ListShell(cb);
 
   /* Return if this is a replay of the unpost event. */
-  if (gs && (event->xbutton.time == gs->grab_shell.unpost_time))
+  if (gs && (_XmPlatEventTime (_XmPlatEventOf (event)) ==
+	     gs->grab_shell.unpost_time))
     return;
 
   /* Ignore the event if this is a replay */
@@ -1825,7 +1827,8 @@ CBDropDownList(Widget    widget,
 	  disp->display.userGrabbed = True;
 
 	  /* Record the post time */
-	  gs->grab_shell.post_time = event->xbutton.time;
+	  gs->grab_shell.post_time =
+	    _XmPlatEventTime (_XmPlatEventOf (event)) ;
 
 	  /* Record the event to prevent popdown on replay */
 	  _XmRecordEvent(event);
@@ -2122,9 +2125,11 @@ PopupEH(Widget    widget,	/* unused */
 {
   XmComboBoxWidget cb = (XmComboBoxWidget)client_data;
 
-  switch (event->type)
+  switch (_XmPlatEventKind (_XmPlatEventOf (event)))
     {
-    case ButtonRelease:
+    case XmPlatEventPointer:
+      if (! _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
+	break ;
       CBDisarm((Widget)cb, event, NULL, NULL);
 
       /* CR 9899: Only discard matched pairs of scrollbar button events. */
@@ -2137,10 +2142,10 @@ PopupEH(Widget    widget,	/* unused */
       /* Press & release in the scrollbar shouldn't popdown the list. */
       if ((cb->combo_box.vsb &&
 	   XtIsRealized(cb->combo_box.vsb) &&
-	   (event->xbutton.window == XtWindow(cb->combo_box.vsb))) ||
+	   (_XmPlatEventWindow (_XmPlatEventOf (event)) == XtWindow(cb->combo_box.vsb))) ||
 	  (cb->combo_box.hsb &&
 	   XtIsRealized(cb->combo_box.hsb) &&
-	   (event->xbutton.window == XtWindow(cb->combo_box.hsb))))
+	   (_XmPlatEventWindow (_XmPlatEventOf (event)) == XtWindow(cb->combo_box.hsb))))
 	cb->combo_box.scrolling = TRUE;
       break;
 
@@ -2178,7 +2183,7 @@ SBBtnDownEH(Widget    w,
 
   XtGrabPointer(w, False, Events | PointerMotionMask | ButtonMotionMask,
 		GrabModeAsync, GrabModeAsync,
-		None, shell->grab_shell.cursor, event->xbutton.time);
+		None, shell->grab_shell.cursor, _XmPlatEventTime (_XmPlatEventOf (event)));
 }
 
 /*ARGSUSED*/
@@ -2196,9 +2201,9 @@ SBBtnUpEH(Widget    w,		/* unused */
   XtGrabPointer((Widget) shell, shell->grab_shell.owner_events, 
 		Events,
 		shell->grab_shell.grab_style, GrabModeAsync,
-		None, shell->grab_shell.cursor, event->xbutton.time);
+		None, shell->grab_shell.cursor, _XmPlatEventTime (_XmPlatEventOf (event)));
   if (shell->grab_shell.grab_style == GrabModeSync)
-    XAllowEvents(XtDisplay(shell), SyncPointer, event->xbutton.time);
+    XAllowEvents(XtDisplay(shell), SyncPointer, _XmPlatEventTime (_XmPlatEventOf (event)));
 }
 
 /*

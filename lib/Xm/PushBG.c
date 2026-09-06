@@ -730,9 +730,11 @@ Activate(
   (* (expose)) ((Widget) pb, event, (Region) NULL);
   
   /* CR 9181: Consider clipping when testing visibility. */
-  if ((event->xany.type == ButtonPress || event->xany.type == ButtonRelease) &&
-      _XmGetPointVisibility((Widget)pb, 
-			    event->xbutton.x_root, event->xbutton.y_root))
+  {
+    XmPlatEvent pev = _XmPlatEventOf (event) ;
+    if ((_XmPlatEventIsButtonPress (pev) || _XmPlatEventIsButtonRelease (pev)) &&
+	_XmGetPointVisibility((Widget)pb, 
+			      _XmPlatEventRootX (pev), _XmPlatEventRootY (pev)))
     {
       call_value.reason = XmCR_ACTIVATE;
       call_value.event = event;
@@ -752,6 +754,7 @@ Activate(
 			      &call_value);
 	}
     }
+  }
 }
 
 static void 
@@ -860,7 +863,7 @@ ArmAndActivate(
   
   if (event)
     {
-      if (event->type == KeyPress)  
+      if (_XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventKey))
 	PBG_ClickCount (pb) = 1;
     }
   
@@ -2604,14 +2607,16 @@ ActivateCommonG(
 {
   if (LabG_IsMenupane(pb))
     {
-      if (event->type == ButtonRelease)
+      if (_XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventPointer) &&
+	  _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
 	BtnUp ((Widget) pb, event);
       else  /* assume KeyRelease */
 	KeySelect ((Widget) pb, event);
     }
   else
     {
-      if (event->type == ButtonRelease)
+      if (_XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventPointer) &&
+	  _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
 	{
 	  Activate (pb, event);
 	  Disarm (pb, event);

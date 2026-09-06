@@ -32,6 +32,7 @@ static char rcsid[] = "$XConsortium: UniqueEvnt.c /main/14 1996/11/25 11:33:58 p
 #endif
 
 #include <limits.h>
+#include "XmPlat/XmPlatP.h"
 #include <Xm/XmP.h>
 #include <Xm/DisplayP.h>
 #include "UniqueEvnI.h"
@@ -76,11 +77,14 @@ static Time
 ExtractTime(
         XEvent *event )
 {
-   if ((event->type == ButtonPress) || (event->type == ButtonRelease))
-      return (event->xbutton.time);
+   {
+     XmPlatEvent pev = _XmPlatEventOf (event) ;
+     if (_XmPlatEventIsButtonPress (pev) || _XmPlatEventIsButtonRelease (pev))
+       return (_XmPlatEventTime (pev)) ;
 
-   if ((event->type == KeyPress) || (event->type == KeyRelease))
-      return (event->xkey.time);
+     if (_XmPlatEventIsKeyPress (pev) || _XmPlatEventIsKeyRelease (pev))
+       return (_XmPlatEventTime (pev)) ;
+   }
 
    return ((Time) 0);
 }
@@ -110,7 +114,8 @@ static XmUniqueStamp
 GetUniqueStamp(
 	XEvent *event )
 {
-  XmDisplay xmDisplay = (XmDisplay)XmGetXmDisplay(event->xany.display);
+  XmDisplay xmDisplay = (XmDisplay)XmGetXmDisplay(
+    _XmPlatEventDisplayOf (_XmPlatEventOf (event)));
   XmUniqueStamp uniqueStamp = (XmUniqueStamp)NULL;
 
   if ((XmDisplay)NULL != xmDisplay)
@@ -201,9 +206,12 @@ ManipulateEvent(
 	 * So if the serial numbers match,  we use the timestamps.
 	 */
 
-	if ( Later(uniqueStamp->serial, event->xany.serial) 
-	     ||  ( uniqueStamp->serial == event->xany.serial &&
-		   Later(uniqueStamp->time, event->xbutton.time)))
+	if ( Later(uniqueStamp->serial,
+		   _XmPlatEventSerial (_XmPlatEventOf (event))) 
+	     ||  ( uniqueStamp->serial ==
+		   _XmPlatEventSerial (_XmPlatEventOf (event)) &&
+		   Later(uniqueStamp->time,
+			 _XmPlatEventTime (_XmPlatEventOf (event)))))
 	  return (TRUE);
 	else
 	  return (FALSE);
@@ -212,8 +220,8 @@ ManipulateEvent(
       case XmRECORD_EVENT:
       {
          /* Save the fingerprints for the new event */
-         uniqueStamp->type = event->type;
-         uniqueStamp->serial = event->xany.serial;
+         uniqueStamp->type = _XmPlatEventKind (_XmPlatEventOf (event));
+         uniqueStamp->serial = _XmPlatEventSerial (_XmPlatEventOf (event));
          uniqueStamp->time = ExtractTime(event);
 
          return (TRUE);

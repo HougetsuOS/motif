@@ -5045,9 +5045,10 @@ HandleFocusEvents(Widget w,
   PosToXY(tw, tw->text.cursor_position, &xmim_point.x, &xmim_point.y);
   (void)_XmTextGetDisplayRect((Widget)tw, &xmim_area);
   
-  switch (event->type) {
-  case FocusIn:
-    if (event->xfocus.send_event && !(newhasfocus)) {
+  switch (_XmPlatEventKind (_XmPlatEventOf (event))) {
+  case XmPlatEventFocus:
+    if (_XmPlatEventIsFocusIn (_XmPlatEventOf (event)) &&
+	_XmPlatEventSendEvent (_XmPlatEventOf (event)) && !(newhasfocus)) {
       cb.reason = XmCR_FOCUS;
       cb.event = event;
       XtCallCallbackList (w, tw->text.focus_callback, (Opaque) &cb);
@@ -5059,16 +5060,18 @@ HandleFocusEvents(Widget w,
       XmImSetFocusValues(w, args, n);
     }
     break;
-  case FocusOut:
-    if (event->xfocus.send_event && newhasfocus) {
+    if (_XmPlatEventIsFocusOut (_XmPlatEventOf (event)) &&
+	_XmPlatEventSendEvent (_XmPlatEventOf (event)) && newhasfocus) {
       newhasfocus = False;
       XmImUnsetFocus(w);
     }
     break;
-  case EnterNotify:
+  case XmPlatEventCrossing:
+    if (! _XmPlatEventIsEnter (_XmPlatEventOf (event)))
+      break ;
     if ((_XmGetFocusPolicy(w) != XmEXPLICIT) && !(newhasfocus) &&
-	event->xcrossing.focus &&
-	(event->xcrossing.detail != NotifyInferior)) {
+	_XmPlatEventFocus (_XmPlatEventOf (event)) &&
+	(_XmPlatEventDetail (_XmPlatEventOf (event)) != NotifyInferior)) {
       cb.reason = XmCR_FOCUS;
       cb.event = event;
       XtCallCallbackList (w, tw->text.focus_callback, (Opaque) &cb);
@@ -5078,11 +5081,9 @@ HandleFocusEvents(Widget w,
       XtSetArg(args[n], XmNarea, &xmim_area); n++;
       XmImSetFocusValues(w, args, n);
     }
-    break;
-  case LeaveNotify:
     if ((_XmGetFocusPolicy(w) != XmEXPLICIT) && newhasfocus &&
-	event->xcrossing.focus &&
-	(event->xcrossing.detail != NotifyInferior)) {
+	_XmPlatEventFocus (_XmPlatEventOf (event)) &&
+	(_XmPlatEventDetail (_XmPlatEventOf (event)) != NotifyInferior)) {
       newhasfocus = False;
       XmImUnsetFocus(w);
     }
@@ -5116,7 +5117,8 @@ HandleGraphicsExposure(Widget w,
 {
   XmTextWidget tw = (XmTextWidget) w;
   OutputData data = tw->text.output->data;
-  if (event->xany.type == GraphicsExpose) {
+  if (_XmPlatEventIsType (_XmPlatEventOf (event),
+			  XmPlatEventGraphicsExpose)) {
     XGraphicsExposeEvent *xe = (XGraphicsExposeEvent *) event;
     if (data->exposehscroll != 0) {
       xe->x = 0;
@@ -5132,7 +5134,8 @@ HandleGraphicsExposure(Widget w,
       if (data->exposevscroll) data->exposevscroll--;
     }
   }
-  if (event->xany.type == NoExpose) {
+  if (_XmPlatEventIsType (_XmPlatEventOf (event),
+			  XmPlatEventNoExpose)) {
     if (data->exposehscroll) data->exposehscroll--;
     if (data->exposevscroll) data->exposevscroll--;
   }
@@ -5258,7 +5261,7 @@ OutputExpose(Widget w,
     font_may_have_changed = True;
   }
   
-  if (event->xany.type != Expose)
+  if (! _XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventExpose))
     return;
   
   if (XtIsSensitive(w) && data->hasfocus)

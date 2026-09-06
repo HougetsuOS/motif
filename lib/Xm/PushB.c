@@ -2094,9 +2094,14 @@ Arm(
   
   pb->pushbutton.armed = TRUE;
   
-  if (event != NULL &&
-      (event->xany.type == ButtonPress || event->xany.type == ButtonRelease))
-    pb->pushbutton.armTimeStamp = event->xbutton.time;
+  if (event != NULL)
+    {
+      XmPlatEvent pev = _XmPlatEventOf (event) ;
+      if (_XmPlatEventIsButtonPress (pev) || _XmPlatEventIsButtonRelease (pev))
+	pb->pushbutton.armTimeStamp = _XmPlatEventTime (pev) ;
+      else
+	pb->pushbutton.armTimeStamp = 0 ;
+    }
   else
     pb->pushbutton.armTimeStamp = 0;
   
@@ -2169,7 +2174,8 @@ MultiActivate(
    */
   if (pb->pushbutton.multiClick == XmMULTICLICK_KEEP)
     {
-      if ((buttonEvent->xbutton.time - pb->pushbutton.armTimeStamp) >
+      if ((_XmPlatEventTime (_XmPlatEventOf (buttonEvent)) -
+	   pb->pushbutton.armTimeStamp) >
 	  XtGetMultiClickTime(XtDisplay(pb)))
 	pb->pushbutton.click_count = 1;
       else
@@ -2202,8 +2208,11 @@ ActivateCommon(
   (* expose)(wid, event, (Region) NULL);
   
   /* CR 9181: Consider clipping when testing visibility. */
-  if ((event->xany.type == ButtonPress || event->xany.type == ButtonRelease) &&
-      _XmGetPointVisibility(wid, event->xbutton.x_root, event->xbutton.y_root))
+  {
+    XmPlatEvent pev = _XmPlatEventOf (event) ;
+    if ((_XmPlatEventIsButtonPress (pev) || _XmPlatEventIsButtonRelease (pev)) &&
+	_XmGetPointVisibility(wid, _XmPlatEventRootX (pev),
+			      _XmPlatEventRootY (pev)))
     {
       call_value.reason = XmCR_ACTIVATE;
       call_value.event = event;
@@ -2228,6 +2237,7 @@ ActivateCommon(
 			      &call_value);
 	}
     }
+  }
 }
 
 
@@ -2536,7 +2546,7 @@ BtnDown(
   if (menuSTrait == NULL) 
     return;
   
-  if (event && (event->type == ButtonPress))
+  if (event && _XmPlatEventIsButtonPress (_XmPlatEventOf (event)))
     validButton = menuSTrait->verifyButton(XtParent(pb), event);
   
   if (!validButton)
@@ -2618,7 +2628,7 @@ BtnUp(
   if (menuSTrait == NULL) 
     return;
   
-  if (event && (event->type == ButtonRelease))
+  if (event && _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
     validButton = menuSTrait->verifyButton(parent, event);
   
   if (!validButton || (pb->pushbutton.armed == FALSE))
@@ -2838,7 +2848,8 @@ Leave(
       Boolean etched_in = dpy->display.enable_etched_in_menu;
 
       if (_XmGetInDragMode((Widget)pb) && pb->pushbutton.armed &&
-          (/* !ActiveTearOff || */ event->xcrossing.mode == NotifyNormal))
+          (/* !ActiveTearOff || */ _XmPlatEventMode (_XmPlatEventOf (event)) ==
+	   XmPlatNotifyNormal))
 	{
 	  pb->pushbutton.armed = FALSE;
   

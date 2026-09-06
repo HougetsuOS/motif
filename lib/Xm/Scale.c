@@ -3250,18 +3250,21 @@ StartDrag (Widget  w,
       BUTTON2_ADJUST and the trigger was button2 */
    if (! dpy -> display.enable_unselectable_drag ||
        (dpy -> display.enable_btn1_transfer == XmBUTTON2_ADJUST &&
-	event && event -> xany.type == ButtonPress &&
-	event -> xbutton.button == 2)) return;
+	event && _XmPlatEventIsButtonPress (_XmPlatEventOf (event)) &&
+	_XmPlatEventButton (_XmPlatEventOf (event)) == 2)) return;
 
    /* first check that the click is OK: button 2 and in the value label */
-   if ((!sw->scale.show_value) ||
-       (event->xbutton.button != Button2) ||
-       ((event->xbutton.x < sw->scale.show_value_x) ||
-	(event->xbutton.y < sw->scale.show_value_y) ||
-	(event->xbutton.x > sw->scale.show_value_x + 
-	 sw->scale.show_value_width) ||
-	(event->xbutton.y > sw->scale.show_value_y +
-	 sw->scale.show_value_height))) return ;
+   {
+     XmPlatEvent pev = _XmPlatEventOf (event) ;
+     if ((!sw->scale.show_value) ||
+	 (_XmPlatEventButton (pev) != Button2) ||
+	 ((_XmPlatEventX (pev) < sw->scale.show_value_x) ||
+	  (_XmPlatEventY (pev) < sw->scale.show_value_y) ||
+	  (_XmPlatEventX (pev) > sw->scale.show_value_x + 
+	   sw->scale.show_value_width) ||
+	  (_XmPlatEventY (pev) > sw->scale.show_value_y +
+	   sw->scale.show_value_height))) return ;
+   }
    
    drag_icon = XmeGetTextualDragIcon(w);
 

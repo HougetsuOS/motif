@@ -1575,7 +1575,7 @@ Redisplay(
 	XSetRegion(XtDisplay(wid), cw->container.normalGC, region);
 	XSetForeground(XtDisplay(wid), cw->container.normalGC,
 		       cw->core.background_pixel);
-	_XmPlatFillOneRect (XtDisplay (wid), XtWindow (wid), cw->container.normalGC, event->xexpose.x, event->xexpose.y, event->xexpose.width, event->xexpose.height);
+	_XmPlatFillOneRect (XtDisplay (wid), XtWindow (wid), cw->container.normalGC, _XmPlatEventX (_XmPlatEventOf (event)), _XmPlatEventY (_XmPlatEventOf (event)), _XmPlatEventWidth (_XmPlatEventOf (event)), _XmPlatEventHeight (_XmPlatEventOf (event)));
 	_XmPlatClrClip (XtDisplay (wid), cw->container.normalGC);
 	XSetForeground(XtDisplay(wid), cw->container.normalGC,
 		       cw->manager.foreground);
@@ -4079,7 +4079,7 @@ ContainerStartTransfer(
 	if (CtrLayoutIsOUTLINE_DETAIL(wid))
 	    {
             cwid = (Widget)_XmInputForGadget(wid,
-				event->xbutton.x,event->xbutton.y);
+				_XmPlatEventX (_XmPlatEventOf (event)),_XmPlatEventY (_XmPlatEventOf (event)));
             if ((cwid) && CtrOUTLINE_BUTTON(cwid))
                 {
                 XtCallActionProc(wid,"ManagerGadgetDrag",
@@ -4195,10 +4195,10 @@ ContainerPrimaryCopy(
 	 * the data transfer operation.
 	 */
 	loc_data = (XPoint *) XtMalloc(sizeof(XPoint));
-	loc_data->x = event->xbutton.x;
-	loc_data->y = event->xbutton.y;
+	loc_data->x = _XmPlatEventX (_XmPlatEventOf (event));
+	loc_data->y = _XmPlatEventY (_XmPlatEventOf (event));
         XmePrimarySink(wid,XmCOPY,
-		       (XtPointer) loc_data,event->xbutton.time);
+		       (XtPointer) loc_data,_XmPlatEventTime (_XmPlatEventOf (event)));
 }
 
 /************************************************************************
@@ -4220,10 +4220,10 @@ ContainerPrimaryLink(
 	 * the data transfer operation.
 	 */
 	loc_data = (XPoint *) XtMalloc(sizeof(XPoint));
-	loc_data->x = event->xbutton.x;
-	loc_data->y = event->xbutton.y;
+	loc_data->x = _XmPlatEventX (_XmPlatEventOf (event));
+	loc_data->y = _XmPlatEventY (_XmPlatEventOf (event));
         XmePrimarySink(wid,XmLINK,
-		       (XtPointer) loc_data,event->xbutton.time);
+		       (XtPointer) loc_data,_XmPlatEventTime (_XmPlatEventOf (event)));
 }
 
 /************************************************************************
@@ -4245,10 +4245,10 @@ ContainerPrimaryMove(
 	 * the data transfer operation.
 	 */
 	loc_data = (XPoint *) XtMalloc(sizeof(XPoint));
-	loc_data->x = event->xbutton.x;
-	loc_data->y = event->xbutton.y;
+	loc_data->x = _XmPlatEventX (_XmPlatEventOf (event));
+	loc_data->y = _XmPlatEventY (_XmPlatEventOf (event));
         XmePrimarySink(wid,XmMOVE,
-		       (XtPointer) loc_data,event->xbutton.time);
+		       (XtPointer) loc_data,_XmPlatEventTime (_XmPlatEventOf (event)));
 }
 
 /************************************************************************
@@ -4300,7 +4300,7 @@ ContainerHandleBtn1Down(
     return;
   }
 
-  cwid = ObjectAtPoint(wid, event->xbutton.x,event->xbutton.y);
+  cwid = ObjectAtPoint(wid, _XmPlatEventX (_XmPlatEventOf (event)),_XmPlatEventY (_XmPlatEventOf (event)));
   if (cwid != (Widget) NULL)
     cwidc = GetContainerConstraint(cwid);
   else
@@ -4348,8 +4348,8 @@ ContainerHandleBtn1Motion(
     {
       int dx, dy;
 
-      dx = event->xmotion.x - cw->container.anchor_point.x;
-      dy = event->xmotion.y - cw->container.anchor_point.y;
+      dx = _XmPlatEventX (_XmPlatEventOf (event)) - cw->container.anchor_point.x;
+      dy = _XmPlatEventY (_XmPlatEventOf (event)) - cw->container.anchor_point.y;
 
       if (ABS(dx) >= MOTION_THRESHOLD ||
 	  ABS(dy) >= MOTION_THRESHOLD) {
@@ -4439,8 +4439,8 @@ ContainerHandleBtn2Motion(
     {
       int dx, dy;
 
-      dx = event->xmotion.x - cw->container.anchor_point.x;
-      dy = event->xmotion.y - cw->container.anchor_point.y;
+      dx = _XmPlatEventX (_XmPlatEventOf (event)) - cw->container.anchor_point.x;
+      dy = _XmPlatEventY (_XmPlatEventOf (event)) - cw->container.anchor_point.y;
 
       if (ABS(dx) >= MOTION_THRESHOLD ||
 	  ABS(dy) >= MOTION_THRESHOLD) {
@@ -4488,7 +4488,7 @@ ContainerBeginSelect(
   cw->container.cancel_pressed = False;
   if (CtrLayoutIsOUTLINE_DETAIL(wid))
     {
-    cwid = (Widget)_XmInputForGadget(wid,event->xbutton.x,event->xbutton.y);
+    cwid = (Widget)_XmInputForGadget(wid,_XmPlatEventX (_XmPlatEventOf (event)),_XmPlatEventY (_XmPlatEventOf (event)));
     if ((cwid) && CtrOUTLINE_BUTTON(cwid))
 	{
 	XtCallActionProc(wid,"ManagerGadgetArm",event,params,*num_params);
@@ -4519,8 +4519,8 @@ ContainerButtonMotion(
 	if (cw->container.scroll_proc_id) {
 	    Widget clip = XtParent(wid);
 	    int rx, ry;		/* event coords relative to the clip */
-	    rx = event->xmotion.x + (int)wid->core.x;
-	    ry = event->xmotion.y + (int)wid->core.y;
+	    rx = _XmPlatEventX (_XmPlatEventOf (event)) + (int)wid->core.x;
+	    ry = _XmPlatEventY (_XmPlatEventOf (event)) + (int)wid->core.y;
 	    if (rx <= (int)clip->core.x) {
 		cw->container.LeaveDir |= LEFTLEAVE;
 		cw->container.LeaveDir &= ~RIGHTLEAVE;
@@ -4606,7 +4606,7 @@ ContainerEndSelect(
     }
   if (CtrPolicyIsSINGLE(cw))
     {
-      GainPrimary(wid,event->xbutton.time);
+      GainPrimary(wid,_XmPlatEventTime (_XmPlatEventOf (event)));
       CallSelectCB(wid,event,XmAUTO_UNSET);
       return;
     }
@@ -4649,7 +4649,7 @@ ContainerEndSelect(
 	/* CtrPolicyIsMULTIPLE || CtrPolicyIsEXTENDED */
 	SetMarkedCwids(wid);
     }
-  GainPrimary(wid,event->xbutton.time);
+  GainPrimary(wid,_XmPlatEventTime (_XmPlatEventOf (event)));
   if (CtrIsAUTO_SELECT(cw))
     if (selection_changes)
       CallSelectCB(wid,event,XmAUTO_CHANGE);
@@ -4675,7 +4675,7 @@ ContainerBeginToggle(
 	if (CtrLayoutIsOUTLINE_DETAIL(wid))
 	    {
             cwid = (Widget)_XmInputForGadget(wid,
-				event->xbutton.x,event->xbutton.y);
+				_XmPlatEventX (_XmPlatEventOf (event)),_XmPlatEventY (_XmPlatEventOf (event)));
             if ((cwid) && CtrOUTLINE_BUTTON(cwid))
             	{
                 XtCallActionProc(wid,"ManagerGadgetTraverseCurrent",
@@ -4735,7 +4735,7 @@ ContainerBeginExtend(
 	if (CtrLayoutIsOUTLINE_DETAIL(wid))
 	    {
 	    current_cwid = (Widget)_XmInputForGadget(wid,
-				event->xbutton.x,event->xbutton.y);
+				_XmPlatEventX (_XmPlatEventOf (event)),_XmPlatEventY (_XmPlatEventOf (event)));
 	    if ((current_cwid) && CtrOUTLINE_BUTTON(current_cwid))
 		{
 		XtCallActionProc(wid,"ManagerGadgetArm",
@@ -4750,7 +4750,7 @@ ContainerBeginExtend(
 	 	return;
 	if (CtrLayoutIsSPATIAL(cw))
 		return;
-	current_cwid = ObjectAtPoint(wid,event->xbutton.x,event->xbutton.y);
+	current_cwid = ObjectAtPoint(wid,_XmPlatEventX (_XmPlatEventOf (event)),_XmPlatEventY (_XmPlatEventOf (event)));
 	/* Handle ObjectAtPoint returning an outline button */
 	if ((current_cwid) && CtrOUTLINE_BUTTON(current_cwid))
 	  current_cwid = NULL;
@@ -4806,7 +4806,7 @@ ContainerEndExtend(
                         _XmPlatClearOneRect (XtDisplay (wid), XtWindow (wid), cw->container.marquee_smallest.x, cw->container.marquee_smallest.y, cw->container.marquee_largest.x, cw->container.marquee_largest.y);
                 }
 	SetMarkedCwids(wid);
-	GainPrimary(wid,event->xbutton.time);
+	GainPrimary(wid,_XmPlatEventTime (_XmPlatEventOf (event)));
 	if (CtrIsAUTO_SELECT(cw))
 		if (selection_changes)
                         CallSelectCB(wid,event,XmAUTO_CHANGE);
@@ -4849,7 +4849,7 @@ ContainerCancel(
 						cw->container.anchor_cwid);
 			if (CtrIsAUTO_SELECT(cw) && selection_changes)
 				{
-				GainPrimary(wid,event->xbutton.time);
+				GainPrimary(wid,_XmPlatEventTime (_XmPlatEventOf (event)));
 				CallSelectCB(wid,event,XmAUTO_CANCEL);
 				}
 			}
@@ -4866,7 +4866,7 @@ ContainerCancel(
                 }
 	if (CtrIsAUTO_SELECT(cw) && selection_changes)
 		{
-		GainPrimary(wid,event->xbutton.time);
+		GainPrimary(wid,_XmPlatEventTime (_XmPlatEventOf (event)));
 		CallSelectCB(wid,event,XmAUTO_CANCEL);
 		}
 }
@@ -4923,7 +4923,7 @@ ContainerExtend(
 	cw->container.no_auto_sel_changes |= 
 			MarkCwidsInRange(wid,cw->container.anchor_cwid,
 					focus_cwid,(Boolean)False);
-	GainPrimary(wid,event->xbutton.time);
+	GainPrimary(wid,_XmPlatEventTime (_XmPlatEventOf (event)));
 	if (CtrIsAUTO_SELECT(cw))
 		{
 		CallSelectCB(wid,event,XmAUTO_BEGIN);
@@ -5020,7 +5020,7 @@ ContainerSelectAll(
 		return;
 		}
 	cw->container.no_auto_sel_changes |= SelectAllCwids(wid);
-	GainPrimary(wid,event->xbutton.time);
+	GainPrimary(wid,_XmPlatEventTime (_XmPlatEventOf (event)));
 	if (CtrIsAUTO_SELECT(cw))
 		{
 		CallSelectCB(wid,event,XmAUTO_BEGIN);
@@ -5046,7 +5046,7 @@ ContainerDeselectAll(
 	XmContainerWidget	cw = (XmContainerWidget)wid;
 
 	cw->container.no_auto_sel_changes |= DeselectAllCwids(wid);
-	GainPrimary(wid,event->xbutton.time);
+	GainPrimary(wid,_XmPlatEventTime (_XmPlatEventOf (event)));
 	if (CtrIsAUTO_SELECT(cw) && (!CtrPolicyIsSINGLE(cw)))
 		{
 		CallSelectCB(wid,event,XmAUTO_BEGIN);
@@ -7233,7 +7233,7 @@ StartSelect(
 	Widget			current_cwid;
 	XmContainerConstraint	c = NULL;
 
-	current_cwid = ObjectAtPoint(wid,event->xbutton.x,event->xbutton.y);
+	current_cwid = ObjectAtPoint(wid,_XmPlatEventX (_XmPlatEventOf (event)),_XmPlatEventY (_XmPlatEventOf (event)));
 	/* Handle ObjectAtPoint returning an outline button */
 	if ((current_cwid) && CtrOUTLINE_BUTTON(current_cwid))
 	  current_cwid = NULL;
@@ -7335,7 +7335,7 @@ StartSelect(
 		{
 		_XmPlatClrClip (XtDisplay (wid), cw->container.marqueeGC);
 		RecalcMarquee(wid,cw->container.anchor_cwid,
-				event->xbutton.x,event->xbutton.y);
+				_XmPlatEventX (_XmPlatEventOf (event)),_XmPlatEventY (_XmPlatEventOf (event)));
 		DrawMarquee(wid);
 		cw->container.marquee_drawn = True;
 		}
@@ -7355,13 +7355,13 @@ SetupDrag(Widget wid,
   Time			click_time;
 
   /* Figure out double clicking */
-  current_cwid = ObjectAtPoint(wid,event->xbutton.x,event->xbutton.y);
+  current_cwid = ObjectAtPoint(wid,_XmPlatEventX (_XmPlatEventOf (event)),_XmPlatEventY (_XmPlatEventOf (event)));
   /* Handle ObjectAtPoint returning an outline button */
   if ((current_cwid) && CtrOUTLINE_BUTTON(current_cwid))
     current_cwid = NULL;
 
   multi_click_time = XtGetMultiClickTime(XtDisplay(wid));
-  click_time = event->xbutton.time;
+  click_time = _XmPlatEventTime (_XmPlatEventOf (event));
   if ((cw->container.anchor_cwid == current_cwid) &&
       ((click_time - cw->container.last_click_time) < multi_click_time))
     {
@@ -7372,14 +7372,14 @@ SetupDrag(Widget wid,
       return(True);
     }
 
-  cw->container.last_click_time = event->xbutton.time;
+  cw->container.last_click_time = _XmPlatEventTime (_XmPlatEventOf (event));
 
-  cw->container.anchor_point.x = event->xbutton.x;
-  cw->container.marquee_smallest.x = event->xbutton.x;
-  cw->container.marquee_largest.x = event->xbutton.x;
-  cw->container.anchor_point.y = event->xbutton.y;
-  cw->container.marquee_smallest.y = event->xbutton.y;
-  cw->container.marquee_largest.y = event->xbutton.y;
+  cw->container.anchor_point.x = _XmPlatEventX (_XmPlatEventOf (event));
+  cw->container.marquee_smallest.x = _XmPlatEventX (_XmPlatEventOf (event));
+  cw->container.marquee_largest.x = _XmPlatEventX (_XmPlatEventOf (event));
+  cw->container.anchor_point.y = _XmPlatEventY (_XmPlatEventOf (event));
+  cw->container.marquee_smallest.y = _XmPlatEventY (_XmPlatEventOf (event));
+  cw->container.marquee_largest.y = _XmPlatEventY (_XmPlatEventOf (event));
   return(False);
 }
 
@@ -7400,7 +7400,7 @@ ProcessButtonMotion(
 	Boolean			find_anchor = False;
 	XmContainerConstraint	c;
 
-        current_cwid = ObjectAtPoint(wid,event->xbutton.x,event->xbutton.y);
+        current_cwid = ObjectAtPoint(wid,_XmPlatEventX (_XmPlatEventOf (event)),_XmPlatEventY (_XmPlatEventOf (event)));
 	/* Handle ObjectAtPoint returning an outline button */
 	if ((current_cwid) && CtrOUTLINE_BUTTON(current_cwid)) 
 	  current_cwid = NULL;
@@ -7449,7 +7449,7 @@ ProcessButtonMotion(
 					current_cwid,(Boolean)True));
 	/* CUA Marquee Selection Technique */
 	find_anchor = (cw->container.anchor_cwid == NULL);
-	RecalcMarquee(wid,current_cwid,event->xbutton.x,event->xbutton.y);
+	RecalcMarquee(wid,current_cwid,_XmPlatEventX (_XmPlatEventOf (event)),_XmPlatEventY (_XmPlatEventOf (event)));
 	selection_changes = MarkCwidsInMarquee(wid,find_anchor,True);
 	DrawMarquee(wid);
 	cw->container.marquee_drawn = True;
@@ -8029,7 +8029,7 @@ KBSelect(
 			cw->container.selection_state = XmSELECTED;
 		}
 	cw->container.no_auto_sel_changes |= MarkCwid(focus_cwid,False);
-	GainPrimary(wid,event->xbutton.time);
+	GainPrimary(wid,_XmPlatEventTime (_XmPlatEventOf (event)));
 	if (CtrIsAUTO_SELECT(cw))
 		{
 		CallSelectCB(wid,event,XmAUTO_BEGIN);
@@ -8957,8 +8957,8 @@ DragStart(
 	return;		/* No context record, shouldn't happen */
 
     cw->container.druggee = ObjectAtPoint((Widget)cw,
-			cw->container.transfer_action->event->xbutton.x,
-			cw->container.transfer_action->event->xbutton.y);
+			_XmPlatEventX (_XmPlatEventOf (cw->container.transfer_action->event)),
+			_XmPlatEventY (_XmPlatEventOf (cw->container.transfer_action->event)));
     /* Handle ObjectAtPoint returning an outline button */
     if ((cw->container.druggee) && CtrOUTLINE_BUTTON(cw->container.druggee)) 
       cw->container.druggee = NULL;
@@ -8972,8 +8972,8 @@ DragStart(
 	}
     g = (XmGadget)cw->container.druggee;
 
-    offsetx = cw->container.transfer_action->event->xbutton.x - g->rectangle.x;
-    offsety = cw->container.transfer_action->event->xbutton.y - g->rectangle.y;
+    offsetx = _XmPlatEventX (_XmPlatEventOf (cw->container.transfer_action->event)) - g->rectangle.x;
+    offsety = _XmPlatEventY (_XmPlatEventOf (cw->container.transfer_action->event)) - g->rectangle.y;
 
     cw->container.drag_offset_x = offsetx;
     cw->container.drag_offset_y = offsety;
@@ -9380,8 +9380,8 @@ LeaveHandler(
 
     /* first lets see which direction we left the window */
     cw->container.LeaveDir = 0;
-    rx = event->xcrossing.x + (int)wid->core.x;
-    ry = event->xcrossing.y + (int)wid->core.y;
+    rx = _XmPlatEventX (_XmPlatEventOf (event)) + (int)wid->core.x;
+    ry = _XmPlatEventY (_XmPlatEventOf (event)) + (int)wid->core.y;
     if (rx <= (int)clip->core.x)
 	cw->container.LeaveDir |= LEFTLEAVE;
     else if (rx >= (int)clip->core.width)

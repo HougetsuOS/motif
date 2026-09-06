@@ -2618,13 +2618,17 @@ ProcessDrag(Widget w,
      BUTTON2_ADJUST and the trigger was button2 */
   if (! dpy -> display.enable_unselectable_drag ||
       (dpy -> display.enable_btn1_transfer == XmBUTTON2_ADJUST &&
-       event && event -> xany.type == ButtonPress &&
-       event -> xbutton.button == 2)) return;
+       event && _XmPlatEventIsButtonPress (_XmPlatEventOf (event)) &&
+       _XmPlatEventButton (_XmPlatEventOf (event)) == 2)) return;
 
   /* CR 5141: Don't allow multi-button drags; they just cause confusion. */
-  if (event && ! (event->xbutton.state &
-	 ~((Button1Mask >> 1) << event->xbutton.button) &
-	 (Button1Mask | Button2Mask | Button3Mask | Button4Mask | Button5Mask)))
+  if (event)
+    {
+      XmPlatEvent pev = _XmPlatEventOf (event) ;
+      if (! (_XmPlatEventState (pev) &
+	     ~((Button1Mask >> 1) << _XmPlatEventButton (pev)) &
+	     (Button1Mask | Button2Mask | Button3Mask | Button4Mask |
+	      Button5Mask)))
     {
       n = 0;
       XtSetArg(args[n], XmNcursorBackground, lw->core.background_pixel), n++;
@@ -2643,6 +2647,7 @@ ProcessDrag(Widget w,
 	}
       XtSetArg(args[n], XmNdragOperations, XmDROP_COPY), n++;
       (void) XmeDragSource(w, NULL, event, args, n);
+    }
     }
 }
 

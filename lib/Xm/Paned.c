@@ -1438,18 +1438,10 @@ _DrawTrackLines(XmPanedWidget pw, Boolean erase)
 static int
 GetEventLocation(XmPanedWidget pw, XEvent *event)
 {
-    switch (event->xany.type) {
-    case ButtonPress:
-    case ButtonRelease: 
-	return((IsVert(pw)) ? event->xbutton.y_root : event->xbutton.x_root);
-    case KeyPress:
-    case KeyRelease:    
-	return((IsVert(pw)) ? event->xkey.y_root : event->xkey.x_root);
-    case MotionNotify:  
-	return((IsVert(pw)) ? event->xmotion.y_root : event->xmotion.x_root);
-    default:	    
-	return XmPaned_start_loc(pw);
-    }
+    XmPlatEvent pev = _XmPlatEventOf (event) ;
+    (void) pev ;
+    return ((IsVert(pw))
+	    ? _XmPlatEventRootY (pev) : _XmPlatEventRootX (pev)) ;
 }
 
 /*	Function Name: StartSashAdjustment
@@ -1636,7 +1628,7 @@ HandleSash(Widget sash, XtPointer junk, XtPointer callData)
 
     loc = GetEventLocation(pw, event);
 
-    if (event->xany.type == KeyPress) {
+    if (_XmPlatEventIsKeyPress (_XmPlatEventOf (event))) {
 	char restptr[BUFSIZ];	/* points to the rest of the string. */
 
 	/* Get movement size */
@@ -1694,10 +1686,10 @@ HandleSash(Widget sash, XtPointer junk, XtPointer callData)
 	return;
     }
 
-    if ((event->xany.type == ButtonPress) || 
-	(event->xany.type == ButtonRelease))
+    if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)) || 
+	_XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
     {
-	if (event->xbutton.button != 1)
+	if (_XmPlatEventButton (_XmPlatEventOf (event)) != 1)
 	    return;
     }
 	

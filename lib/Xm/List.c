@@ -33,6 +33,7 @@ static char rcsid[] = "$TOG: List.c /main/47 1999/10/12 16:58:17 mgreess $"
 
 #include <string.h>
 #include <stdio.h>
+#include "XmPlat/XmPlatP.h"
 #include <X11/Xatom.h>
 #include <Xm/XmosP.h>
 #include "XmI.h"
@@ -70,7 +71,6 @@ static char rcsid[] = "$TOG: List.c /main/47 1999/10/12 16:58:17 mgreess $"
 #include "XmStringI.h"
 #include "ToolTipI.h"
 #include <Xm/XmP.h>
-#include "XmPlat/XmPlatP.h"
 
 #define FIX_1390	1
 #define FIX_1365	1
@@ -4569,6 +4569,7 @@ VerifyMotion(Widget wid,
 	     Cardinal *num_params)
 {
   XmListWidget w = (XmListWidget) wid;
+  XmPlatEvent pev = _XmPlatEventOf (event) ;
   int item;
   int interval = 100;
   register XmListWidget lw = w;
@@ -4589,10 +4590,10 @@ VerifyMotion(Widget wid,
    * correctly.
    *
    ****************/
-  if ((event->xmotion.x < (int)lw->core.width)  &&
-      (event->xmotion.x > (int)lw->core.x)      &&
-      (event->xmotion.y < (int)lw->core.height) &&
-      (event->xmotion.y >(int)lw->core.y))
+  if ((_XmPlatEventX (pev) < (int)lw->core.width)  &&
+      (_XmPlatEventX (pev) > (int)lw->core.x)      &&
+      (_XmPlatEventY (pev) < (int)lw->core.height) &&
+      (_XmPlatEventY (pev) >(int)lw->core.y))
     {
       if (lw->list.DragID) 
 	{
@@ -4603,13 +4604,13 @@ VerifyMotion(Widget wid,
   else
     {
       if (LayoutIsRtoLP(lw)) {
-	if (((event->xmotion.y >= (int)lw->core.height) &&
+	if (((_XmPlatEventY (pev) >= (int)lw->core.height) &&
 	     (lw->list.LeaveDir & TOPLEAVE)) ||
-	    ((event->xmotion.y <= (int)lw->core.y) &&
+	    ((_XmPlatEventY (pev) <= (int)lw->core.y) &&
 	     (lw->list.LeaveDir & BOTTOMLEAVE))  ||
-	    ((event->xmotion.x <= (int)lw->core.x) &&
+	    ((_XmPlatEventX (pev) <= (int)lw->core.x) &&
 	     (lw->list.LeaveDir & LEFTLEAVE))  ||
-	    ((event->xmotion.x >= (int)lw->core.width) &&
+	    ((_XmPlatEventX (pev) >= (int)lw->core.width) &&
 	     (lw->list.LeaveDir & RIGHTLEAVE)))
 	  {
 	    if (lw->list.DragID) 
@@ -4621,13 +4622,13 @@ VerifyMotion(Widget wid,
 	    return;
 	  }
       } else {
-	if (((event->xmotion.y >= (int)lw->core.height) &&
+	if (((_XmPlatEventY (pev) >= (int)lw->core.height) &&
 	     (lw->list.LeaveDir & TOPLEAVE)) ||
-	    ((event->xmotion.y <= (int)lw->core.y) &&
+	    ((_XmPlatEventY (pev) <= (int)lw->core.y) &&
 	     (lw->list.LeaveDir & BOTTOMLEAVE))  ||
-	    ((event->xmotion.x <= (int)lw->core.x) &&
+	    ((_XmPlatEventX (pev) <= (int)lw->core.x) &&
 	     (lw->list.LeaveDir & RIGHTLEAVE))  ||
-	    ((event->xmotion.x >= (int)lw->core.width) &&
+	    ((_XmPlatEventX (pev) >= (int)lw->core.width) &&
 	     (lw->list.LeaveDir & LEFTLEAVE)))
 	  {
 	    if (lw->list.DragID) 
@@ -4642,22 +4643,22 @@ VerifyMotion(Widget wid,
     }
 
   lw->list.LeaveDir = 0;
-  if (event->xmotion.y >= (int)lw->core.height)	/* Bottom */
+  if (_XmPlatEventY (pev) >= (int)lw->core.height)	/* Bottom */
     lw->list.LeaveDir |= BOTTOMLEAVE;
-  if (event->xmotion.y <= (int)lw->core.y)	/* Top */
+  if (_XmPlatEventY (pev) <= (int)lw->core.y)	/* Top */
     lw->list.LeaveDir |= TOPLEAVE;
   if (LayoutIsRtoLP(lw)) {
-    if (event->xmotion.x <= (int)lw->core.x)	/* Left */
+    if (_XmPlatEventX (pev) <= (int)lw->core.x)	/* Left */
       lw->list.LeaveDir |= RIGHTLEAVE;
-    if (event->xmotion.x >= (int)lw->core.width)/* Right */
+    if (_XmPlatEventX (pev) >= (int)lw->core.width)/* Right */
       lw->list.LeaveDir |= LEFTLEAVE;
   } else {
-    if (event->xmotion.x <= (int)lw->core.x)	/* Left */
+    if (_XmPlatEventX (pev) <= (int)lw->core.x)	/* Left */
       lw->list.LeaveDir |= LEFTLEAVE;
-    if (event->xmotion.x >= (int)lw->core.width)/* Right */
+    if (_XmPlatEventX (pev) >= (int)lw->core.width)/* Right */
       lw->list.LeaveDir |= RIGHTLEAVE;
   }
-  item = WhichItem(lw, event->xmotion.y);
+  item = WhichItem(lw, _XmPlatEventY (_XmPlatEventOf (event)));
 
   if (lw->list.LeaveDir)
     {
@@ -4717,7 +4718,7 @@ SelectElement(Widget wid,
 
   interval = (Time) lw->list.ClickInterval;
 
-  item = WhichItem(lw, event->xbutton.y);
+  item = WhichItem(lw, _XmPlatEventY (_XmPlatEventOf (event)));
 
   if ((item >= (lw->list.top_position+lw->list.visibleItemCount)) ||
       (item < lw->list.top_position) ||
@@ -4740,7 +4741,7 @@ SelectElement(Widget wid,
   if (!(lw->list.KbdSelection) &&	/* No more doubleclick from space... */
       (lw->list.DownTime != 0) &&
       (lw->list.DownCount > 0) &&
-      (event->xbutton.time < (lw->list.DownTime + interval)))
+      (_XmPlatEventTime (_XmPlatEventOf (event)) < (lw->list.DownTime + interval)))
     {
       lw->list.DownCount++;
       lw->list.DownTime = 0;
@@ -4750,7 +4751,7 @@ SelectElement(Widget wid,
   /* Else initialize the count variables. */
   lw->list.DownCount = 1;
   if (!(lw->list.KbdSelection))
-    lw->list.DownTime = event->xbutton.time;
+    lw->list.DownTime = _XmPlatEventTime (_XmPlatEventOf (event));
   lw->list.DidSelection = FALSE;
 
   /* Unselect the previous selection if needed. */
@@ -4907,7 +4908,7 @@ KbdSelectElement(Widget wid,
   XmListWidget lw = (XmListWidget) wid;
 
   /* CR 6182:  Let actions work from accelerators. */
-  if ((XtWindow((Widget) lw) == event->xany.window) &&
+  if ((XtWindow((Widget) lw) == (Window) _XmPlatEventWindow (_XmPlatEventOf (event))) &&
       !lw->list.Traversing)
     return;
 
@@ -4945,7 +4946,7 @@ UnSelectElement(Widget wid,
 
   if (!lw->list.itemCount)
     return;
-  item = WhichItem(lw, event->xbutton.y);
+  item = WhichItem(lw, _XmPlatEventY (_XmPlatEventOf (event)));
   ASSIGN_MAX(item, lw->list.top_position);
   if (item > (lw->list.top_position + lw->list.visibleItemCount))
     item = (lw->list.top_position + lw->list.visibleItemCount - 1);
@@ -5036,7 +5037,7 @@ KbdUnSelectElement(Widget wid,
   XmListWidget lw = (XmListWidget) wid;
 
   /* CR 6182:  Let actions work from accelerators. */
-  if ((XtWindow((Widget) lw) == event->xany.window) &&
+  if ((XtWindow((Widget) lw) == (Window) _XmPlatEventWindow (_XmPlatEventOf (event))) &&
       !lw->list.Traversing)
     return;
 
@@ -5934,7 +5935,7 @@ ListFocusIn(Widget wid,
 
   if (lw->primitive.traversal_on &&
       (_XmGetFocusPolicy((Widget) lw) == XmEXPLICIT) &&
-      (event->xfocus.send_event))
+      (_XmPlatEventSendEvent (_XmPlatEventOf (event))))
     {
       lw->list.Traversing = TRUE;
       if (lw->list.matchBehavior == XmQUICK_NAVIGATE)
@@ -6164,25 +6165,25 @@ ListLeave(Widget wid,
     return;
 
   lw->list.LeaveDir = 0;
-  if (event->xcrossing.y >= (int)lw->core.height)	/* Bottom */
+  if (_XmPlatEventY (_XmPlatEventOf (event)) >= (int)lw->core.height)	/* Bottom */
     {
       lw->list.LeaveDir |= BOTTOMLEAVE;
       lw->list.previous_top_position = lw->list.top_position;
     }
-  if (event->xcrossing.y <= (int)lw->core.y)		/* Top */
+  if (_XmPlatEventY (_XmPlatEventOf (event)) <= (int)lw->core.y)		/* Top */
     {
       lw->list.LeaveDir |= TOPLEAVE;
       lw->list.previous_top_position = lw->list.top_position;
     }
   if (LayoutIsRtoLP(lw)) {
-    if (event->xcrossing.x <= (int)lw->core.x)		/* Left */
+    if (_XmPlatEventX (_XmPlatEventOf (event)) <= (int)lw->core.x)		/* Left */
       lw->list.LeaveDir |= RIGHTLEAVE;
-    if (event->xcrossing.x >= (int)lw->core.width)	/* Right */
+    if (_XmPlatEventX (_XmPlatEventOf (event)) >= (int)lw->core.width)	/* Right */
       lw->list.LeaveDir |= LEFTLEAVE;
   } else {
-    if (event->xcrossing.x <= (int)lw->core.x)		/* Left */
+    if (_XmPlatEventX (_XmPlatEventOf (event)) <= (int)lw->core.x)		/* Left */
       lw->list.LeaveDir |= LEFTLEAVE;
-    if (event->xcrossing.x >= (int)lw->core.width)	/* Right */
+    if (_XmPlatEventX (_XmPlatEventOf (event)) >= (int)lw->core.width)	/* Right */
       lw->list.LeaveDir |= RIGHTLEAVE;
   }
   if (lw->list.LeaveDir == 0)
@@ -6394,7 +6395,7 @@ NormalNextElement(Widget wid,
   XmListWidget lw = (XmListWidget) wid;
 
   /* CR 6182:  Let actions work from accelerators. */
-  if ((XtWindow((Widget) lw) == event->xany.window) &&
+  if ((XtWindow((Widget) lw) == (Window) _XmPlatEventWindow (_XmPlatEventOf (event))) &&
       !lw->list.Traversing)
     return;
 
@@ -6422,7 +6423,7 @@ ShiftNextElement(Widget wid,
     return;
 
   /* CR 6182:  Let actions work from accelerators. */
-  if ((XtWindow((Widget) lw) == event->xany.window) &&
+  if ((XtWindow((Widget) lw) == (Window) _XmPlatEventWindow (_XmPlatEventOf (event))) &&
       !lw->list.Traversing)
     return;
 
@@ -6454,7 +6455,7 @@ CtrlNextElement(Widget wid,
   XmListWidget lw = (XmListWidget) wid;
 
   /* CR 6182:  Let actions work from accelerators. */
-  if ((XtWindow((Widget) lw) == event->xany.window) &&
+  if ((XtWindow((Widget) lw) == (Window) _XmPlatEventWindow (_XmPlatEventOf (event))) &&
       !lw->list.Traversing)
     return;
 
@@ -6484,7 +6485,7 @@ ExtendAddNextElement(Widget wid,
     return;
 
   /* CR 6182:  Let actions work from accelerators. */
-  if ((XtWindow((Widget) lw) == event->xany.window) &&
+  if ((XtWindow((Widget) lw) == (Window) _XmPlatEventWindow (_XmPlatEventOf (event))) &&
       !lw->list.Traversing)
     return;
 
@@ -6511,7 +6512,7 @@ NormalPrevElement(Widget wid,
   XmListWidget lw = (XmListWidget) wid;
 
   /* CR 6182:  Let actions work from accelerators. */
-  if ((XtWindow((Widget) lw) == event->xany.window) &&
+  if ((XtWindow((Widget) lw) == (Window) _XmPlatEventWindow (_XmPlatEventOf (event))) &&
       !lw->list.Traversing)
     return;
 
@@ -6539,7 +6540,7 @@ ShiftPrevElement(Widget wid,
     return;
 
   /* CR 6182:  Let actions work from accelerators. */
-  if ((XtWindow((Widget) lw) == event->xany.window) &&
+  if ((XtWindow((Widget) lw) == (Window) _XmPlatEventWindow (_XmPlatEventOf (event))) &&
       !lw->list.Traversing)
     return;
 
@@ -6569,7 +6570,7 @@ CtrlPrevElement(Widget wid,
   XmListWidget lw = (XmListWidget) wid;
 
   /* CR 6182:  Let actions work from accelerators. */
-  if ((XtWindow((Widget) lw) == event->xany.window) &&
+  if ((XtWindow((Widget) lw) == (Window) _XmPlatEventWindow (_XmPlatEventOf (event))) &&
       !lw->list.Traversing)
     return;
 
@@ -6599,7 +6600,7 @@ ExtendAddPrevElement(Widget wid,
     return;
 
   /* CR 6182:  Let actions work from accelerators. */
-  if ((XtWindow((Widget) lw) == event->xany.window) &&
+  if ((XtWindow((Widget) lw) == (Window) _XmPlatEventWindow (_XmPlatEventOf (event))) &&
       !lw->list.Traversing)
     return;
 
@@ -7129,7 +7130,7 @@ ListItemVisible(Widget wid,
 
   if (*num_params == 0)
     {
-      item = WhichItem(lw, event->xbutton.y);
+      item = WhichItem(lw, _XmPlatEventY (_XmPlatEventOf (event)));
       if (item > 0)
 	item -= lw->list.top_position;
       if ((item < 0) || (item >= lw->list.itemCount))
@@ -7221,14 +7222,14 @@ ListProcessDrag(Widget wid,
     }
 
   /* CR 5141: Don't allow multi-button drags. */
-  if (event->xbutton.state &
-      ~((Button1Mask >> 1) << event->xbutton.button) &
+  if (_XmPlatEventState (_XmPlatEventOf (event)) &
+      ~((Button1Mask >> 1) << _XmPlatEventButton (_XmPlatEventOf (event))) &
       (Button1Mask | Button2Mask | Button3Mask | Button4Mask | Button5Mask))
     return;
 
   if (!(lw->list.items && lw->list.itemCount))
     return;
-  item = WhichItem(lw, event->xbutton.y);
+  item = WhichItem(lw, _XmPlatEventY (_XmPlatEventOf (event)));
   if ((item < 0) || (item >= lw->list.itemCount))
     return;
 
@@ -7328,8 +7329,8 @@ ListProcessBtn1(Widget wid,
       /* Invoke the normal action unless already considering dragging */
       /* or a ButtonPress over a selected item. */
       if (!lw->list.drag_start_timer &&
-	  ((event->xany.type != ButtonPress) ||
-	   ((item = WhichItem(lw, event->xbutton.y)) < 0) ||
+	  (! _XmPlatEventIsButtonPress (_XmPlatEventOf (event)) ||
+	   ((item = WhichItem(lw, _XmPlatEventY (_XmPlatEventOf (event)))) < 0) ||
 	   (item >= lw->list.itemCount) ||
 	   !OnSelectedList(lw, lw->list.items[item], item)))
 	{
@@ -7337,13 +7338,13 @@ ListProcessBtn1(Widget wid,
 	}
       else
 	{
-	  switch(event->xany.type)
+	  switch (_XmPlatEventKind (_XmPlatEventOf (event)))
 	    {
 	    case ButtonPress:
 	      /* Queue a drag on the first button press only. */
 	      if ((!lw->list.drag_start_timer) &&
-		  !(event->xbutton.state &
-		    ~((Button1Mask >> 1) << event->xbutton.button) &
+		  !(_XmPlatEventState (_XmPlatEventOf (event)) &
+      ~((Button1Mask >> 1) << _XmPlatEventButton (_XmPlatEventOf (event))) &
 		    (Button1Mask | Button2Mask | Button3Mask |
 		     Button4Mask | Button5Mask)))
 		{
@@ -7391,9 +7392,9 @@ ListProcessBtn1(Widget wid,
 	      if (lw->list.drag_start_timer)
 		{
 		  int dx = ((int)lw->list.drag_event.xbutton.x_root -
-			    (int)event->xmotion.x_root);
+			    (int)_XmPlatEventRootX (_XmPlatEventOf (event)));
 		  int dy = ((int)lw->list.drag_event.xbutton.y_root -
-			    (int)event->xmotion.y_root);
+			    (int)_XmPlatEventRootY (_XmPlatEventOf (event)));
 
 		  if ((ABS(dx) > MOTION_THRESHOLD) ||
 		      (ABS(dy) > MOTION_THRESHOLD))
@@ -7455,7 +7456,7 @@ ListProcessBtn2(Widget wid,
     case XmOFF:
     case XmBUTTON2_TRANSFER:
       /* Invoke the normal action by starting a drag immediately. */
-      if (event->xany.type == ButtonPress)
+      if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)))
 	ListProcessDrag(wid, event, params, num_params);
       break;
 

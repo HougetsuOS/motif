@@ -372,6 +372,7 @@ Redisplay(Widget w, XEvent * event, Region region)
     XmOutlineWidget ow = (XmOutlineWidget) w;
     XEvent junk;
     RedispInfo info;
+    XmPlatEvent pev = _XmPlatEventOf (event) ;
     int lrx, lry;		/* local variables for lower left corner. */
 
 
@@ -390,13 +391,13 @@ Redisplay(Widget w, XEvent * event, Region region)
      * that have yet to be processed.
      */
 
-    if (event->xexpose.x < XmOutline_ul_point(ow).x) 
-	XmOutline_ul_point(ow).x = event->xexpose.x;
-    if (event->xexpose.y < XmOutline_ul_point(ow).y) 
-	XmOutline_ul_point(ow).y = event->xexpose.y;
+    if (_XmPlatEventX (pev) < XmOutline_ul_point(ow).x) 
+	XmOutline_ul_point(ow).x = _XmPlatEventX (pev);
+    if (_XmPlatEventY (pev) < XmOutline_ul_point(ow).y) 
+	XmOutline_ul_point(ow).y = _XmPlatEventY (pev);
 
-    lrx = event->xexpose.x + event->xexpose.width;
-    lry = event->xexpose.y + event->xexpose.height;
+    lrx = _XmPlatEventX (pev) + _XmPlatEventWidth (pev);
+    lry = _XmPlatEventY (pev) + _XmPlatEventHeight (pev);
 
     if (lrx > XmOutline_lr_point(ow).x) 
 	XmOutline_lr_point(ow).x = lrx;
@@ -443,10 +444,12 @@ CheckExpose(Display *disp, XEvent *event, char *info_ptr)
 {
     RedispInfo *info = (RedispInfo *) info_ptr;
 
-    if (info->found || event->xany.type != Expose)
+    if (info->found ||
+	! _XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventExpose))
       return(False);
 
-    if (event->xexpose.window == info->window)
+    if (_XmPlatEventWindow (_XmPlatEventOf (event)) ==
+	(XmPlatWindow) info->window)
       info->found = True;
 
     return(False);

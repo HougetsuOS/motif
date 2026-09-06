@@ -38,6 +38,7 @@ static char rcsid[] = "$XConsortium: GadgetUtil.c /main/16 1996/10/23 15:00:52 c
 #include <Xm/GadgetP.h>
 #include <X11/Shell.h>
 #include <X11/ShellP.h>
+#include "XmPlat/XmPlatP.h"
 #include <Xm/DropSMgr.h>
 #include "GadgetUtiI.h"
 #include "XmI.h"
@@ -150,10 +151,11 @@ XmeRedisplayGadgets(
       {
          if (region == NULL)
          {
-            if (child->core.x < event->xexpose.x + event->xexpose.width      &&
-                child->core.x + child->core.width > event->xexpose.x &&
-                child->core.y < event->xexpose.y + event->xexpose.height     &&
-                child->core.y + child->core.height > event->xexpose.y)
+	    XmPlatEvent pev = _XmPlatEventOf (event) ;
+            if (child->core.x < _XmPlatEventX (pev) + (int) _XmPlatEventWidth (pev) &&
+                child->core.x + child->core.width > _XmPlatEventX (pev) &&
+                child->core.y < _XmPlatEventY (pev) + (int) _XmPlatEventHeight (pev) &&
+                child->core.y + child->core.height > _XmPlatEventY (pev))
             {
 		
 	       _XmProcessLock();
@@ -205,78 +207,63 @@ _XmDispatchGadgetInput(
    {
       if (event != NULL) 
       {
-         XEvent synth_event;
+	 XmPlatEvent pev = _XmPlatEventOf (event) ;
+	 XmPlatEvent synth ;
 
-#define CopyEvent(source, dest, type) \
-    source.type = dest->type
-
-         switch(mask) {
+	 switch(mask) {
 	   case XmENTER_EVENT:
-                   CopyEvent(synth_event, event, xcrossing);
-		   if (event->type != EnterNotify) {
-		      synth_event.type = EnterNotify;
-                   }
-                   break;
+	     synth = _XmPlatEventSynth (pev, XmPlatEventCrossing) ;
+	     break ;
 	   case XmLEAVE_EVENT:
-                   CopyEvent(synth_event, event, xcrossing);
-		   if (event->type != LeaveNotify) {
-		      synth_event.type = LeaveNotify;
-                   }
-                   break;
+	     /* Leave rewrites to LeaveNotify; the Synth helper's crossing
+		default is Enter, so flip the record directly. */
+	     synth = _XmPlatEventSynth (pev, XmPlatEventCrossing) ;
+	     ((XEvent *) _XmPlatEventRaw (synth))->type = LeaveNotify ;
+	     break ;
 	   case XmFOCUS_IN_EVENT:
-                   CopyEvent(synth_event, event, xfocus);
-		   if (event->type != FocusIn) {
-		      synth_event.type = FocusIn;
-		   }
-		   break;
+	     synth = _XmPlatEventSynth (pev, XmPlatEventFocus) ;
+	     break ;
 	   case XmFOCUS_OUT_EVENT:
-                   CopyEvent(synth_event, event, xfocus);
-		   if (event->type != FocusIn) {
-		      synth_event.type = FocusOut;
-		   }
-		   break;
+	     synth = _XmPlatEventSynth (pev, XmPlatEventFocus) ;
+	     ((XEvent *) _XmPlatEventRaw (synth))->type = FocusOut ;
+	     break ;
 	   case XmMOTION_EVENT:
-                   CopyEvent(synth_event, event, xmotion);
-		   if (event->type != MotionNotify) {
-		      event->type = MotionNotify;
-		   }
-		   break;
+	     synth = _XmPlatEventSynth (pev, XmPlatEventPointer) ;
+	     break ;
 	   case XmARM_EVENT:
-                   CopyEvent(synth_event, event, xkey);
-		   if (event->type != ButtonPress &&
-		       event->type != KeyPress) {
-		      synth_event.type = ButtonPress;
-		   }
-		   break;
+	     /* press-like: keep key/press, else rewrite to ButtonPress */
+	     synth = _XmPlatEventCopy (pev) ;
+	     if (! _XmPlatEventIsType (pev, XmPlatEventKey) &&
+		 ! _XmPlatEventIsButtonPress (pev))
+	       ((XEvent *) _XmPlatEventRaw (synth))->type = ButtonPress ;
+	     break ;
 	   case XmACTIVATE_EVENT:
-                   CopyEvent(synth_event, event, xkey);
-		   if (event->type != ButtonRelease &&
-		       event->type != KeyPress) {
-		      synth_event.type = ButtonRelease;
-		   }
-		   break;
+	     synth = _XmPlatEventCopy (pev) ;
+	     if (! _XmPlatEventIsType (pev, XmPlatEventKey) &&
+		 ! _XmPlatEventIsButtonRelease (pev))
+	       ((XEvent *) _XmPlatEventRaw (synth))->type = ButtonRelease ;
+	     break ;
 	   case XmKEY_EVENT:
-                   CopyEvent(synth_event, event, xkey);
-		   if (event->type != KeyPress &&
-		       event->type != ButtonPress) {
-		      synth_event.type = KeyPress;
-		   }
-		   break;
+	     synth = _XmPlatEventCopy (pev) ;
+	     if (! _XmPlatEventIsType (pev, XmPlatEventKey) &&
+		 ! _XmPlatEventIsButtonPress (pev))
+	       ((XEvent *) _XmPlatEventRaw (synth))->type = KeyPress ;
+	     break ;
 	   case XmHELP_EVENT:
-                   CopyEvent(synth_event, event, xkey);
-		   if (event->type != KeyPress) {
-		      synth_event.type = KeyPress;
-		   }
-		   break;
+	     synth = _XmPlatEventCopy (pev) ;
+	     if (! _XmPlatEventIsType (pev, XmPlatEventKey))
+	       ((XEvent *) _XmPlatEventRaw (synth))->type = KeyPress ;
+	     break ;
            default:
-		   memcpy((char*)&synth_event, (char*)event,
-		      (size_t)sizeof(synth_event));
-		   break;
+	     synth = _XmPlatEventCopy (pev) ;
+	     break ;
          }
    
          (*(((XmGadgetClass) (g->object.widget_class))->
              gadget_class.input_dispatch)) ((Widget) g, 
-                                               (XEvent *) &synth_event, mask) ;
+                                               (XEvent *) _XmPlatEventRaw (synth),
+					       mask) ;
+	 _XmPlatEventFreeCopy (synth) ;
       } 
       else
       {

@@ -31,6 +31,7 @@ static char rcsid[] = "$TOG: TravAct.c /main/14 1999/05/27 13:58:09 mgreess $"
 #endif
 #endif
 
+#include "XmPlat/XmPlatP.h"
 #include "TraversalI.h"
 #include "TravActI.h"
 #include <Xm/GadgetP.h>
@@ -144,9 +145,9 @@ FlushPointerData(Widget w,
        * crossing event !!!!!
        */
       
-      lastEvent.serial = event->xany.serial;
-      if ( (LeaveNotify == event->type) || (EnterNotify == event->type) )
-	      lastEvent.time = event->xcrossing.time;
+      lastEvent.serial = _XmPlatEventSerial (_XmPlatEventOf (event)) ;
+      if ( _XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventCrossing) )
+	      lastEvent.time = _XmPlatEventTime (_XmPlatEventOf (event)) ;
       else
 		/* Approximation; the code appears to need even Focus events,
 		** so make up a time and try to continue, rather than limit
@@ -190,38 +191,42 @@ _XmTrackShellFocus(Widget widget,
 
   oldFocalPoint = newFocalPoint = focusData->focalPoint;
   
-  switch(event->type)
+  switch (_XmPlatEventKind (_XmPlatEventOf (event)))
     {
-    case EnterNotify:
-    case LeaveNotify:
+    case XmPlatEventCrossing:
       /*
        * If operating in a focus driven model, then enter and
        * leave events do not affect the keyboard focus.
        */
-      if ((event->xcrossing.detail != NotifyInferior) &&
-	  (event->xcrossing.focus))
-	{	      
-	  switch (oldFocalPoint)
-	    {
-	    case XmUnrelated:
-	      if (event->type == EnterNotify)
-		newFocalPoint = XmMyAncestor;
-	      break;
-	    case XmMyAncestor:
-	      if (event->type == LeaveNotify)
-		newFocalPoint = XmUnrelated;
-	      break;
-	    case XmMyDescendant:
-	    case XmMyCousin:
-	    case XmMySelf:
-	    default:
-	      break;
-	    }	
+	{
+	  XmPlatEvent pev = _XmPlatEventOf (event) ;
+	  if ((_XmPlatEventDetail (pev) != NotifyInferior) &&
+	      (_XmPlatEventFocus (pev)))
+	    {	      
+	      switch (oldFocalPoint)
+		{
+		case XmUnrelated:
+		  if (_XmPlatEventIsEnter (pev))
+		    newFocalPoint = XmMyAncestor;
+		  break;
+		case XmMyAncestor:
+		  if (_XmPlatEventIsLeave (pev))
+		    newFocalPoint = XmUnrelated;
+		  break;
+		case XmMyDescendant:
+		case XmMyCousin:
+		case XmMySelf:
+		default:
+		  break;
+		}	
+	    }
+	  break ;
 	}
-      break;
 
-    case FocusIn:
-      switch (event->xfocus.detail)
+    case XmPlatEventFocus:
+      if (! _XmPlatEventIsFocusIn (_XmPlatEventOf (event)))
+	break ;
+      switch (_XmPlatEventDetail (_XmPlatEventOf (event)))
 	{
 	case NotifyNonlinear:
 	case NotifyAncestor:
@@ -238,18 +243,20 @@ _XmTrackShellFocus(Widget widget,
 	}
       break;
 
-    case FocusOut:
-      switch (event->xfocus.detail)
+      if (_XmPlatEventIsFocusOut (_XmPlatEventOf (event)))
 	{
-	case NotifyPointer:
-	case NotifyNonlinear:
-	case NotifyAncestor:
-	case NotifyNonlinearVirtual:
-	case NotifyVirtual:
-	  newFocalPoint = XmUnrelated;
-	  break;
-	case NotifyInferior:
-	  return;
+	  switch (_XmPlatEventDetail (_XmPlatEventOf (event)))
+	    {
+	    case NotifyPointer:
+	    case NotifyNonlinear:
+	    case NotifyAncestor:
+	    case NotifyNonlinearVirtual:
+	    case NotifyVirtual:
+	      newFocalPoint = XmUnrelated;
+	      break;
+	    case NotifyInferior:
+	      return;
+	    }
 	}
       break;
     }
@@ -295,7 +302,7 @@ _XmPrimitiveEnter(Widget wid,
   _XmToolTipEnter(wid, event, params, num_params);
   if (_XmGetFocusPolicy(wid) == XmPOINTER)
     {   
-      if (event->xcrossing.focus)
+      if (_XmPlatEventFocus (_XmPlatEventOf (event)))
         {   
 	  _XmCallFocusMoved(XtParent(wid), wid, event);
 	  _XmWidgetFocusChange(wid, XmENTER);
@@ -315,7 +322,7 @@ _XmPrimitiveLeave(Widget wid,
   _XmToolTipLeave(wid, event, params, num_params);
   if (_XmGetFocusPolicy(wid) == XmPOINTER)
     {   
-      if (event->xcrossing.focus)
+      if (_XmPlatEventFocus (_XmPlatEventOf (event)))
         {   
 	  _XmCallFocusMoved(wid, XtParent(wid), event);
 	  _XmWidgetFocusChange(wid, XmLEAVE);
@@ -336,7 +343,7 @@ _XmPrimitiveFocusInInternal(Widget wid,
 			    String *params,		/* unused */
 			    Cardinal *num_params)	/* unused */
 {   
-  if (!(event->xfocus.send_event) ||
+  if (! _XmPlatEventSendEvent (_XmPlatEventOf (event)) ||
       _XmGetFocusFlag(wid, XmFOCUS_IGNORE))
     return;
 
@@ -363,7 +370,7 @@ _XmPrimitiveFocusOut(Widget wid,
 		     String *params,		/* unused */
 		     Cardinal *num_params)	/* unused */
 {   
-  if (event->xfocus.send_event &&
+  if (_XmPlatEventSendEvent (_XmPlatEventOf (event)) &&
       !(wid->core.being_destroyed) &&
       (_XmGetFocusPolicy(wid) == XmEXPLICIT))
     {   
@@ -521,20 +528,23 @@ _XmManagerEnter(Widget wid,
 		Cardinal *num_params)	/* unused */
 {
   XmManagerWidget mw = (XmManagerWidget) wid;
-  XCrossingEvent *event = (XCrossingEvent *) event_in;
+  XmPlatEvent pev = _XmPlatEventOf (event_in) ;
   
   if (_XmGetFocusPolicy((Widget) mw) == XmPOINTER)
     {
-      if (UpdatePointerData((Widget) mw, event_in) && event->focus)
+      if (UpdatePointerData((Widget) mw, event_in) &&
+	  _XmPlatEventFocus (pev))
 	{
 	  Widget old;
 	  
-	  if (event->detail == NotifyInferior)
-	    old = XtWindowToWidget(event->display, event->subwindow);
+	  if (_XmPlatEventDetail (pev) == NotifyInferior)
+	    old = XtWindowToWidget (XtDisplayOfObject (wid),
+				    (Window)
+				    _XmPlatEventSubwindow (pev)) ;
 	  else
 	    old = XtParent(mw);
 
-	  _XmCallFocusMoved(old, (Widget) mw, (XEvent *) event);
+	  _XmCallFocusMoved(old, (Widget) mw, event_in);
 	  _XmWidgetFocusChange((Widget) mw, XmENTER);
 	}
     }
@@ -551,19 +561,21 @@ _XmManagerLeave(Widget wid,
    * This code is inefficient since it is called twice for each
    * internal move in the hierarchy |||
    */
-  if (event->type == LeaveNotify)
+  if (_XmPlatEventIsLeave (_XmPlatEventOf (event)))
     {
       if (_XmGetFocusPolicy(wid) == XmPOINTER)
 	{
 	  Widget new_wid;
 	  
-	  if (event->xcrossing.detail == NotifyInferior)
-	    new_wid = XtWindowToWidget(event->xcrossing.display, 
-				       event->xcrossing.subwindow);
+	  if (_XmPlatEventDetail (_XmPlatEventOf (event)) == NotifyInferior)
+	    new_wid = XtWindowToWidget
+	      (XtDisplayOfObject (wid),
+	       (Window) _XmPlatEventSubwindow (_XmPlatEventOf (event))) ;
 	  else 
 	    new_wid = XtParent(wid);
 
-	  if (UpdatePointerData(wid, event) && event->xcrossing.focus)
+	  if (UpdatePointerData(wid, event) &&
+	      _XmPlatEventFocus (_XmPlatEventOf (event)))
 	    {
 	      _XmCallFocusMoved(wid, new_wid, event);
 	      _XmWidgetFocusChange(wid, XmLEAVE);
@@ -587,7 +599,7 @@ _XmManagerFocusInInternal(Widget wid,
    * Xtk focus code is accepted.
    * Bail out if the focus policy is not set to explicit
    */
-  if (!(event->xfocus.send_event) ||
+  if (! _XmPlatEventSendEvent (_XmPlatEventOf (event)) ||
       _XmGetFocusFlag(wid, XmFOCUS_RESET | XmFOCUS_IGNORE))
     return;
 
@@ -641,7 +653,7 @@ _XmManagerFocusOut(Widget wid,
 {   
   Widget child;
   
-  if (!event->xfocus.send_event)
+  if (! _XmPlatEventSendEvent (_XmPlatEventOf (event)))
     return;
 
   if (_XmGetFocusPolicy(wid) == XmEXPLICIT)

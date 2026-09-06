@@ -38,6 +38,7 @@
  * to have intimate knowledge of the RowColumn class functions.
  */
 
+#include "XmPlat/XmPlatP.h"
 #include <Xm/XmP.h>
 #include <Xm/MenuProcP.h>
 #include "MenuProcI.h"
@@ -143,17 +144,16 @@ _XmGetDefaultTime(Widget wid,
 {
   if (event == NULL)
     return(XtLastTimestampProcessed(XtDisplay(wid)));
-  else if (event -> type == ButtonPress ||
-	   event -> type == ButtonRelease)
-    return(event -> xbutton.time);
-  else if (event -> type == KeyPress ||
-	   event -> type == KeyRelease)
-    return(event -> xkey.time);
-  else if (event -> type == MotionNotify)
-    return(event -> xmotion.time);
-  else if (event -> type == EnterNotify ||
-	   event -> type == LeaveNotify)
-    return(event -> xcrossing.time);
+  else if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)) ||
+	   _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
+    return(_XmPlatEventTime (_XmPlatEventOf (event)));
+  else if (_XmPlatEventIsKeyPress (_XmPlatEventOf (event)) ||
+	   _XmPlatEventIsKeyRelease (_XmPlatEventOf (event)))
+    return(_XmPlatEventTime (_XmPlatEventOf (event)));
+  else if (_XmPlatEventIsMotion (_XmPlatEventOf (event)))
+    return(_XmPlatEventTime (_XmPlatEventOf (event)));
+  else if (_XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventCrossing))
+    return(_XmPlatEventTime (_XmPlatEventOf (event)));
   else
     return(XtLastTimestampProcessed(XtDisplay(wid)));
 }

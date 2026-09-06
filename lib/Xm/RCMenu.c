@@ -52,6 +52,7 @@ static char *rcsid = "$TOG: RCMenu.c /main/25 1999/05/24 18:06:57 samborn $";
 
 #include <stdio.h>
 #include <ctype.h>
+#include "XmPlat/XmPlatP.h"
 #include "XmI.h"
 #include <X11/keysym.h>
 #include <Xm/CascadeBGP.h>
@@ -803,7 +804,7 @@ SwallowEventHandler(
   /* while the Menubar is active don't allow any focus type events to the
    * shell
    */
-  switch (event->type)
+  switch (_XmPlatEventKind (_XmPlatEventOf (event)))
   {
      case EnterNotify:
      case LeaveNotify:
@@ -1148,7 +1149,7 @@ _XmRCArmAndActivate(
 	 XtY(m) = y;
 
 	 /* Verify popup for MenuShell's manage_set_changed() */
-	 mst->RC_ButtonEventStatus.time = event->xkey.time;
+	 mst->RC_ButtonEventStatus.time = _XmPlatEventTime (_XmPlatEventOf (event));
 	 mst->RC_ButtonEventStatus.verified = True;
 	 mst->RC_ButtonEventStatus.event = *((XButtonEvent *)event);
 
@@ -2314,8 +2315,8 @@ BtnDownInRowColumn(
 {
    XmGadget gadget;
 
-   Position relativeX = event->xbutton.x_root - x_root;
-   Position relativeY = event->xbutton.y_root - y_root;
+   Position relativeX = _XmPlatEventRootX (_XmPlatEventOf (event)) - x_root;
+   Position relativeY = _XmPlatEventRootY (_XmPlatEventOf (event)) - y_root;
    
    _XmSetMenuTraversal (rc, False);
 
@@ -2399,7 +2400,7 @@ CheckUnpostAndReplay(
     if (_XmGetUnpostBehavior(rc) == XmUNPOST_AND_REPLAY)
     {
 	_XmGetActiveTopLevelMenu(rc, &mst->RC_ReplayInfo.toplevel_menu);
-	mst->RC_ReplayInfo.time = event->xbutton.time;
+	mst->RC_ReplayInfo.time = _XmPlatEventTime (_XmPlatEventOf (event));
 
 	/* do this before popdown since ptr is ungrabed there */
 	XAllowEvents(XtDisplay(rc), ReplayPointer, CurrentTime);
@@ -2422,10 +2423,10 @@ _XmHandleMenuButtonPress(
     
     XtTranslateCoords (wid, 0, 0, &x_root, &y_root);
     
-    if ((event->xbutton.x_root >= x_root) &&
-	(event->xbutton.x_root < x_root + wid->core.width) &&
-	(event->xbutton.y_root >= y_root) &&
-	(event->xbutton.y_root < y_root + wid->core.height))
+    if ((_XmPlatEventRootX (_XmPlatEventOf (event)) >= x_root) &&
+	(_XmPlatEventRootX (_XmPlatEventOf (event)) < x_root + wid->core.width) &&
+	(_XmPlatEventRootY (_XmPlatEventOf (event)) >= y_root) &&
+	(_XmPlatEventRootY (_XmPlatEventOf (event)) < y_root + wid->core.height))
     {
 	/* happened in this rowcolumn */
 	BtnDownInRowColumn (wid, event, x_root, y_root);
@@ -2480,16 +2481,16 @@ _XmMenuBtnDown(
     */
    if (IsOption(rc)) 
      {
-       mst->RC_ButtonEventStatus.time = event->xbutton.time;
+       mst->RC_ButtonEventStatus.time = _XmPlatEventTime (_XmPlatEventOf (event));
      }
 
    XtTranslateCoords ((Widget) rc, 0, 0, &x_root, &y_root);
 
    if (menuSTrait -> verifyButton((Widget) rc, event) &&
-       (event->xbutton.x_root >= x_root) &&
-       (event->xbutton.x_root < x_root + rc->core.width) &&
-       (event->xbutton.y_root >= y_root) &&
-       (event->xbutton.y_root < y_root + rc->core.height))
+       (_XmPlatEventRootX (_XmPlatEventOf (event)) >= x_root) &&
+       (_XmPlatEventRootX (_XmPlatEventOf (event)) < x_root + rc->core.width) &&
+       (_XmPlatEventRootY (_XmPlatEventOf (event)) >= y_root) &&
+       (_XmPlatEventRootY (_XmPlatEventOf (event)) < y_root + rc->core.height))
      {
        if (!XmIsMenuShell(XtParent(rc)) &&
 	   RC_Type(rc) != XmMENU_BAR &&
@@ -2562,9 +2563,9 @@ _XmMenuBtnUp(
        (IsBar(w) && ! RC_IsArmed(w)))
       return;
 
-   if (w->core.window == event->xbutton.window)
-      gadget = (XmGadget) XmObjectAtPoint( (Widget) w, event->xbutton.x,
-			       event->xbutton.y);
+   if (w->core.window == _XmPlatEventWindow (_XmPlatEventOf (event)))
+      gadget = (XmGadget) XmObjectAtPoint( (Widget) w, _XmPlatEventX (_XmPlatEventOf (event)),
+			       _XmPlatEventY (_XmPlatEventOf (event)));
    else
       gadget = NULL;
 
@@ -2790,8 +2791,8 @@ _XmMenuGadgetTraverseCurrent(
     if (!_XmIsEventUnique(event))
 	return;
 
-    child = (Widget) _XmInputForGadget(wid, event->xbutton.x,
-				       event->xbutton.y);
+    child = (Widget) _XmInputForGadget(wid, _XmPlatEventX (_XmPlatEventOf (event)),
+				       _XmPlatEventY (_XmPlatEventOf (event)));
 
     if (child == NULL)
 	/*
@@ -2820,8 +2821,8 @@ _XmMenuGadgetTraverseCurrentUp(
     if (!_XmIsEventUnique(event))
 	return;
 
-    child = (Widget) _XmInputForGadget(wid, event->xbutton.x,
-				       event->xbutton.y);
+    child = (Widget) _XmInputForGadget(wid, _XmPlatEventX (_XmPlatEventOf (event)),
+				       _XmPlatEventY (_XmPlatEventOf (event)));
 
     if (child == NULL)
 	/*
@@ -2893,10 +2894,10 @@ PositionMenu(
 
         case XmMENU_POPUP:          /* position near mouse */
             if (LayoutIsRtoLM(m))
-                XtX (m) = event->x_root -  XtWidth (m);
+                XtX (m) = _XmPlatEventRootX (_XmPlatEventOf (event)) -  XtWidth (m);
             else
-	      XtX (m) = event->x_root;
-            XtY (m) = event->y_root;
+	      XtX (m) = _XmPlatEventRootX (_XmPlatEventOf (event));
+            XtY (m) = _XmPlatEventRootY (_XmPlatEventOf (event));
             RC_SetWidgetMoved (m, TRUE);
             break;
 
@@ -3180,7 +3181,8 @@ VerifyMenuButton(
     /* CDE modification allows any button to activate a cascade
        button to show a menu */
     valid = event && 
-      (event -> type == ButtonPress || event -> type == ButtonRelease);
+      (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)) ||
+       _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)));
   }
 
   return(valid);

@@ -4208,7 +4208,7 @@ _XmDataFieldReplaceText(
      } else
        cursorPos = replace_next + (insert_length - replace_length);
      if (event != NULL) {
-        (void)df_SetDestination((Widget)tf, cursorPos, False, event->xkey.time);
+        (void)df_SetDestination((Widget)tf, cursorPos, False, _XmPlatEventTime (_XmPlatEventOf (event)));
      } else {
         (void) df_SetDestination((Widget)tf, cursorPos, False,
 			      XtLastTimestampProcessed(XtDisplay((Widget)tf)));
@@ -5182,10 +5182,10 @@ df_InsertChar(
     if (replace_res) {
         if (pending_delete) {
            XmDataFieldSetSelection(w, XmTextF_cursor_position(tf),
-                               XmTextF_cursor_position(tf), event->xkey.time);
+                               XmTextF_cursor_position(tf), _XmPlatEventTime (_XmPlatEventOf (event)));
         }
         df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-			       event->xkey.time);
+			       _XmPlatEventTime (_XmPlatEventOf (event)));
         _XmDataFielddf_SetCursorPosition(tf, event, XmTextF_cursor_position(tf), 
 				      False, True);
         cb.reason = XmCR_VALUE_CHANGED;
@@ -5284,10 +5284,10 @@ df_InsertString(
 	  if (replace_res) {
 	      if (pending_delete) {
 		  XmDataFieldSetSelection(w, XmTextF_cursor_position(tf),
-					  XmTextF_cursor_position(tf), event->xkey.time);
+					  XmTextF_cursor_position(tf), _XmPlatEventTime (_XmPlatEventOf (event)));
 	      }
 	      df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-				     event->xkey.time);
+				     _XmPlatEventTime (_XmPlatEventOf (event)));
 	      _XmDataFielddf_SetCursorPosition(tf, event, 
 					    XmTextF_cursor_position(tf), False, True);
 	  }
@@ -5325,7 +5325,7 @@ df_DeletePrevChar(
            if (_XmDataFieldReplaceText(tf, event, XmTextF_cursor_position(tf) - 1,
                                      XmTextF_cursor_position(tf), NULL, 0, True)) {
               df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-	               event->xkey.time);
+	               _XmPlatEventTime (_XmPlatEventOf (event)));
               _XmDataFielddf_SetCursorPosition(tf, event,
 					    XmTextF_cursor_position(tf),
 					    False, True);
@@ -5338,7 +5338,7 @@ df_DeletePrevChar(
         if (_XmDataFieldReplaceText(tf, event, XmTextF_cursor_position(tf) - 1,
                                     XmTextF_cursor_position(tf), NULL, 0, True)) {
             df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-	             event->xkey.time);
+	             _XmPlatEventTime (_XmPlatEventOf (event)));
             _XmDataFielddf_SetCursorPosition(tf, event, XmTextF_cursor_position(tf), 
 					  False, True);
             cb.reason = XmCR_VALUE_CHANGED;
@@ -5380,7 +5380,7 @@ df_DeleteNextChar(
              if (_XmDataFieldReplaceText(tf, event, XmTextF_cursor_position(tf),
                                  XmTextF_cursor_position(tf) + 1, NULL, 0, True)) {
                  df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-			                event->xkey.time);
+			                _XmPlatEventTime (_XmPlatEventOf (event)));
                  _XmDataFielddf_SetCursorPosition(tf, event, 
 					       XmTextF_cursor_position(tf), 
 					       False, True);
@@ -5395,7 +5395,7 @@ df_DeleteNextChar(
 				      NULL, 0, True)) 
 	  {
               df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-					event->xkey.time);
+					_XmPlatEventTime (_XmPlatEventOf (event)));
               _XmDataFielddf_SetCursorPosition(tf, event, 
 					    XmTextF_cursor_position(tf),
 					    False, True);
@@ -5441,7 +5441,7 @@ df_DeletePrevWord(
 				       NULL, 0, True)) 
 	   {
 	       df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-					 event->xkey.time);
+					 _XmPlatEventTime (_XmPlatEventOf (event)));
 	       _XmDataFielddf_SetCursorPosition(tf, event, 
 						XmTextF_cursor_position(tf), 
 						False, True);
@@ -5454,7 +5454,7 @@ df_DeletePrevWord(
           if (_XmDataFieldReplaceText(tf, event, left, XmTextF_cursor_position(tf),
 				      NULL, 0, True)) {
               df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-			             event->xkey.time);
+			             _XmPlatEventTime (_XmPlatEventOf (event)));
               _XmDataFielddf_SetCursorPosition(tf, event,
 					    XmTextF_cursor_position(tf),
 					    False, True);
@@ -5497,7 +5497,7 @@ df_DeleteNextWord(
           if (_XmDataFieldReplaceText(tf, event, XmTextF_cursor_position(tf),
 				      right, NULL, 0, True)){
              df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-				    event->xkey.time);
+				    _XmPlatEventTime (_XmPlatEventOf (event)));
              _XmDataFielddf_SetCursorPosition(tf, event,
 					   XmTextF_cursor_position(tf),
 					   False, True);
@@ -5510,7 +5510,7 @@ df_DeleteNextWord(
           if (_XmDataFieldReplaceText(tf, event, XmTextF_cursor_position(tf),
 				      right, NULL, 0, True)){
               df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-			             event->xkey.time);
+			             _XmPlatEventTime (_XmPlatEventOf (event)));
               _XmDataFielddf_SetCursorPosition(tf, event, 
 					    XmTextF_cursor_position(tf), 
 					    False, True);
@@ -5550,7 +5550,7 @@ df_DeleteToEndOfLine(
      if (_XmDataFieldReplaceText(tf, event, XmTextF_cursor_position(tf),
                                  XmTextF_string_length(tf), NULL, 0, True)) {
          df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-			        event->xkey.time);
+			        _XmPlatEventTime (_XmPlatEventOf (event)));
          _XmDataFielddf_SetCursorPosition(tf, event, XmTextF_cursor_position(tf),
 				       False, True);
          cb.reason = XmCR_VALUE_CHANGED;
@@ -5589,7 +5589,7 @@ df_DeleteToStartOfLine(
     if (_XmDataFieldReplaceText(tf, event, 0, 
 			        XmTextF_cursor_position(tf), NULL, 0, True)) {
         df_CheckDisjointSelection(w, XmTextF_cursor_position(tf),
-			       event->xkey.time);
+			       _XmPlatEventTime (_XmPlatEventOf (event)));
         _XmDataFielddf_SetCursorPosition(tf, event, XmTextF_cursor_position(tf),
 				      False, True);
         cb.reason = XmCR_VALUE_CHANGED;
@@ -5630,7 +5630,7 @@ df_ProcessCancel(
     _XmDataFieldDrawInsertionPoint(tf, False);
     if (XmTextF_has_secondary(tf)) {
        XmTextF_cancel(tf) = True;
-       _XmDataFieldSetSel2(w, 0, 0, False, event->xkey.time);
+       _XmDataFieldSetSel2(w, 0, 0, False, _XmPlatEventTime (_XmPlatEventOf (event)));
        XmTextF_has_secondary(tf) = False;
        XtUngrabKeyboard(w, CurrentTime);
     }
@@ -5639,7 +5639,7 @@ df_ProcessCancel(
        XmTextF_cancel(tf) = True;
       /* reset orig_left and orig_right */
        XmDataFieldSetSelection(w, XmTextF_orig_left(tf),
-			       XmTextF_orig_right(tf), event->xkey.time);
+			       XmTextF_orig_right(tf), _XmPlatEventTime (_XmPlatEventOf (event)));
     }
 
     if (!XmTextF_cancel(tf))
@@ -5830,7 +5830,7 @@ df_SimpleMovement(
 
   _XmDataFieldDrawInsertionPoint(tf, False);
   df_SetNavigationAnchor(tf, cursorPos, extend);
-  df_CompleteNavigation(tf, event, position, event->xkey.time, extend);
+  df_CompleteNavigation(tf, event, position, _XmPlatEventTime (_XmPlatEventOf (event)), extend);
   _XmDataFieldDrawInsertionPoint(tf, True);
 }
 
@@ -6339,12 +6339,12 @@ df_KeySelection(
   if (XmTextF_has_primary(tf))
      df_SetSelection(tf, left, right, True);
   else
-     _XmDataFieldStartSelection(tf, left, right, event->xbutton.time);
+     _XmDataFieldStartSelection(tf, left, right, _XmPlatEventTime (_XmPlatEventOf (event)));
 
   XmTextF_pending_off(tf) = False;
 
   _XmDataFielddf_SetCursorPosition(tf, event, cursorPos, True, True);
-  (void) df_SetDestination(w, cursorPos, False, event->xkey.time);
+  (void) df_SetDestination(w, cursorPos, False, _XmPlatEventTime (_XmPlatEventOf (event)));
 
   XmTextF_orig_left(tf) = XmTextF_prim_pos_left(tf);
   XmTextF_orig_right(tf) = XmTextF_prim_pos_right(tf);
@@ -6375,7 +6375,7 @@ df_TextFocusIn(
    XPoint xmim_point;
    XtWidgetProc bhl;
    
-   if (event->xfocus.send_event && !(XmTextF_has_focus(tf))) {
+   if (_XmPlatEventSendEvent (_XmPlatEventOf (event)) && !(XmTextF_has_focus(tf))) {
       if (!XmTextF_has_rect(tf)) _XmDataFieldSetClipRect(tf);
       XmTextF_has_focus(tf) = True;
       if (XtIsSensitive(w)) _XmDataFToggleCursorGC(w);
@@ -6435,7 +6435,7 @@ df_TextFocusOut(
    XmDataFieldWidget tf = (XmDataFieldWidget) w;
    XtWidgetProc buhl;
    
-   if (event->xfocus.send_event && XmTextF_has_focus(tf)) {
+   if (_XmPlatEventSendEvent (_XmPlatEventOf (event)) && XmTextF_has_focus(tf)) {
       XmTextF_has_focus(tf) = False;
       df_ChangeBlinkBehavior(tf, False);
       _XmDataFieldDrawInsertionPoint(tf, False);
@@ -6456,7 +6456,7 @@ df_TextFocusOut(
 
    /* If traversal is on, then the leave verification callback is called in
       the traversal event handler */
-   if (event->xfocus.send_event && !XmTextF_traversed(tf) &&
+   if (_XmPlatEventSendEvent (_XmPlatEventOf (event)) && !XmTextF_traversed(tf) &&
        _XmGetFocusPolicy(w) == XmEXPLICIT) {
         if (!df_VerifyLeave(tf, event)) {
            if (XmTextF_verify_bell(tf)) XBell(XtDisplay(w), 0);
@@ -6481,8 +6481,8 @@ df_SetScanIndex(
 {
    Time sel_time;
 
-   if (event->type == ButtonPress) sel_time = event->xbutton.time;
-   else sel_time = event->xkey.time;
+   if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event))) sel_time = _XmPlatEventTime (_XmPlatEventOf (event));
+   else sel_time = _XmPlatEventTime (_XmPlatEventOf (event));
 	
 	
    if (sel_time > XmTextF_last_time(tf) &&
@@ -6518,7 +6518,7 @@ df_ExtendScanSelection(
 {
    XmTextPosition pivot_left, pivot_right;
    XmTextPosition left, right;
-   XmTextPosition new_position = df_GetPosFromX(tf, (Position) event->xbutton.x);
+   XmTextPosition new_position = df_GetPosFromX(tf, (Position) _XmPlatEventX (_XmPlatEventOf (event)));
    XmTextPosition cursorPos = XmTextF_cursor_position(tf);
    Boolean pivot_modify = False;
    float bal_point;
@@ -6548,7 +6548,7 @@ df_ExtendScanSelection(
 	      df_SetSelection(tf, XmTextF_prim_anchor(tf), new_position, True);
            else if (new_position != XmTextF_prim_anchor(tf))
      	      _XmDataFieldStartSelection(tf, XmTextF_prim_anchor(tf),
-			     new_position, event->xbutton.time);
+			     new_position, _XmPlatEventTime (_XmPlatEventOf (event)));
            XmTextF_pending_off(tf) = False;
            cursorPos = new_position;
            break;
@@ -6568,7 +6568,7 @@ df_ExtendScanSelection(
       	   if (XmTextF_has_primary(tf))
               df_SetSelection(tf, left, right, True);
       	   else
-     	      _XmDataFieldStartSelection(tf, left, right, event->xbutton.time);
+     	      _XmDataFieldStartSelection(tf, left, right, _XmPlatEventTime (_XmPlatEventOf (event)));
 
            if (pivot_modify) {
               if ((((right - left) / 2) + left) <= new_position) {
@@ -6586,7 +6586,7 @@ df_ExtendScanSelection(
 	   break;
    }
    if (cursorPos != XmTextF_cursor_position(tf)) {
-      (void) df_SetDestination((Widget)tf, cursorPos, False, event->xkey.time);
+      (void) df_SetDestination((Widget)tf, cursorPos, False, _XmPlatEventTime (_XmPlatEventOf (event)));
       _XmDataFielddf_SetCursorPosition(tf, event, cursorPos, True, True);
    }
 }
@@ -6610,8 +6610,8 @@ df_SetScanSelection(
   
    df_SetScanIndex(tf, event);
 
-   if (event->type == ButtonPress)
-       new_position = df_GetPosFromX(tf, (Position) event->xbutton.x);
+   if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)))
+       new_position = df_GetPosFromX(tf, (Position) _XmPlatEventX (_XmPlatEventOf (event)));
    else
        new_position = XmTextF_cursor_position(tf);
 
@@ -6634,7 +6634,7 @@ df_SetScanSelection(
       	   if (XmTextF_has_primary(tf))
               df_SetSelection(tf, left, right, True);
       	   else
-     	      _XmDataFieldStartSelection(tf, left, right, event->xbutton.time);
+     	      _XmDataFieldStartSelection(tf, left, right, _XmPlatEventTime (_XmPlatEventOf (event)));
            XmTextF_pending_off(tf) = False;
            if ((((right - left) / 2) + left) <= new_position)
               cursorPos = right;
@@ -6649,9 +6649,9 @@ df_SetScanSelection(
               df_SetSelection(tf, 0, XmTextF_string_length(tf), True);
       	   else
               _XmDataFieldStartSelection(tf, 0, XmTextF_string_length(tf),
-			     event->xbutton.time);
+			     _XmPlatEventTime (_XmPlatEventOf (event)));
            XmTextF_pending_off(tf) = False;
-   	   if (event->type == ButtonPress)
+   	   if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)))
            {
               if ((XmTextF_string_length(tf)) / 2 <= new_position)
                  cursorPos = XmTextF_string_length(tf);
@@ -6661,7 +6661,7 @@ df_SetScanSelection(
            break;
    }
 
-   (void) df_SetDestination((Widget)tf, cursorPos, False, event->xkey.time);
+   (void) df_SetDestination((Widget)tf, cursorPos, False, _XmPlatEventTime (_XmPlatEventOf (event)));
    if (cursorPos != XmTextF_cursor_position(tf) || update_position) {
       _XmDataFielddf_SetCursorPosition(tf, event, cursorPos, True, True);
    }
@@ -6720,11 +6720,11 @@ df_MoveDestination(
   Boolean old_has_focus = XmTextF_has_focus(tf);
   Boolean reset_cursor = False;
 
-  new_position = df_GetPosFromX(tf, (Position) event->xbutton.x);
+  new_position = df_GetPosFromX(tf, (Position) _XmPlatEventX (_XmPlatEventOf (event)));
 
   _XmDataFieldDrawInsertionPoint(tf, False);
   if (XmDataFieldGetSelectionPosition(w, &left, &right) && (right != left))
-     (void) df_SetDestination(w, new_position, False, event->xbutton.time);
+     (void) df_SetDestination(w, new_position, False, _XmPlatEventTime (_XmPlatEventOf (event)));
 
   XmTextF_pending_off(tf) = False;
 
@@ -6775,10 +6775,10 @@ df_ExtendPrimary(
   XmTextF_do_drop(tf) = False;
 
   if (!df_CheckTimerScrolling(w, event)){
-     if (event->type == ButtonPress)
-        df_DoExtendedSelection(w, event->xbutton.time);
+     if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)))
+        df_DoExtendedSelection(w, _XmPlatEventTime (_XmPlatEventOf (event)));
      else
-        df_DoExtendedSelection(w, event->xkey.time);
+        df_DoExtendedSelection(w, _XmPlatEventTime (_XmPlatEventOf (event)));
   } else
      df_ExtendScanSelection(tf, event); /* use scan type to set the selection */
 
@@ -7022,12 +7022,12 @@ df_CheckTimerScrolling(
                             tf->primitive.shadow_thickness +
                             tf->primitive.highlight_thickness;
 
-    XmTextF_select_pos_x(tf) = event->xmotion.x;
+    XmTextF_select_pos_x(tf) = _XmPlatEventX (_XmPlatEventOf (event));
 
-    if ((event->xmotion.x > (int) margin_size) &&
-      (event->xmotion.x < (int) (tf->core.width - margin_size))  &&
-      (event->xmotion.y > (int) top_margin) &&
-        (event->xmotion.y < (int) (top_margin + XmTextF_font_ascent(tf) +
+    if ((_XmPlatEventX (_XmPlatEventOf (event)) > (int) margin_size) &&
+      (_XmPlatEventX (_XmPlatEventOf (event)) < (int) (tf->core.width - margin_size))  &&
+      (_XmPlatEventY (_XmPlatEventOf (event)) > (int) top_margin) &&
+        (_XmPlatEventY (_XmPlatEventOf (event)) < (int) (top_margin + XmTextF_font_ascent(tf) +
                                  XmTextF_font_descent(tf)))) {
 
        if (XmTextF_select_id(tf)) {
@@ -7036,11 +7036,11 @@ df_CheckTimerScrolling(
        }
     } else {
        /* to the left of the text */
-        if (event->xmotion.x <= (int) margin_size)
+        if (_XmPlatEventX (_XmPlatEventOf (event)) <= (int) margin_size)
            XmTextF_select_pos_x(tf) = (Position) (margin_size -
                                           (XmTextF_average_char_width(tf) + 1));
        /* to the right of the text */
-      else if (event->xmotion.x >= (int) (tf->core.width - margin_size))
+      else if (_XmPlatEventX (_XmPlatEventOf (event)) >= (int) (tf->core.width - margin_size))
            XmTextF_select_pos_x(tf) = (Position) ((tf->core.width - margin_size) +
                                            XmTextF_average_char_width(tf) + 1);
        if (!XmTextF_select_id(tf))
@@ -7263,14 +7263,14 @@ df_StartSecondary(
 #endif /* _NO_PROTO */
 {
   XmDataFieldWidget tf = (XmDataFieldWidget) w;
-  XmTextPosition position = df_GetPosFromX(tf, (Position) event->xbutton.x);
+  XmTextPosition position = df_GetPosFromX(tf, (Position) _XmPlatEventX (_XmPlatEventOf (event)));
   int status;
 
   XmTextF_sec_anchor(tf) = position;
   XmTextF_selection_move(tf) = FALSE;
 
   status = XtGrabKeyboard(w, False, GrabModeAsync, GrabModeAsync,
-			  event->xbutton.time);
+			  _XmPlatEventTime (_XmPlatEventOf (event)));
 
   if (status != GrabSuccess)
      XmeWarning(w, GRABKBDERROR);
@@ -7297,7 +7297,7 @@ df_ProcessBDrag(
     XmTextPosition position, left, right;
     Position left_x, right_x, dummy;
 
-    position = df_GetPosFromX(tf, (Position) event->xbutton.x);
+    position = df_GetPosFromX(tf, (Position) _XmPlatEventX (_XmPlatEventOf (event)));
 
     XmTextF_sec_pos_left(tf) = position;
 
@@ -7308,20 +7308,20 @@ df_ProcessBDrag(
 	  /* Take care of border conditions */
 	   (position == left &&
             df_GetXYFromPos(tf, left, &left_x, &dummy) &&
-	    event->xbutton.x > left_x) ||
+	    _XmPlatEventX (_XmPlatEventOf (event)) > left_x) ||
 	   (position == right &&
             df_GetXYFromPos(tf, right, &right_x, &dummy) &&
-	    event->xbutton.x < right_x)) {
+	    _XmPlatEventX (_XmPlatEventOf (event)) < right_x)) {
            XmTextF_sel_start(tf) = False;
            df_StartDrag(w, event, params, num_params);
 	} else {
 	   XmTextF_sel_start(tf) = True;
-	   XAllowEvents(XtDisplay(w), AsyncBoth, event->xbutton.time);
+	   XAllowEvents(XtDisplay(w), AsyncBoth, _XmPlatEventTime (_XmPlatEventOf (event)));
 	   df_StartSecondary(w, event, params, num_params);
 	}
     } else {
        XmTextF_sel_start(tf) = True;
-       XAllowEvents(XtDisplay(w), AsyncBoth, event->xbutton.time);
+       XAllowEvents(XtDisplay(w), AsyncBoth, _XmPlatEventTime (_XmPlatEventOf (event)));
        df_StartSecondary(w, event, params, num_params);
     }
     _XmDataFieldDrawInsertionPoint(tf, True);
@@ -7344,25 +7344,25 @@ df_ExtendSecondary(
 #endif /* _NO_PROTO */
 {
   XmDataFieldWidget tf = (XmDataFieldWidget) w;
-  XmTextPosition position = df_GetPosFromX(tf, (Position) event->xbutton.x);
+  XmTextPosition position = df_GetPosFromX(tf, (Position) _XmPlatEventX (_XmPlatEventOf (event)));
 
   if (XmTextF_cancel(tf)) return;
 
   _XmDataFieldDrawInsertionPoint(tf, False);
   if (position < XmTextF_sec_anchor(tf)) {
      _XmDataFieldSetSel2(w, position, XmTextF_sec_anchor(tf),
-			 False, event->xbutton.time);
+			 False, _XmPlatEventTime (_XmPlatEventOf (event)));
   } else if (position > XmTextF_sec_anchor(tf)) {
      _XmDataFieldSetSel2(w, XmTextF_sec_anchor(tf), position, 
-			 False, event->xbutton.time);
+			 False, _XmPlatEventTime (_XmPlatEventOf (event)));
   } else {
-     _XmDataFieldSetSel2(w, position, position, False, event->xbutton.time);
+     _XmDataFieldSetSel2(w, position, position, False, _XmPlatEventTime (_XmPlatEventOf (event)));
   }
 
   XmTextF_sec_extending(tf) = True;
 
   if (!df_CheckTimerScrolling(w, event))
-     df_DoSecondaryExtend(w, event->xmotion.time);
+     df_DoSecondaryExtend(w, _XmPlatEventTime (_XmPlatEventOf (event)));
 
   _XmDataFieldDrawInsertionPoint(tf, True);
 }
@@ -7602,7 +7602,7 @@ df_Stuff(
   XtGetSelectionValue(w, XA_PRIMARY,
 		      XmInternAtom(XtDisplay(w), "TARGETS", False),
 		      df_HandleTargets,
-		      (XtPointer)tmp, event->xbutton.time);
+		      (XtPointer)tmp, _XmPlatEventTime (_XmPlatEventOf (event)));
 }
 
 
@@ -7629,7 +7629,7 @@ df_HandleSelectionReplies(
    int adjustment = 0;
    XmAnyCallbackStruct cb;
 
-   if (event->type != SelectionNotify) return;
+   if (! _XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventSelection)) return;
 
    XtRemoveEventHandler(w, (EventMask) NULL, TRUE,
                         df_HandleSelectionReplies,
@@ -7638,8 +7638,8 @@ df_HandleSelectionReplies(
 
    dest_data = df_GetTextFDestData(w);
 
-   if (event->xselection.property == None) {
-      (void) _XmDataFieldSetSel2(w, 0, 0, False, event->xselection.time);
+   if (_XmPlatEventPropertyName (_XmPlatEventOf (event)) == NULL) {
+      (void) _XmDataFieldSetSel2(w, 0, 0, False, _XmPlatEventTime (_XmPlatEventOf (event)));
       XmTextF_selection_move(tf) = False;
    } else {
       if (dest_data->has_destination) {
@@ -7660,7 +7660,7 @@ df_HandleSelectionReplies(
       left = XmTextF_sec_pos_left(tf);
       right = XmTextF_sec_pos_right(tf);
 
-      (void) _XmDataFieldSetSel2(w, 0, 0, False, event->xselection.time);
+      (void) _XmDataFieldSetSel2(w, 0, 0, False, _XmPlatEventTime (_XmPlatEventOf (event)));
       XmTextF_has_secondary(tf) = False;
 
       if (XmTextF_selection_move(tf)) {
@@ -7672,7 +7672,7 @@ df_HandleSelectionReplies(
                 _XmDataFielddf_SetCursorPosition(tf, event, cursorPos,
 					      True, True);
               (void) df_SetDestination((Widget) tf, cursorPos, False,
-                                                       event->xselection.time);
+                                                       _XmPlatEventTime (_XmPlatEventOf (event)));
            }
            if (!dest_data->has_destination) {
                XmTextF_prim_anchor(tf) = XmTextF_cursor_position(tf);
@@ -7687,7 +7687,7 @@ df_HandleSelectionReplies(
       }
    }
 
-   XDeleteProperty(XtDisplay(w), event->xselection.requestor, property);
+   XDeleteProperty(XtDisplay(w), _XmPlatEventRequestor (_XmPlatEventOf (event)), property);
 }
 
 
@@ -7731,7 +7731,7 @@ df_SecondaryNotify(
     if (XmTextF_selection_move(tf) == TRUE && XmTextF_has_destination(tf) &&
         XmTextF_cursor_position(tf) >= XmTextF_sec_pos_left(tf) &&
         XmTextF_cursor_position(tf) <= XmTextF_sec_pos_right(tf)) {
-       (void) _XmDataFieldSetSel2(w, 0, 0, False, event->xbutton.time);
+       (void) _XmDataFieldSetSel2(w, 0, 0, False, _XmPlatEventTime (_XmPlatEventOf (event)));
        return;
     }
 
@@ -7785,7 +7785,7 @@ df_SecondaryNotify(
     XConvertSelection(XtDisplay(w),
     		      XmInternAtom(XtDisplay(w), "MOTIF_DESTINATION", False),
     		      XmInternAtom(XtDisplay(w), "INSERT_SELECTION", False),
-                      XM_TEXT_PROP, XtWindow(w), event->xbutton.time);
+                      XM_TEXT_PROP, XtWindow(w), _XmPlatEventTime (_XmPlatEventOf (event)));
 }
 
    /*
@@ -7877,8 +7877,9 @@ df_HandleTargets(
    * Set stuff position to the x and y position of
    * the button pressed event for primary pastes.
    */
-   if (tmp_action->event->type == ButtonRelease) {
-      select_pos =  df_GetPosFromX(tf, (Position)tmp_action->event->xbutton.x);
+   if (_XmPlatEventIsButtonRelease (_XmPlatEventOf (tmp_action->event))) {
+      select_pos =  df_GetPosFromX(tf,
+	 (Position) _XmPlatEventX (_XmPlatEventOf (tmp_action->event)));
    } else {
       select_pos = XmTextF_cursor_position(tf);
    }
@@ -7897,11 +7898,8 @@ df_HandleTargets(
 
    prim_select->position = select_pos;
 
-   if (tmp_action->event->type == ButtonRelease) {
-      prim_select->time = tmp_action->event->xbutton.time;
-   } else {
-      prim_select->time = tmp_action->event->xkey.time;
-   }
+   prim_select->time =
+     _XmPlatEventTime (_XmPlatEventOf (tmp_action->event)) ;
 
    prim_select->num_chars = 0;
 
@@ -7921,7 +7919,7 @@ df_HandleTargets(
    /* Make request to call df_DoStuff() with the primary selection. */
    XtGetSelectionValue(w, XA_PRIMARY, targets[0], df_DoStuff,
                           (XtPointer)prim_select, 
-			  tmp_action->event->xbutton.time);
+			  _XmPlatEventTime (_XmPlatEventOf (tmp_action->event)));
 
    XtFree((char *)value);
    value = NULL;
@@ -7954,21 +7952,21 @@ df_ProcessBDragRelease(
     _XmDataFieldDrawInsertionPoint(tf, False);
     if (!XmTextF_cancel(tf)) XtUngrabKeyboard(w, CurrentTime);
 
-    position = df_GetPosFromX(tf, (Position) event->xbutton.x);
+    position = df_GetPosFromX(tf, (Position) _XmPlatEventX (_XmPlatEventOf (event)));
 
     if (XmTextF_sel_start(tf)) {
        if (XmTextF_has_secondary(tf) &&
 	       XmTextF_sec_pos_left(tf) != XmTextF_sec_pos_right(tf)) {
           if (ev->x > (int)tf->core.width || ev->x < 0 ||
 	      ev->y > (int)tf->core.height || ev->y < 0) {
-             _XmDataFieldSetSel2(w, 0, 0, False, event->xkey.time);
+             _XmDataFieldSetSel2(w, 0, 0, False, _XmPlatEventTime (_XmPlatEventOf (event)));
              XmTextF_has_secondary(tf) = False;
           } else {
 	     df_SecondaryNotify(w, event, params, num_params);
           }
        } else if (!XmTextF_sec_drag(tf) && !XmTextF_cancel(tf) &&
 		  XmTextF_sec_pos_left(tf) == position) {
-	  XmTextF_stuff_pos(tf) =  df_GetPosFromX(tf, (Position) event->xbutton.x);
+	  XmTextF_stuff_pos(tf) =  df_GetPosFromX(tf, (Position) _XmPlatEventX (_XmPlatEventOf (event)));
 	/*
 	 * Copy contents of primary selection to the stuff position found above.
 	 */
@@ -8297,10 +8295,10 @@ df_SetAnchor(
     XmTextPosition left, right;
 
     XmTextF_prim_anchor(tf) = XmTextF_cursor_position(tf);
-    (void) df_SetDestination(w, XmTextF_prim_anchor(tf), False, event->xkey.time);
+    (void) df_SetDestination(w, XmTextF_prim_anchor(tf), False, _XmPlatEventTime (_XmPlatEventOf (event)));
     if (XmDataFieldGetSelectionPosition(w, &left, &right)) {
        _XmDataFieldStartSelection(tf, XmTextF_prim_anchor(tf),
-                                  XmTextF_prim_anchor(tf), event->xkey.time);
+                                  XmTextF_prim_anchor(tf), _XmPlatEventTime (_XmPlatEventOf (event)));
        XmDataFieldSetAddMode(w, False);
     }
 }
@@ -8391,7 +8389,7 @@ df_SelectAll(
        df_SetSelection(tf, 0, XmTextF_string_length(tf), True);
     else
        _XmDataFieldStartSelection(tf, 0, XmTextF_string_length(tf),
-           	      		  event->xbutton.time);
+           	      		  _XmPlatEventTime (_XmPlatEventOf (event)));
 
     /* Call _XmDataFielddf_SetCursorPosition to force image gc to be updated
      * in case the i-beam is contained within the selection */
@@ -8403,7 +8401,7 @@ df_SelectAll(
     XmTextF_prim_anchor(tf) = 0;
 
     (void) df_SetDestination(w, XmTextF_cursor_position(tf),
-			  False, event->xkey.time);
+			  False, _XmPlatEventTime (_XmPlatEventOf (event)));
     _XmDataFieldDrawInsertionPoint(tf, True);
 }
 
@@ -8432,7 +8430,7 @@ df_DeselectAll(
 				  True, True);
     XmTextF_prim_anchor(tf) = XmTextF_cursor_position(tf);
     (void) df_SetDestination(w, XmTextF_cursor_position(tf),
-			  False, event->xkey.time);
+			  False, _XmPlatEventTime (_XmPlatEventOf (event)));
     _XmDataFieldDrawInsertionPoint(tf, True);
 }
 
@@ -8472,7 +8470,7 @@ df_CutClipboard(
 #endif /* _NO_PROTO */
 {
     _XmDataFieldDrawInsertionPoint((XmDataFieldWidget)w, False);
-    (void) XmDataFieldCut(w, event->xkey.time);
+    (void) XmDataFieldCut(w, _XmPlatEventTime (_XmPlatEventOf (event)));
     _XmDataFieldDrawInsertionPoint((XmDataFieldWidget)w, True);
 }
 
@@ -8495,8 +8493,8 @@ df_CopyClipboard(
     XmDataFieldWidget tf = (XmDataFieldWidget) w;
 
     _XmDataFieldDrawInsertionPoint(tf, False);
-    (void) XmDataFieldCopy(w, event->xkey.time);
-    (void) df_SetDestination(w, XmTextF_cursor_position(tf), False, event->xkey.time);
+    (void) XmDataFieldCopy(w, _XmPlatEventTime (_XmPlatEventOf (event)));
+    (void) df_SetDestination(w, XmTextF_cursor_position(tf), False, _XmPlatEventTime (_XmPlatEventOf (event)));
     _XmDataFieldDrawInsertionPoint(tf, True);
 }
 
@@ -8673,13 +8671,13 @@ df_TextEnter(
     XmAnyCallbackStruct cb;
     XPoint xmim_point;
 
-    /* Use != NotifyInferior along with event->xcrossing.focus to avoid
+    /* Use != NotifyInferior along with _XmPlatEventFocus (_XmPlatEventOf (event)) to avoid
      * sending input method info if reason for the event is pointer moving
      * from TextF widget to over-the-spot window (case when over-the-spot
      * is child of TextF widget). */
     if (_XmGetFocusPolicy(w) != XmEXPLICIT && !(XmTextF_has_focus(tf)) &&
-	event->xcrossing.focus &&
-        (event->xcrossing.detail != NotifyInferior)) {
+	_XmPlatEventFocus (_XmPlatEventOf (event)) &&
+        (_XmPlatEventDetail (_XmPlatEventOf (event)) != NotifyInferior)) {
        if (!XmTextF_has_rect(tf)) _XmDataFieldSetClipRect(tf);
        _XmDataFieldDrawInsertionPoint(tf, False);
        XmTextF_blink_on(tf) = False;
@@ -8721,8 +8719,8 @@ df_TextLeave(
     * wandering into over-the-spot input window - we don't want to change
     * IM's focus state in this case. */
    if (_XmGetFocusPolicy(w) != XmEXPLICIT && XmTextF_has_focus(tf) &&
-       event->xcrossing.focus &&
-       (event->xcrossing.detail != NotifyInferior)) {
+       _XmPlatEventFocus (_XmPlatEventOf (event)) &&
+       (_XmPlatEventDetail (_XmPlatEventOf (event)) != NotifyInferior)) {
       if (tf->core.sensitive) df_ChangeBlinkBehavior(tf, False);
       _XmDataFieldDrawInsertionPoint(tf, False);
       XmTextF_has_focus(tf) = False;
@@ -10532,7 +10530,7 @@ DataFieldExpose(
   XGCValues values;
   
 
-  if (event->xany.type != Expose) return;
+  if (! _XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventExpose)) return;
 
   XmTextF_do_resize(tf) = False;
 

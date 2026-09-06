@@ -901,7 +901,7 @@ ButtonDownAction(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
     short row, col;
     XmI18ListWidget ilist = (XmI18ListWidget) w;
-    XButtonEvent * bevent = (XButtonEvent *) event;
+    XmPlatEvent pev = _XmPlatEventOf (event) ;
 
     if (*num_params > 1) {
         XmeWarning(w, XmNbadMotionParamsMsg);
@@ -932,7 +932,7 @@ ButtonDownAction(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	}
     }
 	    
-    if (event->type != ButtonPress) {
+    if (! _XmPlatEventIsButtonPress (pev)) {
         static String params[] = { "BtnDown" };
 
         _XmWarningMsg(w, XmNunexpectedEvent,
@@ -941,7 +941,8 @@ ButtonDownAction(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	return;
     }
 
-    CvtPositionToRowColumn(w, bevent->x, bevent->y, &row, &col);
+    CvtPositionToRowColumn(w, _XmPlatEventX (pev), _XmPlatEventY (pev),
+			   &row, &col);
 
     if (XmI18List_working_row(ilist) != row) {
 	/*
@@ -975,7 +976,7 @@ ButtonDownAction(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	else /* reset search column since user selected a new row */
 		XmI18List_search_column(ilist) = -1;
 
-    if ((event->xbutton.time - XmI18List_time(ilist)) >
+    if ((_XmPlatEventTime (pev) - XmI18List_time(ilist)) >
 	XtGetMultiClickTime(XtDisplay(w)))
     {
 	SingleClick(ilist);
@@ -998,7 +999,7 @@ ButtonUpOrLeaveAction(Widget w, XEvent *event,
     Boolean notify_type;
     XmI18ListWidget ilist = (XmI18ListWidget) w;
 
-    if (event->type != ButtonRelease) {
+    if (! _XmPlatEventIsButtonRelease (_XmPlatEventOf (event))) {
 	static String params[] = { "BtnUp or BtnLeave" };
 	
 	_XmWarningMsg(w, XmNunexpectedEvent,
@@ -1022,12 +1023,13 @@ ButtonUpOrLeaveAction(Widget w, XEvent *event,
      * notify_type == True specifies double click, False is a single click.
      */
 
-    notify_type = ((event->xbutton.time - XmI18List_time(ilist)) <=
+    notify_type = ((_XmPlatEventTime (_XmPlatEventOf (event)) -
+		    XmI18List_time(ilist)) <=
 		   XtGetMultiClickTime(XtDisplay(w)));
 
     Notify(w, notify_type);
 
-    XmI18List_time(ilist) = event->xbutton.time;
+    XmI18List_time(ilist) = _XmPlatEventTime (_XmPlatEventOf (event)) ;
 
     /*
      * Reset all these flags. 
@@ -1049,9 +1051,9 @@ static void
 MotionAction(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
     XmI18ListWidget ilist = (XmI18ListWidget) w;
-    XButtonEvent * bevent = (XButtonEvent *) event;
+    XmPlatEvent pev = _XmPlatEventOf (event) ;
     short row, col;
-    short y = bevent->y;
+    short y = (short) _XmPlatEventY (pev) ;
 
     /*
      * Invalid row to start selection.
@@ -1066,7 +1068,7 @@ MotionAction(Widget w, XEvent *event, String *params, Cardinal *num_params)
     if (XmI18List_selection_policy(ilist) == XmSINGLE_SELECT) 
 	return;			/* Do nothing here... */
 
-    CvtPositionToRowColumn(w, bevent->x, y,  &row, &col); 
+    CvtPositionToRowColumn(w, _XmPlatEventX (pev), y,  &row, &col); 
     
     /*
      * We have not moved to a new row, or we started in the headers then
@@ -3892,13 +3894,17 @@ ProcessDrag(Widget wid,
     XmString tab;
 
     /* Don't allow multi-button drags. */
-    if (event->xbutton.state &
-	    ~((Button1Mask >> 1) << event->xbutton.button) &
-	    (Button1Mask | Button2Mask | Button3Mask | Button4Mask |
-	    Button5Mask))
+    {
+      XmPlatEvent pev = _XmPlatEventOf (event) ;
+      if (_XmPlatEventState (pev) &
+	      ~((Button1Mask >> 1) << _XmPlatEventButton (pev)) &
+	      (Button1Mask | Button2Mask | Button3Mask | Button4Mask |
+	      Button5Mask))
 	return;
 
-    CvtPositionToRowColumn(wid, event->xbutton.x, event->xbutton.y, &row, &col);
+      CvtPositionToRowColumn(wid, _XmPlatEventX (pev),
+			     _XmPlatEventY (pev), &row, &col);
+    }
     
     if (col < 0 || row >= lw->ilist.num_rows || col >= lw->ilist.num_columns)
 	return;

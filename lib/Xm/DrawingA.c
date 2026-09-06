@@ -27,6 +27,7 @@ static char rcsid[] = "$TOG: DrawingA.c /main/16 1999/10/13 16:16:41 mgreess $"
 #endif
 
 #ifdef HAVE_CONFIG_H
+#include "XmPlat/XmPlatP.h"
 #include <config.h>
 #endif
 
@@ -397,21 +398,24 @@ _XmDrawingAreaInput(
     int x, y ;
     Boolean button_event = True, input_on_gadget ;
 
-    if ((event->type == ButtonPress) || 
-	(event->type == ButtonRelease)) {
-	x = event->xbutton.x ;
-	y = event->xbutton.y ;
-    } else 
-    if (event->type == MotionNotify) {
-	x = event->xmotion.x ;
-	y = event->xmotion.y ;
-    } else
-    if ((event->type == KeyPress) || 
-	(event->type == KeyRelease)) {
-	x = event->xkey.x ;
-	y = event->xkey.y ;
+    {
+      XmPlatEvent pev = _XmPlatEventOf (event) ;
+      if (_XmPlatEventIsButtonPress (pev) || 
+	  _XmPlatEventIsButtonRelease (pev)) {
+	x = _XmPlatEventX (pev) ;
+	y = _XmPlatEventY (pev) ;
+      } else 
+      if (_XmPlatEventIsMotion (pev)) {
+	x = _XmPlatEventX (pev) ;
+	y = _XmPlatEventY (pev) ;
+      } else
+      if (_XmPlatEventIsKeyPress (pev) || 
+	  _XmPlatEventIsKeyRelease (pev)) {
+	x = _XmPlatEventX (pev) ;
+	y = _XmPlatEventY (pev) ;
 	button_event = False ;
-    } else return ; 
+      } else return ; 
+    }
 	    /* Unrecognized event (cannot determine x, y of pointer).*/
 	
     input_on_gadget = (ObjectAtPoint((Widget)da, x, y) != NULL);

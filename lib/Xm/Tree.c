@@ -469,13 +469,16 @@ Redisplay(Widget w, XEvent * event, Region region)
      * that have yet to be processed.
      */
 
-    if (event->xexpose.x < XmTree_ul_point(tw).x) 
-	XmTree_ul_point(tw).x = event->xexpose.x;
-    if (event->xexpose.y < XmTree_ul_point(tw).y) 
-	XmTree_ul_point(tw).y = event->xexpose.y;
+    {
+      XmPlatEvent pev = _XmPlatEventOf (event) ;
+      if (_XmPlatEventX (pev) < XmTree_ul_point(tw).x) 
+	XmTree_ul_point(tw).x = _XmPlatEventX (pev);
+      if (_XmPlatEventY (pev) < XmTree_ul_point(tw).y) 
+	XmTree_ul_point(tw).y = _XmPlatEventY (pev);
 
-    lrx = event->xexpose.x + event->xexpose.width;
-    lry = event->xexpose.y + event->xexpose.height;
+      lrx = _XmPlatEventX (pev) + _XmPlatEventWidth (pev);
+      lry = _XmPlatEventY (pev) + _XmPlatEventHeight (pev);
+    }
 
     if (lrx > XmTree_lr_point(tw).x) 
 	XmTree_lr_point(tw).x = lrx;
@@ -519,10 +522,12 @@ CheckExpose(Display *disp, XEvent *event, char *info_ptr)
 {
     RedispInfo *info = (RedispInfo *) info_ptr;
 
-    if (info->found || event->xany.type != Expose)
+    if (info->found ||
+	! _XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventExpose))
 	return(False);
 
-    if (event->xexpose.window == info->window)
+    if (_XmPlatEventWindow (_XmPlatEventOf (event)) ==
+	(XmPlatWindow) info->window)
 	info->found = True;
 
     return(False);

@@ -32,6 +32,7 @@ static char rcsid[] = "$XConsortium: MapEvents.c /main/12 1995/09/19 23:05:22 cd
 #endif
 
 #include <X11/Intrinsic.h>
+#include "XmPlat/XmPlatP.h"
 #include <X11/IntrinsicP.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -874,10 +875,12 @@ _XmMatchBtnEvent(
         Modifiers modifiers )
 {
    register Modifiers state = 
-     event->xbutton.state & (ShiftMask | LockMask | ControlMask | Mod1Mask | 
-			     Mod2Mask | Mod3Mask | Mod4Mask | Mod5Mask);
-   if (((eventType == XmIGNORE_EVENTTYPE)||(event->type == eventType)) &&
-       (event->xbutton.button == button) &&
+     _XmPlatEventState (_XmPlatEventOf (event)) &
+     (ShiftMask | LockMask | ControlMask | Mod1Mask | 
+      Mod2Mask | Mod3Mask | Mod4Mask | Mod5Mask);
+   if (((eventType == XmIGNORE_EVENTTYPE)||
+	_XmPlatEventIsType (_XmPlatEventOf (event), eventType)) &&
+       (_XmPlatEventButton (_XmPlatEventOf (event)) == button) &&
        ((modifiers == AnyModifier)||(state == modifiers)) )
       return (TRUE);
    else
@@ -920,15 +923,20 @@ _XmMatchKeyEvent(
    
    _XmCheckInitModifiers();
 
-   state = event->xkey.state & ~(LockMask|ScrollLockMask|NumLockMask);
+   state = _XmPlatEventState (_XmPlatEventOf (event)) &
+     ~(LockMask|ScrollLockMask|NumLockMask);
    mods  = modifiers & ~(LockMask|ScrollLockMask|NumLockMask);
 #endif   
-   if ((event->type == eventType) &&
-       (event->xkey.keycode == key) &&
+   if ((eventType == KeyPress
+	? _XmPlatEventIsKeyPress (_XmPlatEventOf (event))
+	: eventType == KeyRelease
+	? _XmPlatEventIsKeyRelease (_XmPlatEventOf (event))
+	: _XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventOther)) &&
+       (_XmPlatEventKeycode (_XmPlatEventOf (event)) == key) &&
 #ifdef FIX_345
        (state == mods))
 #else
-       (event->xkey.state == modifiers))
+       (_XmPlatEventState (_XmPlatEventOf (event)) == modifiers))
 #endif
       return (TRUE);
    else

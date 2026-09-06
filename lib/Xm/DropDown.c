@@ -9,6 +9,7 @@
 #endif
 
 #include <Xm/Xm.h>
+#include "XmPlat/XmPlatP.h"
 #include <Xm/XmP.h>
 #include "XmI.h"
 #include <Xm/VaSimpleP.h>
@@ -918,7 +919,9 @@ CheckUnpost(Widget w, XtPointer combo_ptr, XtPointer info_ptr)
     XmDropDownWidget cbw = (XmDropDownWidget) combo_ptr;
     XmArrowButtonCallbackStruct *arrow = (XmArrowButtonCallbackStruct *) info_ptr;
 	XmGrabShellWidget gs = (XmGrabShellWidget) XmDropDown_popup_shell(cbw) ;
-	if (gs && arrow && arrow->event->xbutton.time == gs->grab_shell.unpost_time)
+	if (gs && arrow &&
+	    _XmPlatEventTime (_XmPlatEventOf (arrow->event)) ==
+	    gs->grab_shell.unpost_time)
 		XmDropDown_list_state(cbw) = XmDropDown_AFTER_UNPOST;
 }
 #endif
@@ -1221,7 +1224,7 @@ ModifyVerifyTextField(Widget w, XtPointer combo_ptr, XtPointer info_ptr)
     if (XmDropDown_activateOnFill(cbw) <= 0) return;
     
     if(field == NULL || field->event == NULL ||
-       field->event->type != KeyPress) return;
+       ! _XmPlatEventIsKeyPress (_XmPlatEventOf (field->event))) return;
     
     /* printf("Text m/v callback, cur/new/start/end = %d %d %d %d\n",
      * field->currInsert, field->newInsert, field->startPos, field->endPos);
@@ -1286,8 +1289,8 @@ ListSelected(Widget w, XtPointer cbw_ptr, XtPointer list_data_ptr)
 
     if ((list_data->reason == XmCR_BROWSE_SELECT) &&
 	((list_data->event == NULL) ||
-	 ((list_data->event->xany.type != ButtonPress) &&
-	  (list_data->event->xany.type != ButtonRelease))))
+	 (! _XmPlatEventIsButtonPress (_XmPlatEventOf (list_data->event)) &&
+	  ! _XmPlatEventIsButtonRelease (_XmPlatEventOf (list_data->event)))))
     {
 	/* 
 	 * Do not popup list is browse select mode.
@@ -1329,32 +1332,30 @@ ShellButtonEvent(Widget w, XtPointer cbw_ptr, XEvent *event, Boolean *dispatch)
     XmDropDownWidget cbw = (XmDropDownWidget) cbw_ptr;
     Widget event_widget;
 
-  switch (event->type)
-    {
-    case ButtonRelease:
-      if (cbw->combo.scrolling)
-	*dispatch = cbw->combo.scrolling = FALSE;
-      break;
-
-    case ButtonPress:
-      /* Press & release in the scrollbar shouldn't popdown the list. */
-      if ((cbw->combo.vsb &&
-	   XtIsRealized(cbw->combo.vsb) &&
-	   (event->xbutton.window == XtWindow(cbw->combo.vsb))) ||
-	  (cbw->combo.hsb &&
-	   XtIsRealized(cbw->combo.hsb) &&
-	   (event->xbutton.window == XtWindow(cbw->combo.hsb))))
-	cbw->combo.scrolling = TRUE;
-      break;
-
-    default:
-      /* This shouldn't happen. */
-      break;
-    }
+  {
+    XmPlatEvent pev = _XmPlatEventOf (event) ;
+    if (_XmPlatEventIsButtonRelease (pev))
+      {
+	if (cbw->combo.scrolling)
+	  *dispatch = cbw->combo.scrolling = FALSE;
+      }
+    else if (_XmPlatEventIsButtonPress (pev))
+      {
+	/* Press & release in the scrollbar shouldn't popdown the list. */
+	if ((cbw->combo.vsb &&
+	     XtIsRealized(cbw->combo.vsb) &&
+	     (_XmPlatEventWindow (pev) == (XmPlatWindow)
+	      XtWindow(cbw->combo.vsb))) ||
+	    (cbw->combo.hsb &&
+	     XtIsRealized(cbw->combo.hsb) &&
+	     (_XmPlatEventWindow (pev) == (XmPlatWindow)
+	      XtWindow(cbw->combo.hsb))))
+	  cbw->combo.scrolling = TRUE;
+      }
 
     /* TODO: move the following into the switch statement above */
-    if (event->xany.type != ButtonPress) {
-	if ((event->xany.type == ButtonRelease) &&
+    if (! _XmPlatEventIsButtonPress (pev)) {
+	if (_XmPlatEventIsButtonRelease (pev) &&
 	    !XmDropDown_customized_combo_box(cbw))
 	    {
 		XtCallActionProc(XmDropDown_list(cbw), "ListEndSelect",
@@ -1363,7 +1364,8 @@ ShellButtonEvent(Widget w, XtPointer cbw_ptr, XEvent *event, Boolean *dispatch)
 	return;
     }
 
-    event_widget = XtWindowToWidget(event->xany.display, event->xany.window);
+    event_widget = XtWindowToWidget(XtDisplayOfObject(w),
+				    (Window) _XmPlatEventWindow (pev));
 
     if (event_widget == XmDropDown_arrow(cbw)) 
 	return;
@@ -1387,6 +1389,7 @@ ShellButtonEvent(Widget w, XtPointer cbw_ptr, XEvent *event, Boolean *dispatch)
     
    if (XmDropDown_list_state(cbw) != XmDropDown_POSTED)	/* in case this popup shell is used for more than one combobox */
     	ArrowClicked(XmDropDown_arrow(cbw), cbw_ptr, NULL);
+  }
 }
 
 /*	Function Name: ComboUnpost
@@ -1959,7 +1962,7 @@ SBBtnDownEH(Widget    w,
 
   XtGrabPointer(w, False, Events | PointerMotionMask | ButtonMotionMask,
 		GrabModeAsync, GrabModeAsync,
-		None, shell->grab_shell.cursor, event->xbutton.time);
+		None, shell->grab_shell.cursor, _XmPlatEventTime (_XmPlatEventOf (event)));
 }
 
 /*ARGSUSED*/
@@ -1977,9 +1980,9 @@ SBBtnUpEH(Widget    w,		/* unused */
   XtGrabPointer((Widget) shell, shell->grab_shell.owner_events, 
 		Events,
 		shell->grab_shell.grab_style, GrabModeAsync,
-		None, shell->grab_shell.cursor, event->xbutton.time);
+		None, shell->grab_shell.cursor, _XmPlatEventTime (_XmPlatEventOf (event)));
   if (shell->grab_shell.grab_style == GrabModeSync)
-    XAllowEvents(XtDisplay(shell), SyncPointer, event->xbutton.time);
+    XAllowEvents(XtDisplay(shell), SyncPointer, _XmPlatEventTime (_XmPlatEventOf (event)));
 }
 
 
@@ -2112,7 +2115,7 @@ TextButtonPress(Widget w , XtPointer client, XEvent *event, Boolean *go_on)
     *go_on = False;
 #endif
 
-    if (event->xany.type == ButtonPress)  {
+    if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)))  {
 	if (XmDropDown_list_state(cbw) == XmDropDown_POSTED)  {
 	    (void)ComboPost( w, NULL, NULL, NULL );
 	    XmDropDown_list_state(cbw) = XmDropDown_BEGIN_POPUP_FROM_TEXT;

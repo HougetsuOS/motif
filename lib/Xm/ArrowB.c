@@ -502,7 +502,8 @@ Arm(
   (void) XmProcessTraversal((Widget) aw, XmTRAVERSE_CURRENT);
   
   aw->arrowbutton.selected = True;
-  aw->arrowbutton.armTimeStamp = event->xbutton.time; /* see MultiActivate */
+  /* see MultiActivate */
+  aw->arrowbutton.armTimeStamp = _XmPlatEventTime (_XmPlatEventOf (event)) ;
   
   DrawArrow(aw, aw->primitive.bottom_shadow_GC,
 	    aw->primitive.top_shadow_GC, NULL);
@@ -571,7 +572,8 @@ MultiActivate(
   
   if (aw->arrowbutton.multiClick == XmMULTICLICK_KEEP)
     {
-      if ((buttonEvent->xbutton.time - aw->arrowbutton.armTimeStamp) > 
+      if ((_XmPlatEventTime (_XmPlatEventOf (buttonEvent)) -
+	   aw->arrowbutton.armTimeStamp) > 
 	  XtGetMultiClickTime(XtDisplay(aw)))
 	aw->arrowbutton.click_count = 1;
       else
@@ -596,11 +598,7 @@ ActivateCommon(
 	    aw->primitive.bottom_shadow_GC, NULL);
   
   /* CR 9181: Consider clipping when testing visibility. */
-  if (((buttonEvent->xany.type == ButtonPress) || 
-       (buttonEvent->xany.type == ButtonRelease)) &&
-      _XmGetPointVisibility(wid, 
-			    buttonEvent->xbutton.x_root, 
-			    buttonEvent->xbutton.y_root) &&
+  if (_XmPlatGetPointVisibilityIsButton (wid, buttonEvent) &&
       (aw->arrowbutton.activate_callback))
     {
       XFlush(XtDisplay(aw));

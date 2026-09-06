@@ -1099,7 +1099,7 @@ SpinChildFocusChange(Widget focusWidget,
   } else {
     /* Only care if this is BSelect */
     if (focusEvent->type == ButtonPress && 
-	focusEvent->xbutton.button == Button1) {
+	_XmPlatEventButton (_XmPlatEventOf (focusEvent)) == Button1) {
       if (spinW->spinBox.textw != (Widget) NULL) {
 	Widget child = spinW->spinBox.textw;
 	WidgetClass wc = XtClass(child);
@@ -1256,7 +1256,8 @@ SpinBFirst(Widget   firstWidget,
   Widget		  child;
   int		  savePosition;
   
-  child = XtWindowToWidget(XtDisplay(firstWidget), firstEvent->xany.window);
+  child = XtWindowToWidget(XtDisplay(firstWidget),
+			   (Window) _XmPlatEventWindow (_XmPlatEventOf (firstEvent)));
   
   child = spinW->spinBox.textw;
   
@@ -1297,7 +1298,8 @@ SpinBLast(Widget lastWidget,
   Widget		  child;
   int 		  savePosition;
   
-  child = XtWindowToWidget(XtDisplay(lastWidget), lastEvent->xany.window);
+  child = XtWindowToWidget(XtDisplay(lastWidget),
+			   (Window) _XmPlatEventWindow (_XmPlatEventOf (lastEvent)));
   child = spinW->spinBox.textw;
   
   if (WidgetIsChild(spinW, child) && UpArrowSensitive(spinW))

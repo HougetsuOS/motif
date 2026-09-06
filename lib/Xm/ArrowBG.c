@@ -1387,7 +1387,7 @@ ActivateCommonG(
         XEvent *event,
         Mask event_mask)
 {
-  if (event->type == ButtonRelease)
+  if (_XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
     {
       Activate((Widget) ag, event, NULL, NULL);
       Disarm (ag, event);

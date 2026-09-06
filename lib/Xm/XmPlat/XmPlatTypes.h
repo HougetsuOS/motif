@@ -12,6 +12,27 @@ typedef struct _XmPlatSurfaceRec   *XmPlatSurface ;
 typedef struct _XmPlatDrawCtxRec   *XmPlatDrawCtx ;
 typedef struct _XmPlatFontRec      *XmPlatFont ;
 typedef struct _XmPlatImageRec     *XmPlatImage ;
+typedef struct _XmPlatEventRec     *XmPlatEvent ;
+
+/*
+ * Window token (Phase 4): identifies a window for event-field purposes
+ * ("did this event happen on my window?").  X11: the Window id cast to
+ * a pointer-sized integer; other backends define their own encoding.
+ */
+typedef unsigned long XmPlatWindow ;
+#define XmPlatWindowNone ((XmPlatWindow) 0)
+
+/* Timestamp in event fields (X11 Time; 0 == CurrentTime). */
+typedef unsigned long XmPlatTime ;
+
+#ifndef XMPLAT_BOOLEAN
+#define XMPLAT_BOOLEAN
+typedef int XmPlatBoolean ;
+#ifndef True
+#define True  1
+#define False 0
+#endif
+#endif
 
 typedef unsigned long XmPlatPixel ;
 typedef int           XmPlatAngle ;	/* 64ths of a degree, X11 units */

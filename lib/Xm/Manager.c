@@ -31,6 +31,7 @@ static char rcsid[] = "$TOG: Manager.c /main/22 1999/01/27 16:07:30 mgreess $"
 #endif
 #endif
 
+#include "XmPlat/XmPlatP.h"
 #include <Xm/AccColorT.h>
 #include <Xm/CareVisualT.h>
 #include <Xm/DrawP.h>
@@ -1189,11 +1190,15 @@ ManagerMotion(
      * as the 1.1 comment above describes.  
      */
 
-   if (event->xmotion.subwindow != 0 || !mw->manager.has_focus)
-      return;
+   {
+     XmPlatEvent pev = _XmPlatEventOf (event) ;
+     if (_XmPlatEventSubwindow (pev) != XmPlatWindowNone ||
+	 ! mw->manager.has_focus)
+       return;
 
-   gadget = _XmInputForGadget((Widget) mw, event->xmotion.x, 
-			      event->xmotion.y);
+     gadget = _XmInputForGadget((Widget) mw, _XmPlatEventX (pev),
+				_XmPlatEventY (pev));
+   }
    oldGadget = (XmGadget) mw->manager.highlighted_widget;
 
 
@@ -1268,8 +1273,8 @@ ManagerEnter(
     */
    _XmManagerEnter((Widget) mw, event, NULL, NULL);
 
-   gadget = _XmInputForGadget( (Widget) mw, event->xcrossing.x,
-                                           event->xcrossing.y);
+   gadget = _XmInputForGadget( (Widget) mw, _XmPlatEventX (_XmPlatEventOf (event)),
+			       _XmPlatEventY (_XmPlatEventOf (event)));
    /*  Dispatch motion and enter events to the child  */
 
    if (gadget != NULL)
@@ -1733,7 +1738,9 @@ _XmGadgetTraverseCurrent(
 {
   Widget child ;
   
-  child = (Widget) _XmInputForGadget(wid, event->xbutton.x, event->xbutton.y); 
+  child = (Widget) _XmInputForGadget(wid,
+				     _XmPlatEventX (_XmPlatEventOf (event)),
+				     _XmPlatEventY (_XmPlatEventOf (event))); 
   XmProcessTraversal(child, XmTRAVERSE_CURRENT) ;
 }
 
@@ -1875,7 +1882,9 @@ _XmGadgetSelect(
             } 
         }
     else /* FocusPolicy == XmPOINTER */
-    {   child = (Widget) _XmInputForGadget( (Widget) mw, event->xkey.x, event->xkey.y) ;
+    {   child = (Widget) _XmInputForGadget( (Widget) mw,
+					    _XmPlatEventX (_XmPlatEventOf (event)),
+					    _XmPlatEventY (_XmPlatEventOf (event))) ;
         } 
     if(    child
         && (((XmGadgetClass)XtClass( child))->gadget_class.arm_and_activate)  )
@@ -1941,8 +1950,9 @@ _XmGadgetButtonMotion(
             } 
         }
     else /* FocusPolicy == XmPOINTER */
-    {   child = (Widget) _XmInputForGadget( (Widget) mw, event->xmotion.x,
-					   event->xmotion.y) ;
+    {   child = (Widget) _XmInputForGadget( (Widget) mw,
+					    _XmPlatEventX (_XmPlatEventOf (event)),
+					    _XmPlatEventY (_XmPlatEventOf (event))) ;
         } 
     if(    child    )
     {   _XmDispatchGadgetInput( child, event, XmMOTION_EVENT);
@@ -1971,7 +1981,8 @@ _XmGadgetKeyInput(
     else /* FocusPolicy == XmPOINTER */
 	{   
 	    child = (Widget) _XmInputForGadget( (Widget) mw, 
-					       event->xkey.x, event->xkey.y) ;
+					       _XmPlatEventX (_XmPlatEventOf (event)),
+					       _XmPlatEventY (_XmPlatEventOf (event))) ;
         } 
     if(    child    )
     {   _XmDispatchGadgetInput( child, event, XmKEY_EVENT);
@@ -1990,8 +2001,9 @@ _XmGadgetArm(
     XmManagerWidget mw = (XmManagerWidget) wid ;
     XmGadget gadget;
 
-    if ((gadget = _XmInputForGadget( (Widget) mw, event->xbutton.x,
-				    event->xbutton.y)) != NULL)
+    if ((gadget = _XmInputForGadget( (Widget) mw,
+				     _XmPlatEventX (_XmPlatEventOf (event)),
+				     _XmPlatEventY (_XmPlatEventOf (event)))) != NULL)
     {
 	XmProcessTraversal( (Widget) gadget, XmTRAVERSE_CURRENT);
         _XmDispatchGadgetInput( (Widget) gadget, event, XmARM_EVENT);
@@ -2020,16 +2032,19 @@ _XmGadgetDrag(
     XmGadget gadget;
 
     /* CR 5141: Don't let multi-button drags cause confusion. */
-    if ( !(event->xbutton.state &
-         ~((Button1Mask >> 1) << event->xbutton.button) &
-         (Button1Mask | Button2Mask | Button3Mask | Button4Mask | Button5Mask))
-	&& (gadget = _XmInputForGadget((Widget) mw, event->xbutton.x,
-				    event->xbutton.y)) != NULL)
     {
-        _XmDispatchGadgetInput( (Widget) gadget, event, XmBDRAG_EVENT);
-        mw->manager.selected_gadget = gadget;
+      XmPlatEvent pev = _XmPlatEventOf (event) ;
+      if ( !(_XmPlatEventState (pev) &
+         ~((Button1Mask >> 1) << _XmPlatEventButton (pev)) &
+         (Button1Mask | Button2Mask | Button3Mask | Button4Mask | Button5Mask))
+	  && (gadget = _XmInputForGadget((Widget) mw,
+					 _XmPlatEventX (pev),
+					 _XmPlatEventY (pev))) != NULL)
+	{
+	  _XmDispatchGadgetInput( (Widget) gadget, event, XmBDRAG_EVENT);
+	  mw->manager.selected_gadget = gadget;
+	}
     }
-
     mw->manager.eligible_for_multi_button_event = NULL;
 }
 
@@ -2080,8 +2095,8 @@ _XmManagerHelp(
         else
         {
 	    if ((widget = XmObjectAtPoint( (Widget) mw, 
-					  event->xkey.x,
-					  event->xkey.y)) != NULL)
+					  _XmPlatEventX (_XmPlatEventOf (event)),
+					  _XmPlatEventY (_XmPlatEventOf (event)))) != NULL)
                _XmDispatchGadgetInput(widget, event, XmHELP_EVENT);
           else
                _XmSocorro( (Widget) mw, event, NULL, NULL);
@@ -2101,8 +2116,8 @@ _XmGadgetMultiArm(
     XmManagerWidget mw = (XmManagerWidget) wid ;	
     XmGadget gadget;
 
-    gadget = _XmInputForGadget( (Widget) mw, event->xbutton.x,
-			       event->xbutton.y);
+    gadget = _XmInputForGadget( (Widget) mw, _XmPlatEventX (_XmPlatEventOf (event)),
+			       _XmPlatEventY (_XmPlatEventOf (event)));
     /*
      * If we're not set up for multi_button events, check to see if the
      * input gadget has changed from the active_child.  This means that the
@@ -2110,8 +2125,8 @@ _XmGadgetMultiArm(
      * If so, arm the gadget as if it were the first button press.
      */
     if (mw->manager.eligible_for_multi_button_event &&
-	((gadget = _XmInputForGadget( (Widget) mw, event->xbutton.x,
-				     event->xbutton.y)) ==
+	((gadget = _XmInputForGadget( (Widget) mw, _XmPlatEventX (_XmPlatEventOf (event)),
+				     _XmPlatEventY (_XmPlatEventOf (event)))) ==
 	  mw->manager.eligible_for_multi_button_event))
     {
         _XmDispatchGadgetInput( (Widget) gadget, event, XmMULTI_ARM_EVENT);

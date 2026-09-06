@@ -299,7 +299,8 @@ SashFocusIn(
 {
     register XmSashWidget sash = (XmSashWidget) w;
 
-    if (event->xany.type != FocusIn || !event->xfocus.send_event)
+    if (! _XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventFocus) ||
+	! _XmPlatEventSendEvent (_XmPlatEventOf (event)))
           return;
 
     if (_XmGetFocusPolicy( (Widget) sash) == XmEXPLICIT)
@@ -326,7 +327,8 @@ SashFocusOut(
 {
     register XmSashWidget sash = (XmSashWidget) w;
 
-    if (event->xany.type != FocusOut || !event->xfocus.send_event)
+    if (! _XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventFocus) ||
+	! _XmPlatEventSendEvent (_XmPlatEventOf (event)))
           return;
 
     if (_XmGetFocusPolicy( (Widget) sash) == XmEXPLICIT)

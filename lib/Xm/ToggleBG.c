@@ -1019,7 +1019,7 @@ InputDispatch(
     {
       if (LabG_IsMenupane(tb))
 	{
-	  if (event->type == ButtonRelease)
+	  if (_XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
 	    BtnUp(tb, event);
 	  else /* Assume KeyPress or KeyRelease */
 	    KeySelect (tb, event);
@@ -1530,11 +1530,7 @@ Select(
   
   /* CR 8068: Verify that this is in fact a button event. */
   /* CR 9181: Consider clipping when testing visibility. */
-  hit = (((event->xany.type == ButtonPress) || 
-	  (event->xany.type == ButtonRelease)) &&
-	 _XmGetPointVisibility((Widget) tb, 
-			       event->xbutton.x_root, 
-			       event->xbutton.y_root));
+  hit = _XmPlatGetPointVisibilityIsButton ((Widget) tb, event) ;
   
   if (hit)
     {
@@ -1897,11 +1893,7 @@ BtnUp(
    * and the submenu's (and menu item children) layout/geometry changes.
    */
   /* CR 9181: Consider clipping when testing visibility. */
-  valid_event = (((event->xany.type == ButtonPress) || 
-		  (event->xany.type == ButtonRelease)) &&
-		 _XmGetPointVisibility((Widget)tb, 
-				       event->xbutton.x_root, 
-				       event->xbutton.y_root));
+  valid_event = _XmPlatGetPointVisibilityIsButton ((Widget) tb, event) ;
   
   if (is_menupane && !XmIsMenuShell(shell))
     popped_up = menuSTrait->popdown((Widget) tb, event);

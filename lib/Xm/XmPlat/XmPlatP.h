@@ -224,3 +224,37 @@ extern XFontStruct * _XmPlatFontSetFirstStruct (XmPlatFont font) ;
    XftDraw for a surface.  Do not use from widget code. */
 extern XftDraw * _XmPlatXftDrawOf (XmPlatDrawCtx ctx, XmPlatSurface surface) ;
 
+
+/*
+ * Event seam (Phase 4).  Widget code wraps the incoming XEvent* once at
+ * the top of a handler and reads prims; frozen Xt/gadget signatures keep
+ * XEvent* and unwrap via _XmPlatEventRaw where they must hand the raw
+ * record onward.  None of these need Display.
+ */
+
+/* Window identity for event-field comparison ("is this event on my
+   window?").  Widget -> XmPlatWindow. */
+static XmPlatWindow
+_XmPlatWindowOf (Widget w)
+{
+    return (XmPlatWindow) (w ? XtWindow (w) : 0) ;
+}
+
+/* Display behind an event token (event-plumbing use only: display-scoped
+   caches and unique-event stamps; NOT for drawing). */
+extern Display *_XmPlatEventDisplayOf (XmPlatEvent ev) ;
+
+/* Pointer sub-kind test shorthand used by gadget dispatch code. */
+#define _XmPlatEventIsButtonPress(ev) \
+    (_XmPlatEventPointerKind (ev) == XmPlatButtonPress)
+#define _XmPlatEventIsButtonRelease(ev) \
+    (_XmPlatEventPointerKind (ev) == XmPlatButtonRelease)
+#define _XmPlatEventIsMotion(ev) \
+    (_XmPlatEventPointerKind (ev) == XmPlatPointerMotion)
+
+/* Migration glue (Phase 4): the recurring "is this a button press or
+   release whose root point is visible over the widget" test used by
+   PushB/ToggleB/ToggleBG/ArrowB/DrawnB activate paths.  _XmGetPoint-
+   Visibility is declared in TraversalI.h. */
+extern Boolean _XmPlatGetPointVisibilityX (Widget w, XmPlatEvent ev) ;
+extern Boolean _XmPlatGetPointVisibilityIsButton (Widget w, XEvent *event) ;

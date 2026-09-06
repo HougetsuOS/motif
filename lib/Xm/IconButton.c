@@ -1132,8 +1132,10 @@ Notify(Widget w, XEvent * event, String * params, Cardinal * num_params)
     XmIconButtonCallbackInfo info;
     Boolean dclick;
 
-    if ((event->type == ButtonPress) || (event->type == ButtonRelease))
-	dclick = ((event->xbutton.time - XmIconButton_time(iw)) <=
+    if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)) ||
+	_XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
+	dclick = ((_XmPlatEventTime (_XmPlatEventOf (event)) -
+		   XmIconButton_time(iw)) <=
 		  XtGetMultiClickTime(XtDisplay(w)));
     else
 	dclick = False;
@@ -1213,7 +1215,7 @@ ButtonUp(Widget w,
 {
     XmIconButtonWidget iw = (XmIconButtonWidget) w;
 
-    XmIconButton_time(iw) = event->xbutton.time;
+    XmIconButton_time(iw) = _XmPlatEventTime (_XmPlatEventOf (event)) ;
 }
 
 /************************************************************

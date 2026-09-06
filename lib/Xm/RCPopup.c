@@ -41,6 +41,7 @@ static char *rcsid = "$XConsortium: RCPopup.c /main/7 1996/03/28 15:15:24 daniel
 #include <ctype.h>
 #include "XmI.h"
 #include <X11/IntrinsicP.h>
+#include "XmPlat/XmPlatP.h"
 #include <X11/CoreP.h>
 #include <X11/CompositeP.h>
 #include <X11/ShellP.h>
@@ -197,9 +198,14 @@ PopupMenuEventHandler(Widget wid, XtPointer poster,
   /* Now look at the event type.  It better be a button or
      key event.  Otherwise abort */
 
-  if (e -> type != ButtonPress && e -> type != ButtonRelease &&
-      e -> type != KeyPress && e -> type != KeyRelease)
-    return;
+  {
+    XmPlatEvent pev = _XmPlatEventOf (e) ;
+    if (! _XmPlatEventIsButtonPress (pev) &&
+	! _XmPlatEventIsButtonRelease (pev) &&
+	! _XmPlatEventIsKeyPress (pev) &&
+	! _XmPlatEventIsKeyRelease (pev))
+      return;
+  }
 
   /* First determine if this might have been a replay.  This variable
      gets passed to the callback as the repost field */
@@ -213,7 +219,7 @@ PopupMenuEventHandler(Widget wid, XtPointer poster,
 
   mst->RC_ButtonEventStatus.time = _time;
 
-  if (e -> type == KeyPress || e -> type == KeyRelease) {
+  if (_XmPlatEventIsType (_XmPlatEventOf (e), XmPlatEventKey)) {
     mst->RC_ButtonEventStatus.verified = True;
   } else {
     mst->RC_ButtonEventStatus.verified = 
@@ -308,7 +314,7 @@ PopupMenuEventHandler(Widget wid, XtPointer poster,
      */
     RC_CascadeBtn(popup) = XtParent(XtParent(popup));
 
-    if (e -> type == KeyPress || e -> type == KeyRelease) {
+    if (_XmPlatEventIsType (_XmPlatEventOf (e), XmPlatEventKey)) {
       XmRowColumnClassRec * rc;
 
       rc = (XmRowColumnClassRec *)XtClass(popup);
@@ -449,7 +455,7 @@ MenuMatches(Widget menu, int level, XEvent *event)
       /* We have a candidate.  It is a popup menu with
 	 an appropriate popup enabled value */
       {
-	if (event -> type == KeyPress || event -> type == KeyRelease) {
+	if (_XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventKey)) {
 	  found = MatchInKeyboardList((XmRowColumnWidget) menu,
 				      (XKeyEvent *) event, 0) != -1;
 	} else {
@@ -705,7 +711,8 @@ _XmPostPopupMenu(
     * we'll just take for granted that the application knows what it's doing
     * and force the menu to post.
     */
-   if (event->type == ButtonPress || event->type == ButtonRelease)
+   if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)) ||
+       _XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
    {
       ButtonEventHandler( wid, (XtPointer) wid, event, NULL); /* drand #4973 */
    }
@@ -715,7 +722,8 @@ _XmPostPopupMenu(
 	 /* This could be trouble if the event type passed in does not have
 	  * a time stamp!
 	  */
-	 mst->RC_ButtonEventStatus.time = event->xkey.time;
+	 mst->RC_ButtonEventStatus.time =
+	   _XmPlatEventTime (_XmPlatEventOf (event)) ;
 	 mst->RC_ButtonEventStatus.waiting_to_be_managed = True;
 	 mst->RC_ButtonEventStatus.event = *((XButtonEvent *)event);
       }
@@ -1077,8 +1085,8 @@ MatchInKeyboardList(
        {
 	   if (_XmMatchKeyEvent((XEvent *) event, klist[i].eventType,
 				klist[i].key, klist[i].isMnemonic ? 
-				klist[i].modifiers | (event->state &
-						     (ShiftMask | LockMask)) :
+				klist[i].modifiers | (_XmPlatEventState (_XmPlatEventOf (event)) &
+					 (ShiftMask | LockMask)) :
 				klist[i].modifiers)) 
 	   {
 	       return(i);

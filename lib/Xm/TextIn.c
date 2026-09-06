@@ -1094,7 +1094,7 @@ DeleteOrKill(XmTextWidget tw,
   XmTextBlockRec block, newblock;
   Boolean freeBlock;
   char *ptr;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   
@@ -1141,7 +1141,7 @@ StuffFromBuffer(XmTextWidget tw,
   XmTextPosition from_pos, to_pos;
   XmTextBlockRec block, newblock;
   Boolean freeBlock;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   from_pos = to_pos = tw->text.cursor_position;
@@ -1192,7 +1192,7 @@ RemoveCurrentSelection(Widget w,
 {
   XmTextWidget tw = (XmTextWidget) w;
   XmTextPosition newCursorPos, cursorPos, left, right;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   if (!(*tw->text.source->GetSelection)(tw->text.source, &left, &right)) {
@@ -1371,7 +1371,7 @@ SelfInsert(Widget w,
   Status status_return;
   Boolean pending_delete = False;
   Boolean freeBlock;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   /* Determine what was pressed.
@@ -1465,7 +1465,7 @@ InsertString(Widget w,
   Boolean value_changed = False;
   Boolean pending_delete = False;
   Boolean freeBlock;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   _XmTextDisableRedisplay(tw, TRUE);
@@ -1692,7 +1692,7 @@ KeySelection(Widget w,
   XmTextScanDirection  cursorDir;                              /* PIR1858 */
   XmTextPosition       tempIndex;                              /* PIR1858 */
   int value;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   
@@ -1961,7 +1961,7 @@ SimpleMovement(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   Boolean extend = False;
   int value;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   EraseInsertionPoint(tw);
@@ -2028,7 +2028,7 @@ MoveForwardWord(Widget w,
   XmTextPosition position, cursorPos;
   Boolean extend = False;
   int value;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   _XmTextResetIC(w);
@@ -2086,7 +2086,7 @@ MoveBackwardWord(Widget w,
   XmTextPosition position, cursorPos;
   Boolean extend = False;
   int value;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   _XmTextResetIC(w);
@@ -2166,7 +2166,7 @@ MoveToLineStart(Widget w,
   XmTextPosition position, cursorPos;
   Boolean extend = False;
   int value;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   _XmTextResetIC(w);
@@ -2210,7 +2210,7 @@ MoveToLineEnd(Widget w,
   XmTextPosition position, cursorPos;
   Boolean extend = False;
   int value;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   _XmTextResetIC(w);
@@ -2269,7 +2269,7 @@ _MoveNextLine(Widget w,
   Position cur_x = 0, cur_y = 0;
   Boolean extend = False;
   int value;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   if (tw->text.edit_mode == XmSINGLE_LINE_EDIT) return;
@@ -2384,7 +2384,7 @@ _MovePreviousLine(Widget w,
   Position cur_x = 0, cur_y = 0;
   Boolean extend = False;
   int value;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   if (tw->text.edit_mode == XmSINGLE_LINE_EDIT) return;
@@ -2479,7 +2479,7 @@ MoveNextPage(Widget w,
   Position x, y;
   int n, value;
   Boolean extend = False;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   _XmTextResetIC(w);
@@ -2544,7 +2544,7 @@ MovePreviousPage(Widget w,
   Position x, y;
   int n, value;
   Boolean extend = False;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   _XmTextResetIC(w);
@@ -2598,7 +2598,7 @@ MovePageLeft(Widget w,
   Position x, y;
   Boolean extend = False;
   int value;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   _XmTextResetIC(w);
@@ -2645,7 +2645,7 @@ MovePageRight(Widget w,
   Position x, y;
   Boolean extend = False;
   int value;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   _XmTextResetIC(w);
@@ -2692,7 +2692,7 @@ MovePageUp(Widget w,
   Position x = 0, y = 0;
   Boolean extend = False;
   int value = 0;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   EraseInsertionPoint(tw);
@@ -2737,7 +2737,7 @@ MovePageDown(Widget w,
   Position x = 0, y = 0;
   Boolean extend = False;
   int value = 0;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   EraseInsertionPoint(tw);
@@ -2848,8 +2848,8 @@ ScrollCursorVertically(Widget w,
   
   if (*num_params == 0) {
     if (event) 
-      pos = (*tw->text.output->XYToPos)(tw, event->xbutton.x, 
-					event->xbutton.y);
+      pos = (*tw->text.output->XYToPos)(tw, _XmPlatEventX (_XmPlatEventOf (event)), 
+					_XmPlatEventY (_XmPlatEventOf (event)));
     else
       pos = tw->text.cursor_position;
     if (pos == tw->text.line[tw->text.number_lines].start)
@@ -2887,7 +2887,7 @@ AddNewLine(Widget w,
   Boolean pending_delete = False;
   Boolean freeBlock;
   char str[32]; 
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
  
   str[0] = '\n';
@@ -2972,7 +2972,7 @@ InsertNewLineAndIndent(Widget w,
   XmTextBlockRec block, newblock;
   XmTextPosition  pos, from_pos, to_pos, left, right, cursorPos, newCursorPos;
   Boolean freeBlock, value_changed = False;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   _XmTextResetIC(w);
@@ -3120,8 +3120,8 @@ SetCursorPosition(Widget w,
   _XmTextResetIC(w);
   if (event)
     _XmTextSetCursorPosition(w, (*tw->text.output->XYToPos)(tw, 
-							    event->xbutton.x,
-							    event->xbutton.y));
+							    _XmPlatEventX (_XmPlatEventOf (event)),
+							    _XmPlatEventY (_XmPlatEventOf (event))));
 }
 
 static void 
@@ -3137,7 +3137,7 @@ RemoveBackwardChar(Widget w,
 {
   XmTextWidget tw = (XmTextWidget) w;
   XmTextPosition newCursorPos, cursorPos, nextPos, left, right;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   cursorPos = nextPos = tw->text.cursor_position;
@@ -3201,7 +3201,7 @@ RemoveForwardWord(Widget w,
 {
   XmTextWidget tw = (XmTextWidget) w;
   XmTextPosition newCursorPos, left, right;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   EraseInsertionPoint(tw);
@@ -3267,7 +3267,7 @@ RemoveBackwardWord(Widget w,
 {
   XmTextWidget tw = (XmTextWidget) w;
   XmTextPosition newCursorPos, left, right;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   EraseInsertionPoint(tw);
@@ -3338,7 +3338,7 @@ RemoveForwardChar(Widget w,
 {
   XmTextWidget tw = (XmTextWidget) w;
   XmTextPosition newCursorPos, cursorPos, nextPos, left, right;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   EraseInsertionPoint(tw);
@@ -3399,7 +3399,7 @@ RemoveToEndOfLine(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   XmTextPosition newCursorPos, left, right;
   LineNum line;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   EraseInsertionPoint(tw);
@@ -3448,7 +3448,7 @@ RemoveToStartOfLine(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   XmTextPosition newCursorPos, left, cursorPos, right;
   LineNum line;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   EraseInsertionPoint(tw);
@@ -3657,8 +3657,8 @@ SetSelectionHint(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   InputData data = tw->text.input->data;
   if (event) {
-    data->selectionHint.x = event->xbutton.x;
-    data->selectionHint.y = event->xbutton.y;
+    data->selectionHint.x = _XmPlatEventX (_XmPlatEventOf (event));
+    data->selectionHint.y = _XmPlatEventY (_XmPlatEventOf (event));
   }
 }
 
@@ -3733,7 +3733,7 @@ SetAnchor(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   InputData data = tw->text.input->data;
   XmTextPosition left, right;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   data->anchor = tw->text.cursor_position;
@@ -3754,8 +3754,8 @@ DoSelection(Widget w,
 {
   XmTextWidget tw = (XmTextWidget) w;
   if (event)
-    a_Selection(tw, event->xbutton.x, event->xbutton.y,
-		event->xbutton.time, True);
+    a_Selection(tw, _XmPlatEventX (_XmPlatEventOf (event)), _XmPlatEventY (_XmPlatEventOf (event)),
+		_XmPlatEventTime (_XmPlatEventOf (event)), True);
 }
 
 static void 
@@ -3765,7 +3765,7 @@ SetScanType(Widget w,
 {
   int i;
   int multi_click_time;
-  Time event_time = event ? event->xbutton.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay(w));
   
   multi_click_time = XtGetMultiClickTime(XtDisplay(w));
@@ -3793,14 +3793,14 @@ StartPrimary(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   InputData data = tw->text.input->data;
   XmTextPosition left, right;
-  Time event_time = event ? event->xbutton.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay(w));
   
   _XmTextResetIC(w);
   EraseInsertionPoint(tw);
   if (event)
-    data->anchor = (*tw->text.output->XYToPos)(tw, event->xbutton.x,
-					       event->xbutton.y);
+    data->anchor = (*tw->text.output->XYToPos)(tw, _XmPlatEventX (_XmPlatEventOf (event)),
+					       _XmPlatEventY (_XmPlatEventOf (event)));
   else
     data->anchor = tw->text.cursor_position;
   SetSelectionHint(w, event, params, num_params);
@@ -3828,7 +3828,7 @@ StartSecondary(Widget w,
   InputData data = tw->text.input->data;
   int status;
   Position x, y;
-  Time event_time = event ? event->xbutton.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay(w));
   if (!event_time) event_time = _XmValidTimestamp(w);
 
@@ -3836,8 +3836,8 @@ StartSecondary(Widget w,
   XAllowEvents(XtDisplay(w), AsyncBoth, event_time);
 
   if (event) {
-    data->Sel2Hint.x = event->xbutton.x;
-    data->Sel2Hint.y = event->xbutton.y;
+    data->Sel2Hint.x = _XmPlatEventX (_XmPlatEventOf (event));
+    data->Sel2Hint.y = _XmPlatEventY (_XmPlatEventOf (event));
   } else {
     (*tw->text.output->PosToXY)(tw, tw->text.cursor_position, 
 				&x, &y);
@@ -3948,9 +3948,9 @@ InSelection(Widget w,
   Position x, y;
   
   if (event) {
-    position = (*tw->text.output->XYToPos)(tw, event->xbutton.x,
-					   event->xbutton.y);
-    x = event->xbutton.x;
+    position = (*tw->text.output->XYToPos)(tw, _XmPlatEventX (_XmPlatEventOf (event)),
+					   _XmPlatEventY (_XmPlatEventOf (event)));
+    x = _XmPlatEventX (_XmPlatEventOf (event));
   } else {
     position = tw->text.cursor_position;
     (*tw->text.output->PosToXY)(tw, position, &x, &y);
@@ -3976,7 +3976,7 @@ ProcessBSelect(Widget w,
 {
   XmTextWidget tw = (XmTextWidget) w;
   InputData data = tw->text.input->data;
-  Time event_time = event->xbutton.time;
+  Time event_time = _XmPlatEventTime (_XmPlatEventOf (event));
   XtEnum drag_on_btn1 = XmOFF;
   XmDisplay dpy;
 
@@ -3990,12 +3990,13 @@ ProcessBSelect(Widget w,
   }
   
   if (*num_params == 0) {
-    if (event->type == ButtonPress &&
+    if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)) &&
 	InSelection(w, event))
       StartDrag(w, event, params, num_params);
   } else {
-    switch (event->type) {
-    case ButtonPress:
+    switch (_XmPlatEventKind (_XmPlatEventOf (event))) {
+    case XmPlatEventPointer:
+      if (_XmPlatEventIsButtonPress (_XmPlatEventOf (event))) {
       if (!InSelection(w, event) ||
 	  (event_time > data->lasttime &&
 	   event_time - data->lasttime < XtGetMultiClickTime(XtDisplay(w)))) {
@@ -4018,9 +4019,10 @@ ProcessBSelect(Widget w,
 					DragStart, (XtPointer)w);
 	SetSelectionHint(w, event, params, num_params);
       }
-      break;
-    case ButtonRelease:
-      if (data->drag_id) {
+      } /* end ButtonPress */
+      else if (_XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
+	{
+	  if (data->drag_id) {
 	XtRemoveTimeOut(data->drag_id);
 	data->drag_id = 0;
 	data->selectionHint.x = data->selectionHint.y = 0;
@@ -4030,8 +4032,9 @@ ProcessBSelect(Widget w,
 	}
       }
       XtCallActionProc(w, params[0], event, NULL, 0);
-      break;
-    case MotionNotify:
+	}
+      else if (_XmPlatEventIsMotion (_XmPlatEventOf (event)))
+	{
       if (data->drag_id) {
 	if (dragged(data->selectionHint, event, data->threshold)) {
 	  data->selectionHint.x = data->selectionHint.y = 0;
@@ -4041,6 +4044,7 @@ ProcessBSelect(Widget w,
 	}
       } else if (*num_params > 0)
 	XtCallActionProc(w, params[0], event, NULL, 0);
+	}
       break;
     }
   }
@@ -4080,8 +4084,8 @@ dragged(SelectionHint selectionHint,
         int threshold)
 {
   int xdiff, ydiff;
-  xdiff = event ? abs(selectionHint.x - event->xbutton.x) : 0;
-  ydiff = event ? abs(selectionHint.y - event->xbutton.y) : 0;
+  xdiff = event ? abs(selectionHint.x - _XmPlatEventX (_XmPlatEventOf (event))) : 0;
+  ydiff = event ? abs(selectionHint.y - _XmPlatEventY (_XmPlatEventOf (event))) : 0;
   if((xdiff > threshold) || (ydiff > threshold))
     return TRUE;
   else
@@ -4273,13 +4277,13 @@ CheckTimerScrolling(Widget w,
   if (!event)
     return False;
 
-  data->select_pos_x = event->xmotion.x;
-  data->select_pos_y = event->xmotion.y;
+  data->select_pos_x = _XmPlatEventX (_XmPlatEventOf (event));
+  data->select_pos_y = _XmPlatEventY (_XmPlatEventOf (event));
   
-  if ((event->xmotion.x > (int)o_data->leftmargin) &&
-      (event->xmotion.x < (int)(tw->core.width - o_data->rightmargin))  &&
-      (event->xmotion.y > (int)o_data->topmargin) &&
-      (event->xmotion.y < (int)(o_data->topmargin + (o_data->lineheight *
+  if ((_XmPlatEventX (_XmPlatEventOf (event)) > (int)o_data->leftmargin) &&
+      (_XmPlatEventX (_XmPlatEventOf (event)) < (int)(tw->core.width - o_data->rightmargin))  &&
+      (_XmPlatEventY (_XmPlatEventOf (event)) > (int)o_data->topmargin) &&
+      (_XmPlatEventY (_XmPlatEventOf (event)) < (int)(o_data->topmargin + (o_data->lineheight *
 						     o_data->number_lines)))) {
     
     if (data->select_id) {
@@ -4290,26 +4294,26 @@ CheckTimerScrolling(Widget w,
     if(XmDirectionMatch(XmPrim_layout_direction(tw),
 			XmTOP_TO_BOTTOM_RIGHT_TO_LEFT)) {
       /* to the above of the text */
-      if (event->xmotion.y <= (int) o_data->topmargin)
+      if (_XmPlatEventY (_XmPlatEventOf (event)) <= (int) o_data->topmargin)
 	data->select_pos_y = (Position) (o_data->topmargin -
 					 (o_data->font_ascent +
 					  o_data->font_descent + 1));
       /* to the below of the text */
-      else if (event->xmotion.y >= (int) (tw->core.height - 
+      else if (_XmPlatEventY (_XmPlatEventOf (event)) >= (int) (tw->core.height - 
 					  o_data->bottommargin))
 	data->select_pos_y = (Position) ((tw->core.height -
 					  o_data->bottommargin) +
 					 (o_data->font_ascent +
 					  o_data->font_descent + 1));
       /* right the text */
-      if (event->xmotion.x >= (int) (tw->core.width - o_data->rightmargin)) {
+      if (_XmPlatEventX (_XmPlatEventOf (event)) >= (int) (tw->core.width - o_data->rightmargin)) {
 	data->select_pos_x = (int) ((tw->core.width - o_data->rightmargin) +
 				     o_data->linewidth);
 	if (tw->text.top_line == 0)
 	  data->select_pos_x = tw->core.width;
 	
       /* left the text */
-      } else if (event->xmotion.x <= 
+      } else if (_XmPlatEventX (_XmPlatEventOf (event)) <= 
 		 (int) ((tw->core.width - o_data->rightmargin) - 
 			(o_data->linewidth * (o_data->number_lines + 1))))
 	data->select_pos_y = (tw->core.width - o_data->rightmargin) -
@@ -4321,23 +4325,23 @@ CheckTimerScrolling(Widget w,
 		      XmNinitialDelay, &interval, NULL);
     } else {
       /* to the left of the text */
-      if (event->xmotion.x <= (int) o_data->leftmargin)
+      if (_XmPlatEventX (_XmPlatEventOf (event)) <= (int) o_data->leftmargin)
 	data->select_pos_x = (Position) (o_data->leftmargin -
 					 (o_data->averagecharwidth + 1));
       /* to the right of the text */
-      else if (event->xmotion.x >= (int) (tw->core.width - 
+      else if (_XmPlatEventX (_XmPlatEventOf (event)) >= (int) (tw->core.width - 
 					  o_data->rightmargin))
 	data->select_pos_x = (Position) ((tw->core.width -
 					  o_data->rightmargin) +
 					 o_data->averagecharwidth + 1);
       /* above the text */
-      if (event->xmotion.y <= (int) o_data->topmargin) {
+      if (_XmPlatEventY (_XmPlatEventOf (event)) <= (int) o_data->topmargin) {
 	data->select_pos_y = (int) (o_data->topmargin - o_data->lineheight);
 	if (tw->text.top_line == 0)
 	  data->select_pos_x = 0;
 	
       /* below the text */
-      } else if (event->xmotion.y >= 
+      } else if (_XmPlatEventY (_XmPlatEventOf (event)) >= 
 		 (int) (o_data->topmargin +
 			(o_data->lineheight * o_data->number_lines)))
 	data->select_pos_y = o_data->topmargin + (o_data->lineheight *
@@ -4383,7 +4387,7 @@ ExtendSelection(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   InputData data = tw->text.input->data;
   OutputData o_data = tw->text.output->data;
-  Time event_time = event ? event->xbutton.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay(w));
   
   if (data->cancel) return;
@@ -4420,7 +4424,7 @@ ExtendSecondary(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   InputData data = tw->text.input->data;
   XmTextPosition position, hintposition;
-  Time event_time = event ? event->xbutton.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay(w));
   
   if (data->cancel) return;
@@ -4428,8 +4432,8 @@ ExtendSecondary(Widget w,
   
   EraseInsertionPoint(tw);
   if (event)
-    position = (*tw->text.output->XYToPos)(tw, event->xbutton.x,
-					   event->xbutton.y);
+    position = (*tw->text.output->XYToPos)(tw, _XmPlatEventX (_XmPlatEventOf (event)),
+					   _XmPlatEventY (_XmPlatEventOf (event)));
   else
     position = tw->text.cursor_position;
 
@@ -4513,42 +4517,42 @@ DoGrabFocus(Widget w,
     if(XmDirectionMatch(XmPrim_layout_direction(tw),
 			XmTOP_TO_BOTTOM_RIGHT_TO_LEFT)) {
     /* to the top of the text */
-      if (event->xbutton.y <= (int) o_data->topmargin)
-        event->xbutton.y = (Position) (o_data->topmargin + 1);
+      if (_XmPlatEventY (_XmPlatEventOf (event)) <= (int) o_data->topmargin)
+        _XmPlatEventSetY (_XmPlatEventOf (event), (Position) (o_data->topmargin + 1));
       
       /* to the bottom of the text */
-      else if (event->xbutton.y >=
+      else if (_XmPlatEventY (_XmPlatEventOf (event)) >=
 	       (int) (tw->core.height - o_data->bottommargin))
-        event->xbutton.y =
-	    (Position)((tw->core.height - o_data->bottommargin)- 1);
+        _XmPlatEventSetY (_XmPlatEventOf (event),
+	    (Position)((tw->core.height - o_data->bottommargin)- 1));
       /* above the text */
-      if (event->xbutton.x >= (int) (tw->core.width - o_data->rightmargin))
-        event->xbutton.x = (int) (tw->core.width - o_data->rightmargin) - 1;
+      if (_XmPlatEventX (_XmPlatEventOf (event)) >= (int) (tw->core.width - o_data->rightmargin))
+        _XmPlatEventSetX (_XmPlatEventOf (event), (int) (tw->core.width - o_data->rightmargin) - 1);
       
       /* below the text */
-      else if (event->xbutton.x <= 
+      else if (_XmPlatEventX (_XmPlatEventOf (event)) <= 
 	       (int)(tw->core.width - o_data->rightmargin -
 	       (o_data->linewidth * o_data->number_lines)))
-        event->xbutton.x = ((int)(tw->core.width - o_data->rightmargin) -
-			    (o_data->linewidth * o_data->number_lines)) + 1;
+        _XmPlatEventSetX (_XmPlatEventOf (event), ((int)(tw->core.width - o_data->rightmargin) -
+			    (o_data->linewidth * o_data->number_lines)) + 1);
     } else {
       /* to the left of the text */
-      if (event->xbutton.x <= (int) o_data->leftmargin)
-        event->xbutton.x = (Position) (o_data->leftmargin + 1);
+      if (_XmPlatEventX (_XmPlatEventOf (event)) <= (int) o_data->leftmargin)
+        _XmPlatEventSetX (_XmPlatEventOf (event), (Position) (o_data->leftmargin + 1));
       
       /* to the right of the text */
-      else if (event->xbutton.x >= (int) (tw->core.width - o_data->rightmargin))
-        event->xbutton.x = (Position)((tw->core.width - o_data->rightmargin)- 1);
+      else if (_XmPlatEventX (_XmPlatEventOf (event)) >= (int) (tw->core.width - o_data->rightmargin))
+        _XmPlatEventSetX (_XmPlatEventOf (event), (Position)((tw->core.width - o_data->rightmargin)- 1));
       /* above the text */
-      if (event->xbutton.y <= (int) o_data->topmargin)
-        event->xbutton.y = (int) (o_data->topmargin + 1);
+      if (_XmPlatEventY (_XmPlatEventOf (event)) <= (int) o_data->topmargin)
+        _XmPlatEventSetY (_XmPlatEventOf (event), (int) (o_data->topmargin + 1));
     
       /* below the text */
-      else if (event->xbutton.y >= 
+      else if (_XmPlatEventY (_XmPlatEventOf (event)) >= 
 	       (int)(o_data->topmargin + (o_data->lineheight *
 					  o_data->number_lines)))
-        event->xbutton.y = (o_data->topmargin +
-			    (o_data->lineheight * o_data->number_lines)) - 1;
+        _XmPlatEventSetY (_XmPlatEventOf (event), (o_data->topmargin +
+			    (o_data->lineheight * o_data->number_lines)) - 1);
     }
   }
 
@@ -4577,14 +4581,14 @@ MoveDestination(Widget w,
 {
   XmTextWidget tw = (XmTextWidget) w;
   XmTextPosition new_pos, left, right;
-  Time event_time = event ? event->xbutton.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   _XmTextResetIC(w);
   EraseInsertionPoint(tw);
   if (event)
-    new_pos = (*tw->text.output->XYToPos)(tw, event->xbutton.x,
-					  event->xbutton.y);
+    new_pos = (*tw->text.output->XYToPos)(tw, _XmPlatEventX (_XmPlatEventOf (event)),
+					  _XmPlatEventY (_XmPlatEventOf (event)));
   else
     new_pos = tw->text.cursor_position;
   
@@ -4614,7 +4618,7 @@ Stuff(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   XPoint *point = NULL;
   InputData data = tw->text.input->data;
-  Time event_time = event ? event->xbutton.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay(w));
   
   _XmTextResetIC(w);
@@ -4623,14 +4627,14 @@ Stuff(Widget w,
    * taken care of in HandleTargets().
    */
   
-  if (event && event->type == ButtonRelease) {
+  if (event && _XmPlatEventIsButtonRelease (_XmPlatEventOf (event))) {
       /* WARNING: do not free the following memory in this module. 
        * It will be freed in FreeLocationData, triggered at the end of 
        * the data transfer operation.
        */
       point = (XPoint *) XtMalloc(sizeof(XPoint));
-      point->x = event->xbutton.x;
-      point->y = event->xbutton.y;
+      point->x = _XmPlatEventX (_XmPlatEventOf (event));
+      point->y = _XmPlatEventY (_XmPlatEventOf (event));
   } 
 
   if (!event_time) event_time = _XmValidTimestamp(w);
@@ -4740,7 +4744,7 @@ SecondaryNotify(Widget w,
   InputData data = tw->text.input->data;
   TextDestData dest_data;
   XmTextPosition left, right;
-  Time event_time = event ? event->xbutton.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay(w));
   
   _XmTextResetIC(w);
@@ -4824,15 +4828,15 @@ ExtendSecondaryEnd(Widget w,
 {
   XmTextWidget tw = (XmTextWidget) w;
   InputData data = tw->text.input->data;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   if (!data->cancel) XtUngrabKeyboard(w, CurrentTime);
   
   /* if the pointer is inside the text area, do the secondary transfer */
   if (event)
-    if (event->xbutton.x > (int) tw->core.width || event->xbutton.x < 0 || 
-	event->xbutton.y > (int) tw->core.height || event->xbutton.y < 0) {
+    if (_XmPlatEventX (_XmPlatEventOf (event)) > (int) tw->core.width || _XmPlatEventX (_XmPlatEventOf (event)) < 0 || 
+	_XmPlatEventY (_XmPlatEventOf (event)) > (int) tw->core.height || _XmPlatEventY (_XmPlatEventOf (event)) < 0) {
       if (data->hasSel2 && data->Sel2Extending) {
 	data->cancel = True;
 	_XmTextSetSel2(tw, 1, 0, event_time);
@@ -4876,7 +4880,7 @@ SelectAll(Widget w,
   XmTextPosition last_position = 
     (*tw->text.source->Scan)(tw->text.source, 0, XmSELECT_ALL,
 			     XmsdRight, 1, TRUE);
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   EraseInsertionPoint(tw);
@@ -4902,7 +4906,7 @@ DeselectAll(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   InputData data = tw->text.input->data;
   XmTextPosition cursorPos = tw->text.cursor_position;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   EraseInsertionPoint(tw);
@@ -4929,7 +4933,7 @@ ClearSelection(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   XmTextPosition left, right;
   Boolean freeBlock;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   EraseInsertionPoint(tw);
@@ -5152,7 +5156,7 @@ CutClipboard(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   XmTextSource source = GetSrc(tw);
   XmTextPosition left, right;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   if (!event_time) event_time = _XmValidTimestamp(w);
@@ -5175,7 +5179,7 @@ CopyClipboard(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   XmTextSource source = GetSrc(w);
   XmTextPosition left, right;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
 
   if (!event_time) event_time = _XmValidTimestamp(w);
@@ -5249,7 +5253,7 @@ TextFocusIn(Widget w,
 {
   XmTextWidget tw = (XmTextWidget) w;
   
-  if (!event || !event->xfocus.send_event) return;
+  if (!event || ! _XmPlatEventSendEvent (_XmPlatEventOf (event))) return;
   
   if (_XmGetFocusPolicy(w) == XmEXPLICIT && !_XmTextHasDestination(w) &&
       !tw->text.input->data->sel_start)
@@ -5270,7 +5274,7 @@ TextFocusOut(Widget w,
   
   /* If traversal is on, then the leave verification callback is called in
      the traversal event handler */
-  if (event && event->xfocus.send_event && 
+  if (event && _XmPlatEventSendEvent (_XmPlatEventOf (event)) && 
       _XmGetFocusPolicy(w) == XmEXPLICIT && !tw->text.traversed) {
     (void) VerifyLeave(w, event);
   } else
@@ -5396,7 +5400,7 @@ ProcessCancel(Widget w,
   InputData data = tw->text.input->data;
   
   XmParentInputActionRec  p_event;
-  Time event_time = event ? event->xkey.time :
+  Time event_time = event ? _XmPlatEventTime (_XmPlatEventOf (event)) :
                             XtLastTimestampProcessed(XtDisplay((Widget)tw));
   
   data->cancel = False;

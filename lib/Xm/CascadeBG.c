@@ -1137,10 +1137,10 @@ InputDispatch(
           (LabG_MenuType(cb) == XmMENU_POPUP) ||
 	  (LabG_MenuType(cb) == XmMENU_BAR))
       {
-          if (event->type == ButtonRelease)
+          if (_XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))
              DoSelect (cb, event);
 
-          else if (event->type == KeyPress)
+          else if (_XmPlatEventIsKeyPress (_XmPlatEventOf (event)))
              KeySelect (cb, event);
 
 #ifdef FIX_1665
@@ -1252,7 +1252,8 @@ ArmAndPost(
    {
       if ((LabG_MenuType(cb) == XmMENU_OPTION) &&
 	  (XtParent(cb) == mst->RC_ReplayInfo.toplevel_menu) &&
-	  (event->xbutton.time == mst->RC_ReplayInfo.time))
+	  (_XmPlatEventTime (_XmPlatEventOf (event)) ==
+	   mst->RC_ReplayInfo.time))
 	 return;
 
       _XmCascadingPopup ((Widget) cb, event, TRUE);

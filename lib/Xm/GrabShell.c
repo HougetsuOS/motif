@@ -31,6 +31,7 @@
 
 
 #include "XmI.h"
+#include "XmPlat/XmPlatP.h"
 #include <X11/ShellP.h>
 #include <X11/VendorP.h>
 #include <X11/cursorfont.h>
@@ -367,7 +368,7 @@ MapNotifyHandler(Widget shell, XtPointer client_data,
   XErrorHandler old_handler;
 
   /* Only handles map events */
-  if (event -> type != MapNotify) return;
+  if (! _XmPlatEventIsType (_XmPlatEventOf (event), XmPlatEventMap)) return;
   
   /* CR 9920:  Popdown may be called before MapNotify. */
   grabshell->grab_shell.mapped = True;
@@ -406,7 +407,7 @@ static void MouseWheel (Widget w, XEvent *event, String *params, Cardinal *num_p
 {
 	(void)params;
 	(void)num_params;
-	GSAllowEvents(w, SyncPointer, event -> xbutton.time);
+	GSAllowEvents(w, SyncPointer, _XmPlatEventTime (_XmPlatEventOf (event)));
 }
 #endif
 
@@ -434,9 +435,9 @@ BtnUp (Widget w,
   /* Handle click to post 
      we then ignore the event if it occured within the 
      click to post time */
-  delta = event -> xbutton.time - grabshell -> grab_shell.post_time;
+  delta = _XmPlatEventTime (_XmPlatEventOf (event)) - grabshell -> grab_shell.post_time;
   if (delta <= XtGetMultiClickTime(XtDisplay(w))) {
-    GSAllowEvents(w, SyncPointer, event -> xbutton.time);
+    GSAllowEvents(w, SyncPointer, _XmPlatEventTime (_XmPlatEventOf (event)));
     return;
   }
 
@@ -456,15 +457,15 @@ BtnDown (Widget grabshell,
   if (! _XmIsEventUnique(event)) return;
 
   /* Move to grabshell's coordinate system */
-  XTranslateCoordinates(XtDisplay(grabshell), event -> xbutton.window,
+  XTranslateCoordinates(XtDisplay(grabshell), _XmPlatEventWindow (_XmPlatEventOf (event)),
 			XtWindow(grabshell), 
-			event -> xbutton.x, event -> xbutton.y,
+			_XmPlatEventX (_XmPlatEventOf (event)), _XmPlatEventY (_XmPlatEventOf (event)),
 			&x, &y, &win);
 
   /* Popdown if outside the shell */
   if (x >= 0 && y >= 0 && 
       x <= XtWidth(grabshell) && y <= XtHeight(grabshell)) {
-    GSAllowEvents(grabshell, SyncPointer, event -> xbutton.time);
+    GSAllowEvents(grabshell, SyncPointer, _XmPlatEventTime (_XmPlatEventOf (event)));
   } else {
     Popdown(grabshell, event, params, num_params);
   }
@@ -487,8 +488,10 @@ Popdown(Widget shell,
   Time time;
   
   /* Record for replay detection */
-  if (event && (event->type == ButtonPress || event->type == ButtonRelease)) {
-    grabshell->grab_shell.unpost_time = event->xbutton.time;
+  if (event && (_XmPlatEventIsButtonPress (_XmPlatEventOf (event)) ||
+		_XmPlatEventIsButtonRelease (_XmPlatEventOf (event)))) {
+    grabshell->grab_shell.unpost_time =
+      _XmPlatEventTime (_XmPlatEventOf (event));
   }
 
   if (!(time = XtLastTimestampProcessed(XtDisplay(shell))))
@@ -500,7 +503,8 @@ Popdown(Widget shell,
       XErrorHandler old_handler;
 
       if (screen -> screen.unpostBehavior == XmUNPOST_AND_REPLAY)
-	GSAllowEvents(shell, ReplayPointer, event ? event->xbutton.time : time);
+	GSAllowEvents(shell, ReplayPointer,
+		      event ? _XmPlatEventTime (_XmPlatEventOf (event)) : time);
       XtUngrabPointer(shell, time);
       XtUngrabKeyboard(shell, time);
       _XmPopdown(shell);

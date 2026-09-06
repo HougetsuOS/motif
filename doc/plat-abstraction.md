@@ -400,6 +400,24 @@ image:    26 lines / 7 files outside XmPlat, all in the documented
           stipple copy, DragIcon mask->region, MessageB builtin icons,
           ReadImage/Obso2_0, Region all on XmPlatImage tokens.
 draw/font: 0 (unchanged); event/atoms unchanged.
+
+# after Phase 4 — 2026-09-06
+event:    0 XEvent field accesses outside XmPlat and the documented
+          D4 plumbing exemptions (doc/phase4-notes.md):
+            DnD/selection transport (DragC, DragICC, DropSMgr,
+              DropTrans, CutPaste, Transfer)
+            event-loop helpers / peek loops (TrackLoc, TearOff,
+              Display, ValTime, Protocols, PrintS, MenuShell)
+            IM filter (XmIm; frozen XKeyEvent* XmIm API)
+            keycode->keysym (VirtKeys), Xt protocol (EditresCom),
+            Xt shell machinery (ShellE), the RowColumn fast-expose
+            XEvent fabrication and the RCPopup xany.window munge
+            around XtDispatchEvent.
+          Widget handler bodies read XmPlatEvent prims; the frozen
+          XEvent* signatures (Xt action procs, gadget input_dispatch,
+          XmAnyCallbackStruct.event) still carry raw XEvent* as
+          opaque pointers unwrapped at the seam.
+draw/font/image: 0 (unchanged); atoms unchanged.
 ```
 
 Phase-1 exit criterion met: zero `XDraw*`/`XFill*`/`XCreateGC`/`XChangeGC`/
