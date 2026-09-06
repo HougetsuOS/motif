@@ -39,6 +39,7 @@ static char rcsid[] = "$TOG: WmWinInfo.c /main/18 1999/02/04 15:17:25 mgreess $"
  * Included Files:
  */
 
+#include "XmPlat/XmPlatAtoms.h"
 #include "WmGlobal.h"
 #include "WmICCC.h"
 #include "WmResNames.h"
@@ -955,7 +956,7 @@ ProcessSmClientID (ClientData *pCD)
 	pCD->smClientID = (String)NULL;
     }
 
-    if ((XGetWindowProperty(DISPLAY, pCD->client, wmGD.xa_SM_CLIENT_ID,
+    if ((_XmPlatGetWindowProperty(DISPLAY, pCD->client, wmGD.xa_SM_CLIENT_ID,
 			    0L, (long)1000000, False, AnyPropertyType,
 			    &actualType, &actualFormat, &nitems,
 			    &leftover, (unsigned char **)&clientID)
@@ -1002,7 +1003,7 @@ ProcessWmSaveHint (ClientData *pCD)
     unsigned long nitems, leftover;
     BITS32 *saveHintFlags = (BITS32 *)NULL;
 
-    if ((XGetWindowProperty(DISPLAY, pCD->client, wmGD.xa_WMSAVE_HINT,
+    if ((_XmPlatGetWindowProperty(DISPLAY, pCD->client, wmGD.xa_WMSAVE_HINT,
 			    0L, (long)1000000, False, AnyPropertyType,
 			    &actualType, &actualFormat, &nitems,
 			    &leftover, (unsigned char **)&saveHintFlags)
@@ -2232,7 +2233,7 @@ WmICCCMToXmString (XTextProperty *wmNameProp)
 #ifndef MOTIF_ONE_DOT_ONE
 	  sprintf(msg, GETMESSAGE (70,5,
 		    "Window manager cannot convert property %.100s as clientTitle/iconTitle: XmbTextPropertyToTextList"), 
-		  XGetAtomName (DISPLAY,wmNameProp->encoding));
+		  _XmPlatAtomNameRaw (DISPLAY,wmNameProp->encoding));
 	  Warning(msg);
 #endif /* MOTIF_ONE_DOT_ONE */
 	  break;
@@ -2240,7 +2241,7 @@ WmICCCMToXmString (XTextProperty *wmNameProp)
       case XNoMemory:
 	  sprintf(msg, GETMESSAGE (70, 6, 
 		    "insufficient memory to convert property %.100s as clientTitle/iconTitle: XmbTextPropertyToTextList"),
-		  XGetAtomName(DISPLAY,wmNameProp->encoding));
+		  _XmPlatAtomNameRaw(DISPLAY,wmNameProp->encoding));
 	  Warning(msg);
 	  break;
 
@@ -2255,7 +2256,7 @@ WmICCCMToXmString (XTextProperty *wmNameProp)
 	      /* Atom was neither STRING nor COMPOUND_TEXT */
 	      sprintf(msg, GETMESSAGE(70, 8, 
 			"Window manager received unknown property as clientTitle/iconTitle: %.100s. Property ignored."),
-		      XGetAtomName(DISPLAY, wmNameProp->encoding));
+		      _XmPlatAtomNameRaw(DISPLAY, wmNameProp->encoding));
 	  }
 	  Warning(msg);
 	  break;

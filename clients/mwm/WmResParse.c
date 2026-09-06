@@ -38,6 +38,7 @@ static char rcsid[] = "$XConsortium: WmResParse.c /main/9 1996/11/01 10:17:34 dr
  * Included Files:
  */
 
+#include "XmPlat/XmPlatAtoms.h"
 #include "WmGlobal.h"
 #include "WmResNames.h"
 #ifdef WSM
@@ -7344,7 +7345,7 @@ void ProcessMotifBindings (void)
          * Get the atom for the property.
          */
         wmGD.xa_MOTIF_BINDINGS =
-                XInternAtom (DISPLAY, _XA_MOTIF_BINDINGS, False);
+                _XmPlatInternAtomRaw (DISPLAY, _XA_MOTIF_BINDINGS, False);
 
         /*
          * The property goes on the root window of screen zero
@@ -7356,7 +7357,7 @@ void ProcessMotifBindings (void)
          */
         while ( (count=fread((char *) &buffer[0], 1, MBBSIZ, fileP)) > 0)
         {
-            XChangeProperty (DISPLAY, propWindow, wmGD.xa_MOTIF_BINDINGS,
+            _XmPlatChangeProperty (DISPLAY, propWindow, wmGD.xa_MOTIF_BINDINGS,
                                 XA_STRING, 8, mode,
                                 &buffer[0], count);
 
@@ -7369,14 +7370,14 @@ void ProcessMotifBindings (void)
     }
 
 #else
-    XDeleteProperty (DISPLAY, RootWindow (DISPLAY, 0),
-		XInternAtom (DISPLAY, "_MOTIF_BINDINGS", False));
-    XDeleteProperty (DISPLAY, RootWindow (DISPLAY, 0),
-		XInternAtom (DISPLAY, "_MOTIF_DEFAULT_BINDINGS", False));
+    _XmPlatDeleteProperty (DISPLAY, RootWindow (DISPLAY, 0),
+		_XmPlatInternAtomRaw (DISPLAY, "_MOTIF_BINDINGS", False));
+    _XmPlatDeleteProperty (DISPLAY, RootWindow (DISPLAY, 0),
+		_XmPlatInternAtomRaw (DISPLAY, "_MOTIF_DEFAULT_BINDINGS", False));
 
     if (_XmVirtKeysLoadFileBindings (fileName, &bindings) == True) {
-	XChangeProperty (DISPLAY, RootWindow(DISPLAY, 0),
-		XInternAtom (DISPLAY, "_MOTIF_BINDINGS", False),
+	_XmPlatChangeProperty (DISPLAY, RootWindow(DISPLAY, 0),
+		_XmPlatInternAtomRaw (DISPLAY, "_MOTIF_BINDINGS", False),
 		XA_STRING, 8, PropModeReplace,
 		(unsigned char *)bindings, strlen(bindings));
     }

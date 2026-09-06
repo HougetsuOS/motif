@@ -26,6 +26,7 @@
 #endif
 
 
+#include "XmPlat/XmPlatAtoms.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -490,7 +491,7 @@ getClientWorkspaces(ClientData *pCD)
     /* Should we use _DtWmParseMakeQuotedString() when looking at */
     /* the name of the workspace, as is done in WmWrkspace.c? */
 
-    /* Easy but slow way to do this would be to use XGetAtomName(). */
+    /* Easy but slow way to do this would be to use _XmPlatAtomNameRaw(). */
     /* To avoid XServer round trips (and to weed out invalid WS names) */
     /* we look through workspaces attached to this screen for ID matches. */
     char *cwsP, *tmpP, *wsNameP;

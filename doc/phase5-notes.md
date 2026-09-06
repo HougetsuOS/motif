@@ -141,3 +141,15 @@ Batch 3 (XSendEvent): Protocols, DragICC, CutPaste, PrintS, MenuUtil.
   Selection smoke (copy/paste in hellomotif) to be checked interactively
   by the user; the clipboard property paths exercised by the demos'
   build/destroy are clean under UBSan.
+
+- 2026-09-06 (Phase 5b): clients/mwm moved onto the contract — 55 sites in
+  10 files (WmProperty 21, WmResParse 7, WmProtocol 6, WmInitWs 5,
+  WmWinInfo 5, WmWsmLib/disp 3, WmEvent 2, WmWsmLib/recv 1, WmFunction 1,
+  WmXSMP 1 comment-only).  New narrow seam header
+  lib/Xm/XmPlat/XmPlatAtoms.h declares just the raw atom/property glue
+  (the full XmPlatP.h pulls Xft/freetype flags mwm's build does not
+  carry); XmPlatP.h includes it so there is one source of truth.
+  Runtime smoke: mwm starts under Xvfb, parses its resources, and runs
+  its event loop (the system.mwmrc lookup failure is the compiled-in
+  MWMRCDIR packaging path, unrelated); UBSan clean.
+- Gate extended to scan clients/mwm; p5 gate at 0.

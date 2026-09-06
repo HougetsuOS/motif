@@ -17,6 +17,7 @@
 #include <X11/Xft/Xft.h>
 #include "XmPlat/XmPlatTypes.h"
 #include "XmPlat/XmPlat.h"
+#include "XmPlat/XmPlatAtoms.h"
 
 /* lifecycle (internal) */
 extern void _XmPlatSurfaceFree (XmPlatSurface surface) ;

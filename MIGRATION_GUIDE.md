@@ -371,7 +371,7 @@ phases land.
 | 2 — fonts | done | switch `_XmPlatFontOfGC` text sites to font tokens (`_XmPlatFontOf*D`); metrics via `_XmPlatTextWidth`/`Extents` | §4.4 |
 | 3 — images | done | hold `XmPlatImage` tokens; draw via `_XmPlatPutImage`; build via `_XmPlatImageCreate`/`BitmapOf`; screen reads via `_XmPlatImageFromSurface2`; pixel access via `Get/PutPixel` prims | §4.5 |
 | 4 — events | done | wrap once per handler (`_XmPlatEventOf`), read `_XmPlatEvent*` prims; raw `XEvent*` stays in frozen Xt/gadget/callback signatures as opaque plumbing | §4.6 |
-| 5 — atoms | done | apps: nothing; XmInternAtom/XmGetAtomName are now wrappers over the contract (same signatures). lib/Xm: interning via `_XmPlatInternAtomRaw`, property I/O via `_XmPlatChange/Get/DeleteProperty`, WM/DnD messages via `_XmPlatSendClientMessage` | §4.8 |
+| 5 — atoms+DnD+mwm | done | apps: nothing; XmInternAtom/XmGetAtomName are now wrappers over the contract (same signatures). lib/Xm and clients/mwm: interning via `_XmPlatInternAtomRaw`, property I/O via `_XmPlatChange/Get/DeleteProperty`, WM/DnD messages via `_XmPlatSendClientMessage` | §4.8 |
 | 6 — cairo backend | after 5 | custom widgets must be on the contract by now (**hard deadline**) | §4 rewrite |
 
 ## 8. FAQ

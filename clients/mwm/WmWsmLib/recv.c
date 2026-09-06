@@ -26,6 +26,7 @@
  * HISTORY
  */
 
+#include "XmPlat/XmPlatAtoms.h"
 #include "wsm_proto.h"
 #include "utm_send.h"
 #include <X11/Xatom.h>
@@ -341,7 +342,7 @@ UTMConvertProc(Widget w, XtPointer clientData, XtPointer callData)
 {
   int scr = XScreenNumberOfScreen(XtScreen(w));
   XmConvertCallbackStruct *ccs = (XmConvertCallbackStruct *)callData;
-  Atom lose_sel = XInternAtom(XtDisplay(w), "_MOTIF_LOSE_SELECTION", False);
+  Atom lose_sel = _XmPlatInternAtomRaw(XtDisplay(w), "_MOTIF_LOSE_SELECTION", False);
   WSMScreenInfo *scrInfo = _WSMGetScreenInfo(XtDisplay(w), scr);
 
   /*

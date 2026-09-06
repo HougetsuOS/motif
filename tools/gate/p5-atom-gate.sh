@@ -2,14 +2,15 @@
 # Phase-5 contract gate (doc/plat-abstraction.md §3 Phase 5): fail if any
 # direct X11 atom/property call appears in lib/Xm outside the backend.
 #
-# The only X-call surface allowed is lib/Xm/XmPlat (the backend itself);
+# The only X-call surface allowed is lib/Xm/XmPlat (the backend itself)
+# and the raw-glue header users; this includes clients/mwm (Phase 5b):
 # AtomMgr.c's XmInternAtom/XmGetAtomName are public wrappers whose bodies
 # route through the backend (they are excluded from the scan as source-
 # compat shims, verified by inspection).
 cd "$(dirname "$0")/../.." || exit 1
 PAT='XInternAtom|XChangeProperty|XGetWindowProperty|XDeleteProperty|XSendEvent|XGetAtomName|XRotateBuffers'
 tmp=$(mktemp /tmp/opencode/gate5.XXXXXX)
-rg -n "$PAT" lib/Xm -g '*.c' -g '!lib/Xm/XmPlat/*' > "$tmp" 2>/dev/null
+rg -n "$PAT" lib/Xm clients/mwm -g '*.c' -g '!lib/Xm/XmPlat/*' > "$tmp" 2>/dev/null
 python3 - "$tmp" <<'PYEOF'
 import sys
 
@@ -49,6 +50,9 @@ for f,entries in files.items():
         # Transfer.c defines a string constant "XGetAtomName" for an error
         # message table; not a call.
         if '"XGetAtomName"' in code:
+            continue
+        # Message-catalog strings mentioning X function names are not calls.
+        if 'GETMESSAGE' in code:
             continue
         hits.append(f"{f}:{num}:{code}")
 

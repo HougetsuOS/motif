@@ -26,6 +26,7 @@
  * HISTORY
  */
 
+#include "XmPlat/XmPlatAtoms.h"
 #include "wsm_proto.h"
 
 WSMDispInfo * GDispInfo = NULL;
@@ -89,7 +90,7 @@ _WSMGetDispInfo(Display *dpy)
      * ||| Should use XtConvertAndStore().
      */
 
-    XInternAtoms(dpy, atom_names, XtNumber(atom_names), False, atoms);
+    _XmPlatInternAtomsRaw(dpy, atom_names, XtNumber(atom_names), False, atoms);
 
     disp_info->connect = atoms[XA_WSM_NAME_CONNECT];
     disp_info->extensions = atoms[XA_WSM_NAME_EXTENSIONS];
@@ -174,10 +175,10 @@ _WSMGetScreenInfo(Display *dpy, int screen_number)
     screen_info->screen_num = screen_number;
 
     sprintf(temp, WM_SELECTION_FORMAT, screen_number);
-    screen_info->wm_selection = XInternAtom(dpy, temp, False);
+    screen_info->wm_selection = _XmPlatInternAtomRaw(dpy, temp, False);
 
     sprintf(temp, WSM_SELECTION_FORMAT, screen_number);
-    screen_info->wsm_selection = XInternAtom(dpy, temp, False);
+    screen_info->wsm_selection = _XmPlatInternAtomRaw(dpy, temp, False);
 
     screen_info->next = NULL;
     screen_info->global.num_attrs = 0;

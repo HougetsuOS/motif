@@ -38,6 +38,7 @@ static char rcsid[] = "$XConsortium: WmEvent.c /main/7 1996/11/20 15:27:47 rswis
  * Included Files:
  */
 
+#include "XmPlat/XmPlatAtoms.h"
 #include "WmGlobal.h"
 /*
  * include extern functions
@@ -2371,7 +2372,7 @@ void HandleWsConfigureRequest (XConfigureRequestEvent *configureEvent)
 	        notifyEvent.above = None;
 	        notifyEvent.override_redirect = False;
 
-	        XSendEvent (DISPLAY, configureEvent->window, False,
+	        _XmPlatSendClientMessage (DISPLAY, configureEvent->window, False,
 	            StructureNotifyMask, (XEvent *)&notifyEvent);
             }
         }
@@ -2554,7 +2555,7 @@ Time GetTimestamp (void)
     /*
      * Do zero-length append to our own WM_STATE
      */
-    XChangeProperty (DISPLAY, pSD->wmWorkspaceWin, wmGD.xa_WM_STATE, 
+    _XmPlatChangeProperty (DISPLAY, pSD->wmWorkspaceWin, wmGD.xa_WM_STATE, 
 	wmGD.xa_WM_STATE, 32, PropModeAppend, 
 	(unsigned char *)&property, 0);
 

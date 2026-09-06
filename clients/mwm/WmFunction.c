@@ -40,6 +40,7 @@ static char rcsid[] = "$TOG: WmFunction.c /main/19 1998/04/20 13:00:48 mgreess $
  * Included Files:
  */
 
+#include "XmPlat/XmPlatAtoms.h"
 #include "WmGlobal.h"
 #include <sys/types.h>
 #ifndef X_NOT_STDC_ENV
@@ -1272,7 +1273,7 @@ void Do_Quit_Mwm (Boolean diedOnRestart)
 #endif /* PANELIST */
 
 #ifndef WSM
-		XDeleteProperty(DISPLAY, wmGD.Screens[scr].rootWindow,
+		_XmPlatDeleteProperty(DISPLAY, wmGD.Screens[scr].rootWindow,
 				wmGD.xa_MWM_INFO);
 #endif /* WSM */
 	    }

@@ -38,6 +38,7 @@ static char rcsid[] = "$TOG: WmInitWs.c /main/18 1999/09/20 15:18:22 mgreess $"
  * Included Files:
  */
 
+#include "XmPlat/XmPlatAtoms.h"
 #include "WmGlobal.h"
 #include "WmResNames.h"
 #ifdef WSM
@@ -742,7 +743,7 @@ void InitWmGlobal (int argc, char *argv [], char *environ [])
 		      _XA_DT_WM_LOCK_DISPLAY, _XA_DT_WM_READY };
 
 		    Atom atoms[XtNumber(atom_names)];
-		    XInternAtoms(DISPLAY, atom_names, XtNumber(atom_names), 
+		    _XmPlatInternAtomsRaw(DISPLAY, atom_names, XtNumber(atom_names), 
 				 False, atoms);
 
 		    wmGD.xa_DT_SESSION_HINTS = atoms[XA_DT_SESSION_HINTS];
@@ -962,7 +963,7 @@ void InitWmGlobal (int argc, char *argv [], char *environ [])
 	     _XA_DT_WORKSPACE_LIST, _XA_DT_WORKSPACE_CURRENT };
 
       Atom atoms[XtNumber(atom_names)];
-      XInternAtoms(DISPLAY, atom_names, XtNumber(atom_names), False, atoms);
+      _XmPlatInternAtomsRaw(DISPLAY, atom_names, XtNumber(atom_names), False, atoms);
 
       wmGD.xa_DT_WORKSPACE_HINTS = atoms[XA_DT_WORKSPACE_HINTS];
       wmGD.xa_DT_WORKSPACE_PRESENCE = atoms[XA_DT_WORKSPACE_PRESENCE];
@@ -1726,7 +1727,7 @@ void InitWmWorkspace (WmWorkspaceData *pWS, WmScreenData *pSD)
 
 #ifdef WSM
     /* internalize the workspace name */
-    pWS->id = XInternAtom (DISPLAY, pWS->name, False);
+    pWS->id = _XmPlatInternAtomRaw (DISPLAY, pWS->name, False);
 #endif /* WSM */
 
     /*
@@ -1895,7 +1896,7 @@ void ProcessMotifWmInfo (Window rootWindowOfScreen)
 {
     MwmInfo *pMwmInfo;
 
-    wmGD.xa_MWM_INFO = XInternAtom (DISPLAY, _XA_MWM_INFO, False);
+    wmGD.xa_MWM_INFO = _XmPlatInternAtomRaw (DISPLAY, _XA_MWM_INFO, False);
     if ((pMwmInfo = (MotifWmInfo *)GetMwmInfo (rootWindowOfScreen)) != NULL)
     {
 	wmGD.useStandardBehavior =
@@ -2539,7 +2540,7 @@ GetBindingsProperty(
   unsigned long bytes_after ;
   unsigned char *prop = NULL ;
 
-  XGetWindowProperty( dsp, RootWindow( dsp, 0), property, 0, 1000000L,
+  _XmPlatGetWindowProperty( dsp, RootWindow( dsp, 0), property, 0, 1000000L,
       FALSE, XA_STRING, &actual_type, &actual_format, &num_items, &bytes_after,
                                                                        &prop) ;
   if(    (actual_type != XA_STRING)
@@ -2562,7 +2563,7 @@ SetBindingsProperty(
         Atom property,
         String binding)
 {
-  XChangeProperty( dsp, RootWindow( dsp, 0), property, XA_STRING, 8,
+  _XmPlatChangeProperty( dsp, RootWindow( dsp, 0), property, XA_STRING, 8,
                 PropModeReplace, (unsigned char *) binding, strlen( binding)) ;
 }
 
@@ -2651,7 +2652,7 @@ VirtKeys4DIN(
     }
 
   prop_atoms = (Atom *) XtMalloc( sizeof( Atom) * num_props) ;
-  XInternAtoms(dsp, prop_names, num_props, FALSE, prop_atoms);
+  _XmPlatInternAtomsRaw(dsp, prop_names, num_props, FALSE, prop_atoms);
 
   prop_existed = FALSE ;
   i = 0 ;

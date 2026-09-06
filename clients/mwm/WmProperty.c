@@ -38,6 +38,7 @@ static char rcsid[] = "$TOG: WmProperty.c /main/7 1997/12/02 10:00:00 bill $"
  * Included Files:
  */
 
+#include "XmPlat/XmPlatAtoms.h"
 #include "WmGlobal.h"
 #include "WmICCC.h"
 #include <stdio.h>
@@ -118,7 +119,7 @@ GetNormalHints(
 
 #ifdef WSM
     if ((!HasProperty (pCD, XA_WM_NORMAL_HINTS)) ||
-	((Success != XGetWindowProperty (DISPLAY, pCD->client,
+	((Success != _XmPlatGetWindowProperty (DISPLAY, pCD->client,
 			XA_WM_NORMAL_HINTS, 0L, (long)PROP_SIZE_HINTS_ELEMENTS,
 			False, XA_WM_SIZE_HINTS, &actualType, &actualFormat,
 			&nitems, &leftover, (unsigned char **)&property)) ||
@@ -126,7 +127,7 @@ GetNormalHints(
 	  (nitems < (PROP_SIZE_HINTS_ELEMENTS - 3)) ||
 	  (actualFormat != 32)))
 #else /* WSM */
-    if ((Success != XGetWindowProperty (DISPLAY, pCD->client,
+    if ((Success != _XmPlatGetWindowProperty (DISPLAY, pCD->client,
 			XA_WM_NORMAL_HINTS, 0L, (long)PROP_SIZE_HINTS_ELEMENTS,
 			False, XA_WM_SIZE_HINTS, &actualType, &actualFormat,
 			&nitems, &leftover, (unsigned char **)&property)) ||
@@ -266,7 +267,7 @@ void ProcessWmProtocols (ClientData *pCD)
 	rValue = -1;
     else
 #endif /* WSM */
-    rValue = XGetWindowProperty (DISPLAY, pCD->client, wmGD.xa_WM_PROTOCOLS, 0L,
+    rValue = _XmPlatGetWindowProperty (DISPLAY, pCD->client, wmGD.xa_WM_PROTOCOLS, 0L,
 		 (long)MAX_CLIENT_PROTOCOL_COUNT, False, AnyPropertyType,
 		 &actualType, &actualFormat, &nitems, &leftover,
 		 (unsigned char **)&property);
@@ -391,7 +392,7 @@ void ProcessMwmMessages (ClientData *pCD)
         rValue = ~Success;
     else
 #endif /* WSM */
-    rValue = XGetWindowProperty (DISPLAY, pCD->client, wmGD.xa_MWM_MESSAGES, 0L,
+    rValue = _XmPlatGetWindowProperty (DISPLAY, pCD->client, wmGD.xa_MWM_MESSAGES, 0L,
 		 (long)MAX_MWM_MESSAGES_COUNT, False, AnyPropertyType,
 		 &actualType, &actualFormat, &nitems, &leftover,
 		 (unsigned char **)&property);
@@ -477,7 +478,7 @@ void SetMwmInfo (Window propWindow, long flags, Window wmWindow)
     property.flags = flags;
     property.wmWindow = wmWindow;
 
-    XChangeProperty (DISPLAY, propWindow, wmGD.xa_MWM_INFO, wmGD.xa_MWM_INFO,
+    _XmPlatChangeProperty (DISPLAY, propWindow, wmGD.xa_MWM_INFO, wmGD.xa_MWM_INFO,
 	32, PropModeReplace, (unsigned char *)&property,
 	PROP_MWM_INFO_ELEMENTS);
 
@@ -512,7 +513,7 @@ void SetMwmSaveSessionInfo (Window wmWindow)
     Atom  property;
     property = wmGD.xa_WM_SAVE_YOURSELF;
     
-    XChangeProperty (DISPLAY, wmWindow, 
+    _XmPlatChangeProperty (DISPLAY, wmWindow, 
 		     wmGD.xa_WM_PROTOCOLS, XA_ATOM,
 		     32, PropModeReplace,
 		     (unsigned char *) &property, 1);
@@ -562,7 +563,7 @@ GetWMState(
     unsigned long leftover;
 
 
-    ret_val = XGetWindowProperty (DISPLAY, window, wmGD.xa_WM_STATE, 
+    ret_val = _XmPlatGetWindowProperty (DISPLAY, window, wmGD.xa_WM_STATE, 
 		  0L, PROP_WM_STATE_ELEMENTS,
 		  False, wmGD.xa_WM_STATE, 
 		  &actual_type, &actual_format, 
@@ -628,7 +629,7 @@ void SetWMState (Window window, int state, Window icon)
     property.state = state;
     property.icon = icon;
 
-    XChangeProperty (DISPLAY, window, wmGD.xa_WM_STATE, wmGD.xa_WM_STATE, 32,
+    _XmPlatChangeProperty (DISPLAY, window, wmGD.xa_WM_STATE, wmGD.xa_WM_STATE, 32,
 	PropModeReplace, (unsigned char *)&property, PROP_WM_STATE_ELEMENTS);
 
 } /* END OF FUNCTION SetWMState */
@@ -674,7 +675,7 @@ GetMwmHints(
 	ret_val = ~Success;
     else
 #endif /* WSM */
-    ret_val = XGetWindowProperty (DISPLAY, pCD->client, wmGD.xa_MWM_HINTS, 
+    ret_val = _XmPlatGetWindowProperty (DISPLAY, pCD->client, wmGD.xa_MWM_HINTS, 
 		  0L, PROP_MWM_HINTS_ELEMENTS,
 		  False, wmGD.xa_MWM_HINTS, 
 		  &actual_type, &actual_format, 
@@ -749,7 +750,7 @@ PropMwmInfo *GetMwmInfo (Window rootWindowOfScreen)
     unsigned long leftover;
 
 
-    ret_val = XGetWindowProperty (DISPLAY, rootWindowOfScreen,
+    ret_val = _XmPlatGetWindowProperty (DISPLAY, rootWindowOfScreen,
                                      wmGD.xa_MWM_INFO,
                                      0L, PROP_MWM_INFO_ELEMENTS,
                                      False, wmGD.xa_MWM_INFO,
@@ -831,7 +832,7 @@ void ProcessWmColormapWindows (ClientData *pCD)
      * Read the WM_COLORMAP_WINDOWS property.
      */
 
-    rValue = XGetWindowProperty (DISPLAY, pCD->client,
+    rValue = _XmPlatGetWindowProperty (DISPLAY, pCD->client,
 		 wmGD.xa_WM_COLORMAP_WINDOWS, 0L,
 		 (long)MAX_COLORMAP_WINDOWS_COUNT, False, AnyPropertyType,
 		 &actualType, &actualFormat, &nitems, &leftover,
@@ -1219,7 +1220,7 @@ Status GetWorkspaceHints (Display *display, Window window,
 void SetEmbeddedClientsProperty (Window propWindow, 
     Window *pEmbeddedClients, unsigned long cEmbeddedClients)
 {
-    XChangeProperty (DISPLAY, propWindow, wmGD.xa_DT_EMBEDDED_CLIENTS, 
+    _XmPlatChangeProperty (DISPLAY, propWindow, wmGD.xa_DT_EMBEDDED_CLIENTS, 
 	wmGD.xa_DT_EMBEDDED_CLIENTS,
 	32, PropModeReplace, (unsigned char *)pEmbeddedClients,
 	cEmbeddedClients);
@@ -1249,7 +1250,7 @@ void SetEmbeddedClientsProperty (Window propWindow,
 
 void SetWorkspaceInfo (Window propWindow, WorkspaceInfo *pWsInfo, unsigned long cInfo)
 {
-    XChangeProperty (DISPLAY, propWindow, wmGD.xa_DT_WORKSPACE_INFO, 
+    _XmPlatChangeProperty (DISPLAY, propWindow, wmGD.xa_DT_WORKSPACE_INFO, 
 	wmGD.xa_DT_WORKSPACE_INFO,
 	32, PropModeReplace, (unsigned char *)pWsInfo,
 	(cInfo * sizeof(WorkspaceInfo))/sizeof(long));
@@ -1292,7 +1293,7 @@ SetWorkspaceListProperty (WmScreenData *pSD)
 	pws++;
     }
 
-    XChangeProperty (DISPLAY, pSD->wmWorkspaceWin, 
+    _XmPlatChangeProperty (DISPLAY, pSD->wmWorkspaceWin, 
         wmGD.xa_DT_WORKSPACE_LIST, 
 	XA_ATOM,
 	32, PropModeReplace, (unsigned char *)pWsList,
@@ -1327,7 +1328,7 @@ SetCurrentWorkspaceProperty (WmScreenData *pSD)
 
     aCurrent = pSD->pActiveWS->id;
 
-    XChangeProperty (DISPLAY, pSD->wmWorkspaceWin, 
+    _XmPlatChangeProperty (DISPLAY, pSD->wmWorkspaceWin, 
         wmGD.xa_DT_WORKSPACE_CURRENT, 
 	XA_ATOM,
 	32, PropModeReplace, (unsigned char *)&aCurrent,
@@ -1502,7 +1503,7 @@ DeleteWorkspaceInfoProperty (WmWorkspaceData *pWS)
     /*
      * Do the property deletion
      */
-    XDeleteProperty (DISPLAY, pWS->pSD->wmWorkspaceWin, aProperty);
+    _XmPlatDeleteProperty (DISPLAY, pWS->pSD->wmWorkspaceWin, aProperty);
     XFlush (DISPLAY);
 
 
@@ -1577,7 +1578,7 @@ WorkspacePropertyName (WmWorkspaceData *pWS)
 
 void SetWorkspacePresence (Window propWindow, Atom *pWsPresence, unsigned long cPresence)
 {
-    XChangeProperty (DISPLAY, propWindow, wmGD.xa_DT_WORKSPACE_PRESENCE, 
+    _XmPlatChangeProperty (DISPLAY, propWindow, wmGD.xa_DT_WORKSPACE_PRESENCE, 
 	wmGD.xa_DT_WORKSPACE_PRESENCE, 32, PropModeReplace, 
 	(unsigned char *)pWsPresence, cPresence);
     XFlush (DISPLAY);
@@ -1624,7 +1625,7 @@ void GetDtSessionHints (WmScreenData *pSD, int sNum)
      * Read the  property.
      */
 
-    rValue = XGetWindowProperty (DISPLAY, pSD->rootWindow,
+    rValue = _XmPlatGetWindowProperty (DISPLAY, pSD->rootWindow,
                                  wmGD.xa_DT_SESSION_HINTS, 0L,
                                  (long)1000000, False, AnyPropertyType,
                                  &actualType, &actualFormat, &nitems,
@@ -1655,7 +1656,7 @@ void GetDtSessionHints (WmScreenData *pSD, int sNum)
      * restarts dtwm.
      */
 #ifndef DEBUG_SESSION_HINTS
-    XDeleteProperty (DISPLAY, pSD->rootWindow, wmGD.xa_DT_SESSION_HINTS);
+    _XmPlatDeleteProperty (DISPLAY, pSD->rootWindow, wmGD.xa_DT_SESSION_HINTS);
 #endif /* DEBUG_SESSION_HINTS */
 } /* END OF FUNCTION GetDtSessionHints */
 
@@ -1728,7 +1729,7 @@ GetDtWmRequest (
 	/*
 	 * Read the property and delete it.
 	 */
-	rValue = XGetWindowProperty (DISPLAY, pSD->wmWorkspaceWin,
+	rValue = _XmPlatGetWindowProperty (DISPLAY, pSD->wmWorkspaceWin,
 				     wmGD.xa_DT_WM_REQUEST, 0L,
 				     (long)1000000, True, AnyPropertyType,
 				     &actualType, &actualFormat, &nitems,

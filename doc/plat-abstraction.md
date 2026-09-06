@@ -351,8 +351,11 @@ Total at baseline: 193 lines in 38 files.
 [X] lib/Xm/FileSB.c        1     [X] lib/Xm/EditresCom.c     1
 [X] lib/Xm/Display.c       1     [X] lib/Xm/DataFSel.c       1
 [X] lib/Xm/TextIn.c XRotateBuffers (cut-buffer kill ring)
-[ ] clients/mwm  (property/WM-protocol work moves onto the contract —
-    separate commit; the lib/Xm side of the contract is complete)
+[X] clients/mwm  55 (property/WM-protocol work moved onto the contract;
+    2026-09-06 — WmProperty, WmResParse, WmProtocol, WmInitWs, WmWinInfo,
+    WmEvent, WmXSMP, WmFunction, WmWsmLib/disp, WmWsmLib/recv; the narrow
+    seam header lib/Xm/XmPlat/XmPlatAtoms.h keeps the full XmPlatP.h
+    backend-render internals out of mwm's build)
 ```
 [X] = done 2026-09-06.  Gate: tools/gate/p5-atom-gate.sh (0 violations).
 XmInternAtom/XmGetAtomName remain as source-compat wrappers whose bodies
@@ -435,8 +438,15 @@ atoms:    0 direct X11 atom/property calls outside XmPlat (gate
           The frozen `Atom` type in public structs/resources is
           unaffected: interning goes through the contract, the integer
           lands in the same fields as before.
-draw/font/image/event: 0 (unchanged); mwm (clients/) still direct —
-          Phase 5b.
+draw/font/image/event: 0 (unchanged).
+
+# after Phase 5b (mwm) — 2026-09-06
+clients/mwm: 55 sites in 10 files moved onto the atom/property contract
+          via the XmPlatAtoms.h seam (interning, bulk interning, name
+          lookup, property get/change/delete, client-message send).
+          mwm runtime smoke: starts under Xvfb, parses resources, runs
+          its event loop (config-file path is a packaged-resource issue,
+          not a code fault); UBSan clean.
 ```
 
 Phase-1 exit criterion met: zero `XDraw*`/`XFill*`/`XCreateGC`/`XChangeGC`/

@@ -38,6 +38,7 @@ static char rcsid[] = "$TOG: WmProtocol.c /main/8 1997/06/18 17:31:34 samborn $"
  * Included Files:
  */
 
+#include "XmPlat/XmPlatAtoms.h"
 #include "WmGlobal.h"
 #include "WmICCC.h"
 
@@ -181,7 +182,7 @@ void SetupWmICCC (void)
      * Make atoms that are required by the ICCC and mwm.  The atom for
      * _MOTIF_WM_INFO is intern'ed in ProcessMotifWmInfo.
      */
-    XInternAtoms(DISPLAY, atom_names, XtNumber(atom_names), False, atoms);
+    _XmPlatInternAtomsRaw(DISPLAY, atom_names, XtNumber(atom_names), False, atoms);
 
 
 #if ((!defined(WSM)) || defined(MWM_QATS_PROTOCOL))
@@ -249,7 +250,7 @@ void SetupWmICCC (void)
 
           sprintf(wm_query_scr, "_MOTIF_WM_QUERY_%d",
                                         wmGD.Screens[scr].screen);
-          xa_WM_QUERY[scr] = XInternAtom(DISPLAY, wm_query_scr, False);
+          xa_WM_QUERY[scr] = _XmPlatInternAtomRaw(DISPLAY, wm_query_scr, False);
         }
         else
         {
@@ -383,7 +384,7 @@ void SendConfigureNotify (ClientData *pCD)
     notifyEvent.above = None;
     notifyEvent.override_redirect = False;
 
-    XSendEvent (DISPLAY, pCD->client, False, StructureNotifyMask,
+    _XmPlatSendClientMessage (DISPLAY, pCD->client, False, StructureNotifyMask,
 	(XEvent *)&notifyEvent);
 
 
@@ -498,7 +499,7 @@ void SendClientOffsetMessage (ClientData *pCD)
 	}
     }
 
-    XSendEvent (DISPLAY, pCD->client, False, NoEventMask,
+    _XmPlatSendClientMessage (DISPLAY, pCD->client, False, NoEventMask,
 	(XEvent *)&clientMsgEvent);
 
 
@@ -563,7 +564,7 @@ void SendClientMsg (Window window, long type, long data0, Time time, long *pData
     }
     
     
-    XSendEvent (DISPLAY, window, False, NoEventMask,
+    _XmPlatSendClientMessage (DISPLAY, window, False, NoEventMask,
 	(XEvent *)&clientMsgEvent);
     XFlush(DISPLAY);
 
@@ -1195,7 +1196,7 @@ OwnWMSelections ( Time timestamp )
 	  char wm_scr[8];
 	  
  	  sprintf(wm_scr, "WM_S%d", DefaultScreen(DISPLAY));
-	  wmGD.xa_WM[scr] = XInternAtom (DISPLAY, wm_scr, False);
+	  wmGD.xa_WM[scr] = _XmPlatInternAtomRaw (DISPLAY, wm_scr, False);
 	  
 #ifdef MWM_WSM
 	  /*
@@ -1488,7 +1489,7 @@ WMiConvertCB (
 {
   XmConvertCallbackStruct *cnv = (XmConvertCallbackStruct *)callData;
   Atom _MOTIF_LOSE_SELECTION =
-    XInternAtom(DISPLAY, "_MOTIF_LOSE_SELECTION", False);
+    _XmPlatInternAtomRaw(DISPLAY, "_MOTIF_LOSE_SELECTION", False);
   int scr = XScreenNumberOfScreen(XtScreen(w));
   
 
