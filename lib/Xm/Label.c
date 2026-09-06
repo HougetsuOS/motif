@@ -2693,7 +2693,7 @@ _XmLabelConvert(Widget w,
   
   C_ENCODING = XmeGetEncodingAtom(w);
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplayOfObject(w), atom_names, XtNumber(atom_names), 
+  _XmPlatInternAtomsRaw(XtDisplayOfObject(w), atom_names, XtNumber(atom_names), 
 	       False, atoms);
 
   if (cs->selection != atoms[XmA_MOTIF_DROP])
@@ -2939,9 +2939,9 @@ ConvertToEncoding(Widget w, char* str, Atom encoding,
 {
   XtPointer rval = NULL;
   XTextProperty tmp_prop;
-  Atom COMPOUND_TEXT = XInternAtom(XtDisplay(w), XmSCOMPOUND_TEXT, False);
+  Atom COMPOUND_TEXT = _XmPlatInternAtomRaw(XtDisplay(w), XmSCOMPOUND_TEXT, False);
 #ifdef UTF8_SUPPORTED
-  Atom UTF8_STRING = XInternAtom(XtDisplay(w), XmSUTF8_STRING, False);
+  Atom UTF8_STRING = _XmPlatInternAtomRaw(XtDisplay(w), XmSUTF8_STRING, False);
 #endif
   int ret_status;
 

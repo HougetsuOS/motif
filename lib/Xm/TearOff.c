@@ -1032,7 +1032,7 @@ _XmTearOffInitiate(
    } 
 
    assert(XtNumber(atom_names) == NUM_ATOMS);
-   XInternAtoms(XtDisplay(to_shell), atom_names, XtNumber(atom_names), FALSE, 
+   _XmPlatInternAtomsRaw(XtDisplay(to_shell), atom_names, XtNumber(atom_names), FALSE, 
 		atoms);
 
    XmAddWMProtocolCallback((Widget)to_shell, atoms[XmAWM_DELETE_WINDOW],
@@ -1087,7 +1087,7 @@ _XmTearOffInitiate(
    /* Wait until after to_shell realize to set the focus */
    XmProcessTraversal((Widget)submenu, XmTRAVERSE_CURRENT);
 
-   XGetWindowProperty(XtDisplay(to_shell), XtWindow(to_shell),
+   _XmPlatGetWindowProperty(XtDisplay(to_shell), XtWindow(to_shell),
 		      atoms[XmA_MOTIF_WM_HINTS], 0,
 		      PROP_MWM_HINTS_ELEMENTS, False,
 		      atoms[XmA_MOTIF_WM_HINTS], 
@@ -1110,7 +1110,7 @@ _XmTearOffInitiate(
 
       sprop.flags |= MWM_HINTS_STATUS;
       sprop.status |= MWM_TEAROFF_WINDOW;
-      XChangeProperty(XtDisplay(to_shell), XtWindow(to_shell),
+      _XmPlatChangeProperty(XtDisplay(to_shell), XtWindow(to_shell),
 		      atoms[XmA_MOTIF_WM_HINTS], atoms[XmA_MOTIF_WM_HINTS], 32,
 		      PropModeReplace, 
 		      (unsigned char *) &sprop, PROP_MWM_HINTS_ELEMENTS);

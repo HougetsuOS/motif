@@ -32,6 +32,7 @@
 
 
 
+#include "XmPlat/XmPlatP.h"
 #include <stdio.h>
 #ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
@@ -354,7 +355,7 @@ GetUseableText(Display *display, XmString xmstring, char **buffer,
 	text_prop_return.value[txt_len] = '\0';
 	text_prop_return.nitems = txt_len;
 	text_prop_return.encoding =
-		XInternAtom(display, XmSCOMPOUND_TEXT, False);
+		_XmPlatInternAtomRaw(display, XmSCOMPOUND_TEXT, False);
 	text_prop_return.format = 8;
 	XtFree(compound_text);
 	/* then to a text list, which should result in text. */
@@ -429,7 +430,7 @@ XmCvtXmStringTableToTextProperty(Display *display,
       XtFree((char *) compound_text);
       text_prop_return->value = (unsigned char *) xm_compound_text;
       text_prop_return->encoding = 
-	  XInternAtom(display, XmSCOMPOUND_TEXT, False);
+	  _XmPlatInternAtomRaw(display, XmSCOMPOUND_TEXT, False);
       text_prop_return->format = 8;
       text_prop_return->nitems = total_size;
       _XmAppUnlock(app);
@@ -456,7 +457,7 @@ XmCvtXmStringTableToTextProperty(Display *display,
       text_prop_return->nitems = total_size;
       text_prop_return->format = 8;
       text_prop_return->encoding =
-	XInternAtom(display, XmS_MOTIF_COMPOUND_STRING, False);
+	_XmPlatInternAtomRaw(display, XmS_MOTIF_COMPOUND_STRING, False);
       _XmAppUnlock(app);
       return(Success);
       
@@ -598,7 +599,7 @@ XmCvtTextPropertyToXmStringTable(Display *display,
     _XmDisplayToAppContext(display);
 
     assert(XtNumber(atom_names) == NUM_ATOMS);
-    XInternAtoms(display, atom_names, XtNumber(atom_names), False, atoms);
+    _XmPlatInternAtomsRaw(display, atom_names, XtNumber(atom_names), False, atoms);
 
     _XmAppLock(app);
     if (text_prop->encoding == atoms[XmACOMPOUND_TEXT])

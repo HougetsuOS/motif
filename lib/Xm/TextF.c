@@ -3447,7 +3447,7 @@ SetDestination(Widget w,
 {
   XmTextFieldWidget tf = (XmTextFieldWidget) w;
   Boolean result = TRUE;
-  Atom MOTIF_DESTINATION = XInternAtom(XtDisplay(w),
+  Atom MOTIF_DESTINATION = _XmPlatInternAtomRaw(XtDisplay(w),
 				       XmS_MOTIF_DESTINATION, False);
   
   if (!XtIsRealized(w)) return False;
@@ -7810,7 +7810,7 @@ DragProcCallback(Widget w,
   Atom atoms[XtNumber(atom_names)];
   
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   targets[0] = XmeGetEncodingAtom(w);
   targets[1] = atoms[XmACOMPOUND_TEXT];
@@ -7862,7 +7862,7 @@ RegisterDropSite(Widget w)
   Atom atoms[XtNumber(atom_names)];
   
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   targets[0] = XmeGetEncodingAtom(w);
   targets[1] = atoms[XmACOMPOUND_TEXT];

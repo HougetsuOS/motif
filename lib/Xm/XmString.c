@@ -7843,7 +7843,7 @@ XmeSetWMShellTitle(
 				     &from, &to, NULL)    )
 	    {
 	      text = to.addr ;
-	      encoding = XInternAtom(XtDisplay(shell), XmSCOMPOUND_TEXT, FALSE);
+	      encoding = _XmPlatInternAtomRaw(XtDisplay(shell), XmSCOMPOUND_TEXT, FALSE);
 	    }
 	}
       if(    text    )

@@ -31,6 +31,7 @@ static char rcsid[] = "$XConsortium: DropTrans.c /main/15 1996/05/02 13:50:19 pa
 #endif
 
 
+#include "XmPlat/XmPlatP.h"
 #include <Xm/DropTransP.h>
 #include <Xm/DragCP.h>
 #include "XmI.h"
@@ -224,7 +225,7 @@ Initialize(
 		dtp->num_drop_transfer_lists = 0;
 	}
 
-	dtp->motif_drop_atom = XInternAtom(
+	dtp->motif_drop_atom = _XmPlatInternAtomRaw(
 		XtDisplayOfObject(nw), XmS_MOTIF_DROP, False);
 
 	dtp->cur_drop_transfer_list = (Cardinal) -1;
@@ -303,10 +304,10 @@ TerminateTransfer(
 	XmDragContext	dc = (XmDragContext) dtp->dragContext;
 
 	if (dtp->transfer_status == XmTRANSFER_SUCCESS)
-		status = XInternAtom(XtDisplayOfObject((Widget)dt),
+		status = _XmPlatInternAtomRaw(XtDisplayOfObject((Widget)dt),
 			XmSTRANSFER_SUCCESS, False);
 	else /* XmTRANSFER_FAILURE */
-		status = XInternAtom(XtDisplayOfObject((Widget)dt),
+		status = _XmPlatInternAtomRaw(XtDisplayOfObject((Widget)dt),
 			XmSTRANSFER_FAILURE, False);
 	
 	/*

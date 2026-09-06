@@ -38,6 +38,7 @@ static char rcsid[] = "$TOG: VendorSE.c /main/21 1997/10/13 14:58:18 cshi $"
 
 
 #ifndef X_NOT_STDC_ENV
+#include "XmPlat/XmPlatP.h"
 #include <stdlib.h>
 #endif
 #include <string.h>
@@ -874,8 +875,8 @@ GetMWMFunctionsFromProperty(
       *value = (XtArgVal) ve->vendor.mwm_hints.functions ;
       return ;
     } 
-  mwm_hints_atom = XInternAtom( XtDisplay( shell), _XA_MWM_HINTS, FALSE);
-  XGetWindowProperty( XtDisplay( shell), XtWindow( shell), mwm_hints_atom, 0,
+  mwm_hints_atom = _XmPlatInternAtomRaw( XtDisplay( shell), _XA_MWM_HINTS, FALSE);
+  _XmPlatGetWindowProperty( XtDisplay( shell), XtWindow( shell), mwm_hints_atom, 0,
 		     (long) PROP_MWM_HINTS_ELEMENTS, FALSE, mwm_hints_atom,
 		     &actual_type, &actual_format, &num_items, &bytes_after,
 		     (unsigned char **) &prop);

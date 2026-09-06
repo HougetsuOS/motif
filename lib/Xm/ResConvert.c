@@ -34,6 +34,7 @@ static char rcsid[] = "$TOG: ResConvert.c /main/29 1999/05/18 19:19:39 mgreess $
 #define X_INCLUDE_STRING_H
 #define XOS_USE_XT_LOCKING
 #ifndef NEED_XOS_R_H
+#include "XmPlat/XmPlatP.h"
 #include <X11/Xos_r.h>
 #else
 #include <Xm/Xmos_r.h>
@@ -2151,7 +2152,7 @@ CvtStringToAtomList(
     }
 
   atom_list = (Atom *) XtMalloc(sizeof(Atom) * atom_count);
-  XInternAtoms(dpy, name_list, atom_count, False, atom_list);
+  _XmPlatInternAtomsRaw(dpy, name_list, atom_count, False, atom_list);
 
   while(--atom_count >= 0)
     XtFree(name_list[atom_count]);

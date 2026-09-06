@@ -30,6 +30,7 @@
 #define FIX_1400
 #define FIX_1181
 
+#include "XmPlat/XmPlatP.h"
 #include "XmI.h"
 #include "ColorObjI.h"
 #include <Xm/VendorSEP.h>
@@ -538,7 +539,7 @@ Initialize(
 	      sprintf(names[i], "%s%d", XmSCUSTOMIZE_DATA, i);
 	    }
 
-	    XInternAtoms(new_obj->color_obj.display, names,
+	    _XmPlatInternAtomsRaw(new_obj->color_obj.display, names,
 			 nscreens, FALSE, new_obj->color_obj.atoms);
 
 	    if (nscreens > MAX_SCREENS)
@@ -587,7 +588,7 @@ Initialize(
 			  if(!XtIsRealized((Widget) new_obj))
 			      XtRealizeWidget((Widget) new_obj);
 	
-			  tmpAtom = XInternAtom(new_obj->color_obj.display, 
+			  tmpAtom = _XmPlatInternAtomRaw(new_obj->color_obj.display, 
 						XmSPIXEL_SET, True);
 			  /* if noone has created this one, no need to go on */
 			  if (tmpAtom == None) break ;
@@ -693,11 +694,11 @@ ColorCachePropertyExists(
 	return False ; 
 
     /* try to get the property if it exist only */
-    if ((pixel_set_atom = XInternAtom(dpy, XmSPIXEL_SET_PROP, TRUE)) == None)
+    if ((pixel_set_atom = _XmPlatInternAtomRaw(dpy, XmSPIXEL_SET_PROP, TRUE)) == None)
 	return False ;
 
     /* get the content of the property */
-    result = XGetWindowProperty(dpy, SelOwner, pixel_set_atom, 0L, 1000000,
+    result = _XmPlatGetWindowProperty(dpy, SelOwner, pixel_set_atom, 0L, 1000000,
 		    False, (Atom)AnyPropertyType, &target, &format, 
 		    &length, &bytesafter, (unsigned char **) &value);
 

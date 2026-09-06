@@ -3594,7 +3594,7 @@ FSBConvert(Widget wid, XtPointer client_data, XtPointer cb_struct)
   Atom atoms[XtNumber(atom_names)];
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(wid), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(wid), atom_names, XtNumber(atom_names), False, atoms);
 
   if (FS_DirSearchProc(fsb) == DirSearchProc &&
       FS_FileSearchProc(fsb) == FileSearchProc) {

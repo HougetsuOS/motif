@@ -4464,7 +4464,7 @@ df_SetDestination(
 {
     XmDataFieldWidget tf = (XmDataFieldWidget) w;
     Boolean result = TRUE;
-    Atom MOTIF_DESTINATION = XmInternAtom(XtDisplay(w),
+    Atom MOTIF_DESTINATION = _XmPlatInternAtomRaw(XtDisplay(w),
                                         "MOTIF_DESTINATION", False);
 
     if (!XtIsRealized(w)) return False;
@@ -4907,7 +4907,7 @@ df_GetServerTime(
      XSelectInput(XtDisplay(w), XtWindow(w),
                   (long)(shellMask | PropertyChangeMask));
 
-  XChangeProperty(XtDisplay(w), XtWindow(w), XA_WM_HINTS, XA_WM_HINTS,
+  _XmPlatChangeProperty(XtDisplay(w), XtWindow(w), XA_WM_HINTS, XA_WM_HINTS,
                   32, PropModeAppend, (unsigned char *)NULL, 0);
 
 
@@ -7222,11 +7222,11 @@ df_StartDrag(
     if (tmp_prop.value != NULL) XFree((char *)tmp_prop.value);
 
 #ifdef UTF8_SUPPORTED
-    targets[num_targets++] = XmInternAtom(XtDisplay(w), "UTF8_STRING", False);
+    targets[num_targets++] = _XmPlatInternAtomRaw(XtDisplay(w), "UTF8_STRING", False);
 #endif
-    targets[num_targets++] = XmInternAtom(XtDisplay(w), "COMPOUND_TEXT", False);
+    targets[num_targets++] = _XmPlatInternAtomRaw(XtDisplay(w), "COMPOUND_TEXT", False);
     targets[num_targets++] = XA_STRING;
-    targets[num_targets++] = XmInternAtom(XtDisplay(w), "TEXT", False);
+    targets[num_targets++] = _XmPlatInternAtomRaw(XtDisplay(w), "TEXT", False);
 
     drag_icon = XmeGetTextualDragIcon(w);
 
@@ -7392,7 +7392,7 @@ df_DoStuff(
 {
     XmDataFieldWidget tf = (XmDataFieldWidget) w;
     _XmTextPrimSelect *prim_select = (_XmTextPrimSelect *) closure;
-    Atom NULL_ATOM = XmInternAtom(XtDisplay(w), "NULL", False);
+    Atom NULL_ATOM = _XmPlatInternAtomRaw(XtDisplay(w), "NULL", False);
     XmTextPosition right, left;
     int prim_char_length = 0;
     Boolean replace_res = False;
@@ -7408,7 +7408,7 @@ df_DoStuff(
 
     if (!(*length) && *type != NULL_ATOM ) {
       /* Backwards compatibility for 1.0 Selections */
-       if (prim_select->target == XmInternAtom(XtDisplay(w), "TEXT", False)) {
+       if (prim_select->target == _XmPlatInternAtomRaw(XtDisplay(w), "TEXT", False)) {
           prim_select->target = XA_STRING;
           XtGetSelectionValue(w, XA_PRIMARY, XA_STRING, df_DoStuff,
                            (XtPointer)prim_select, prim_select->time);
@@ -7440,9 +7440,9 @@ df_DoStuff(
           XmTextF_max_length(tf) = INT_MAX;
        }
 
-       if (*type == XmInternAtom(XtDisplay(w), "COMPOUND_TEXT", False) ||
+       if (*type == _XmPlatInternAtomRaw(XtDisplay(w), "COMPOUND_TEXT", False) ||
 #ifdef UTF8_SUPPORTED
-           *type == XmInternAtom(XtDisplay(w), "UTF8_STRING", False) ||
+           *type == _XmPlatInternAtomRaw(XtDisplay(w), "UTF8_STRING", False) ||
 #endif
            *type == XA_STRING) {
 	  tmp_prop.value = (unsigned char *) value;
@@ -7547,7 +7547,7 @@ df_DoStuff(
 	  if (XmTextF_selection_move(tf)) {
               prim_select->ref_count++;
               XtGetSelectionValue(w, XA_PRIMARY,
-                                  XmInternAtom(XtDisplay(w), "DELETE", False),
+                                  _XmPlatInternAtomRaw(XtDisplay(w), "DELETE", False),
                                   df_DoStuff, (XtPointer)prim_select,
                                   prim_select->time);
            }
@@ -7600,7 +7600,7 @@ df_Stuff(
   tmp->num_params = num_params;
 
   XtGetSelectionValue(w, XA_PRIMARY,
-		      XmInternAtom(XtDisplay(w), "TARGETS", False),
+		      _XmPlatInternAtomRaw(XtDisplay(w), "TARGETS", False),
 		      df_HandleTargets,
 		      (XtPointer)tmp, _XmPlatEventTime (_XmPlatEventOf (event)));
 }
@@ -7633,7 +7633,7 @@ df_HandleSelectionReplies(
 
    XtRemoveEventHandler(w, (EventMask) NULL, TRUE,
                         df_HandleSelectionReplies,
-		       (XtPointer) XmInternAtom(XtDisplay(w),
+		       (XtPointer) _XmPlatInternAtomRaw(XtDisplay(w),
 						"_XM_TEXT_I_S_PROP", False));
 
    dest_data = df_GetTextFDestData(w);
@@ -7687,7 +7687,7 @@ df_HandleSelectionReplies(
       }
    }
 
-   XDeleteProperty(XtDisplay(w), _XmPlatEventRequestor (_XmPlatEventOf (event)), property);
+   _XmPlatDeleteProperty(XtDisplay(w), _XmPlatEventRequestor (_XmPlatEventOf (event)), property);
 }
 
 
@@ -7718,7 +7718,7 @@ df_SecondaryNotify(
 #endif /* _NO_PROTO */
 {
     XmDataFieldWidget tf = (XmDataFieldWidget) w;
-    Atom XM_TEXT_PROP = XmInternAtom(XtDisplay(w), "_XM_TEXT_I_S_PROP", False);
+    Atom XM_TEXT_PROP = _XmPlatInternAtomRaw(XtDisplay(w), "_XM_TEXT_I_S_PROP", False);
     Atom CS_OF_LOCALE; /* to be initialized by XmbTextListToTextProperty */
     char * tmp_string = "ABC";  /* these are characters in XPCS, so... safe */
     TextFDestData dest_data;
@@ -7756,8 +7756,8 @@ df_SecondaryNotify(
     pair->target = CS_OF_LOCALE;
 
    /* add the insert selection property on the text field widget's window */
-    XChangeProperty(XtDisplay(w), XtWindow(w), XM_TEXT_PROP, 
-    		    XmInternAtom(XtDisplay(w), "ATOM_PAIR", False),
+    _XmPlatChangeProperty(XtDisplay(w), XtWindow(w), XM_TEXT_PROP, 
+    		    _XmPlatInternAtomRaw(XtDisplay(w), "ATOM_PAIR", False),
 		    32, PropModeReplace, (unsigned char *)pair, 2);
 
     dest_data = df_GetTextFDestData(w);
@@ -7783,8 +7783,8 @@ df_SecondaryNotify(
     * type INSERT_SELECTION as per ICCCM.
     */ 
     XConvertSelection(XtDisplay(w),
-    		      XmInternAtom(XtDisplay(w), "MOTIF_DESTINATION", False),
-    		      XmInternAtom(XtDisplay(w), "INSERT_SELECTION", False),
+    		      _XmPlatInternAtomRaw(XtDisplay(w), "MOTIF_DESTINATION", False),
+    		      _XmPlatInternAtomRaw(XtDisplay(w), "INSERT_SELECTION", False),
                       XM_TEXT_PROP, XtWindow(w), _XmPlatEventTime (_XmPlatEventOf (event)));
 }
 
@@ -7819,9 +7819,9 @@ df_HandleTargets(
 {
     XmDataFieldWidget tf = (XmDataFieldWidget) w;
     Atom CS_OF_LOCALE; /* to be initialized by XmbTextListToTextProperty */
-    Atom COMPOUND_TEXT = XmInternAtom(XtDisplay(w),"COMPOUND_TEXT", False);
+    Atom COMPOUND_TEXT = _XmPlatInternAtomRaw(XtDisplay(w),"COMPOUND_TEXT", False);
 #ifdef UTF8_SUPPORTED
-    Atom UTF8_STRING = XmInternAtom(XtDisplay(w), XmSUTF8_STRING, False);
+    Atom UTF8_STRING = _XmPlatInternAtomRaw(XtDisplay(w), XmSUTF8_STRING, False);
 #endif
     XmTextPosition left, right;
     Boolean supports_locale_data = False;
@@ -7904,7 +7904,7 @@ df_HandleTargets(
    prim_select->num_chars = 0;
 
    if (supports_locale_data)
-      prim_select->target = targets[0] = XmInternAtom(XtDisplay(w), "TEXT",
+      prim_select->target = targets[0] = _XmPlatInternAtomRaw(XtDisplay(w), "TEXT",
 						      False);
 #ifdef UTF8_SUPPORTED
    else if (supports_utf8_string)
@@ -9838,9 +9838,9 @@ df_DropTransferCallback(
 {
     _XmTextDropTransferRec *transfer_rec = (_XmTextDropTransferRec *) closure;
     XmDataFieldWidget tf = (XmDataFieldWidget) transfer_rec->widget;
-    Atom COMPOUND_TEXT = XmInternAtom(XtDisplay(w), "COMPOUND_TEXT", False);
+    Atom COMPOUND_TEXT = _XmPlatInternAtomRaw(XtDisplay(w), "COMPOUND_TEXT", False);
 #ifdef UTF8_SUPPORTED
-    Atom UTF8_STRING = XmInternAtom(XtDisplay(w), XmSUTF8_STRING, False);
+    Atom UTF8_STRING = _XmPlatInternAtomRaw(XtDisplay(w), XmSUTF8_STRING, False);
 #endif
     Atom CS_OF_LOCALE;
     XmTextPosition insertPosLeft, insertPosRight, left, right, cursorPos;
@@ -9860,7 +9860,7 @@ df_DropTransferCallback(
     XmAnyCallbackStruct cb;
 
    /* When type = NULL, we are assuming a DELETE request has been requested */
-    if (*type == XmInternAtom(XtDisplay(transfer_rec->widget), "NULL", False)) {
+    if (*type == _XmPlatInternAtomRaw(XtDisplay(transfer_rec->widget), "NULL", False)) {
        if (transfer_rec->num_chars > 0 && transfer_rec->move) {
           XmTextF_prim_anchor(tf) = transfer_rec->insert_pos;
           cursorPos = transfer_rec->insert_pos + transfer_rec->num_chars;
@@ -10008,7 +10008,7 @@ df_DropTransferCallback(
           XmDropTransferEntryRec transferEntries[1];
 
           transferEntries[0].client_data = (XtPointer) transfer_rec;
-          transferEntries[0].target = XmInternAtom(XtDisplay(w),"DELETE",False);
+          transferEntries[0].target = _XmPlatInternAtomRaw(XtDisplay(w),"DELETE",False);
           XmDropTransferAdd(w, transferEntries, 1);
        }
        cb.reason = XmCR_VALUE_CHANGED;
@@ -10064,10 +10064,10 @@ df_HandleDrop(
     } else {
        XmDropTransferEntryRec transferEntries[2];
        XmDropTransferEntryRec *transferList = NULL;
-       Atom TEXT = XmInternAtom(display, "TEXT", False);
-       Atom COMPOUND_TEXT = XmInternAtom(display, "COMPOUND_TEXT", False);
+       Atom TEXT = _XmPlatInternAtomRaw(display, "TEXT", False);
+       Atom COMPOUND_TEXT = _XmPlatInternAtomRaw(display, "COMPOUND_TEXT", False);
 #ifdef UTF8_SUPPORTED
-       Atom UTF8_STRING = XmInternAtom(display, "UTF8_STRING", False);
+       Atom UTF8_STRING = _XmPlatInternAtomRaw(display, "UTF8_STRING", False);
 #endif
        Atom CS_OF_LOCALE;
        char * tmp_string = "ABC"; /* these are characters in XPCS, so... safe */
@@ -10199,11 +10199,11 @@ df_DragProcCallback(
                             */
     if (tmp_prop.value != NULL) XFree((char *)tmp_prop.value);
 
-    targets[1] = XmInternAtom(XtDisplay(w), "COMPOUND_TEXT", False);
+    targets[1] = _XmPlatInternAtomRaw(XtDisplay(w), "COMPOUND_TEXT", False);
     targets[2] = XA_STRING;
-    targets[3] = XmInternAtom(XtDisplay(w), "TEXT", False);
+    targets[3] = _XmPlatInternAtomRaw(XtDisplay(w), "TEXT", False);
 #ifdef UTF8_SUPPORTED
-    targets[4] = XmInternAtom(XtDisplay(w), XmSUTF8_STRING, False);
+    targets[4] = _XmPlatInternAtomRaw(XtDisplay(w), XmSUTF8_STRING, False);
 #endif
 
     drag_cont = cb->dragContext;
@@ -10292,11 +10292,11 @@ df_RegisterDropSite(
                             */
     if (tmp_prop.value != NULL) XFree((char *)tmp_prop.value);
 
-    targets[1] = XmInternAtom(XtDisplay(w), "COMPOUND_TEXT", False);
+    targets[1] = _XmPlatInternAtomRaw(XtDisplay(w), "COMPOUND_TEXT", False);
     targets[2] = XA_STRING;
-    targets[3] = XmInternAtom(XtDisplay(w), "TEXT", False);
+    targets[3] = _XmPlatInternAtomRaw(XtDisplay(w), "TEXT", False);
 #ifdef UTF8_SUPPORTED
-    targets[4] = XmInternAtom(XtDisplay(w), XmSUTF8_STRING, False);
+    targets[4] = _XmPlatInternAtomRaw(XtDisplay(w), XmSUTF8_STRING, False);
 #endif
 
     n = 0;
@@ -12346,7 +12346,7 @@ XmDataFieldCopy(
 	    return False;
 	}
 
-	atom_name = XGetAtomName(display, tmp_prop.encoding);
+	atom_name = _XmPlatAtomNameRaw(display, tmp_prop.encoding);
 
 	/* move the data to the clipboard */
 	status = XmClipboardCopy(display, window, item_id, atom_name,
@@ -12546,7 +12546,7 @@ XmDataFieldPaste(
    }
    else
    {
-       tmp_prop.encoding = XmInternAtom(display, "COMPOUND_TEXT", False);
+       tmp_prop.encoding = _XmPlatInternAtomRaw(display, "COMPOUND_TEXT", False);
    }
 
    tmp_prop.format = 8;

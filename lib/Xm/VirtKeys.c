@@ -32,6 +32,7 @@ static char rcsid[] = "$TOG: VirtKeys.c /main/22 1999/06/02 14:45:52 samborn $"
 #endif
 
 #ifndef X_NOT_STDC_ENV
+#include "XmPlat/XmPlatP.h"
 #include <stdlib.h>
 #endif
 
@@ -450,9 +451,9 @@ GetBindingsProperty(Display *display,
   if ( binding == NULL ) 
     return False;
 
-  XGetWindowProperty (display, 
+  _XmPlatGetWindowProperty (display, 
 		      RootWindow(display, 0),
-		      XInternAtom(display, property, FALSE),
+		      _XmPlatInternAtomRaw(display, property, FALSE),
 		      0, (long)1000000,
 		      FALSE, XA_STRING,
 		      &actual_type, &actual_format,
@@ -972,7 +973,7 @@ _XmVirtKeysLoadFallbackBindings(Display	*display,
   *binding = NULL;
   
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(display, atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(display, atom_names, XtNumber(atom_names), False, atoms);
 
   /* Load .motifbind - necessary, if mwm and xmbind are not used */
   homeDir = XmeGetHomeDirName();
@@ -995,7 +996,7 @@ _XmVirtKeysLoadFallbackBindings(Display	*display,
   if (*binding != NULL) 
     {
       /* Set the user property for future Xm applications. */
-      XChangeProperty (display, RootWindow(display, 0),
+      _XmPlatChangeProperty (display, RootWindow(display, 0),
 		       atoms[XmA_MOTIF_BINDINGS],
 		       XA_STRING, 8, PropModeReplace,
 		       (unsigned char *)*binding, strlen(*binding));
@@ -1040,7 +1041,7 @@ _XmVirtKeysLoadFallbackBindings(Display	*display,
     }
   
   /* Set the fallback property for future Xm applications */
-  XChangeProperty (display, RootWindow(display, 0),
+  _XmPlatChangeProperty (display, RootWindow(display, 0),
 		   atoms[XmA_MOTIF_DEFAULT_BINDINGS],
 		   XA_STRING, 8, PropModeReplace,
 		   (unsigned char *)*binding, strlen(*binding));

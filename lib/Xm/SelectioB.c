@@ -1326,7 +1326,7 @@ ListCallback(
 	if (textTrait == NULL) return; /* Abort if text child is broken */
 
 	assert(XtNumber(atom_names) == NUM_ATOMS);
-	XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), 
+	_XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), 
 		     False, atoms);
 
 	/*	Update the text widget to relect the latest list selection.

@@ -3308,7 +3308,7 @@ DragConvertCallback (Widget w,
    int		 format = 8 ;
       
    assert(XtNumber(atom_names) == NUM_ATOMS);
-   XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+   _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
    /* Begin fixing the bug OSF 4846 */
    /* get the value of the scale and convert it to compound text */

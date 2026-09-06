@@ -1844,6 +1844,31 @@ _XmPlatEventDisplayOf (XmPlatEvent ev)
     return ev->ev->xany.display ;
 }
 
+unsigned long
+_XmPlatInternAtomRaw (Display *dpy, const char *name,
+		      XmPlatBoolean only_if_exists)
+{
+    if (dpy == NULL || name == NULL) return 0 ;
+    return (unsigned long) XInternAtom (dpy, name,
+					only_if_exists ? True : False) ;
+}
+
+void
+_XmPlatInternAtomsRaw (Display *dpy, char **names, unsigned int nnames,
+		       XmPlatBoolean only_if_exists, unsigned long *atoms)
+{
+    if (dpy == NULL || names == NULL || atoms == NULL) return ;
+    XInternAtoms (dpy, names, (int) nnames,
+		  only_if_exists ? True : False, (Atom *) atoms) ;
+}
+
+char *
+_XmPlatAtomNameRaw (Display *dpy, unsigned long raw)
+{
+    if (dpy == NULL || raw == 0) return NULL ;
+    return XGetAtomName (dpy, (Atom) raw) ;
+}
+
 /* Migration glue: see XmPlatP.h (Phase 4). */
 extern Boolean _XmGetPointVisibility (Widget w, int root_x, int root_y) ;
 
@@ -1868,4 +1893,127 @@ _XmPlatGetPointVisibilityIsButton (Widget w, XEvent *event)
     return _XmGetPointVisibility (w,
 				  _XmPlatEventRootX (pev),
 				  _XmPlatEventRootY (pev)) ;
+}
+
+/* ---- Atom / property contract (Phase 5) -------------------------------- */
+
+struct _XmPlatAtomRec {
+    Atom atom ;			/* interned server-side id */
+    Display *dpy ;		/* display the atom was interned on */
+    char *name ;		/* cached name (or NULL until asked) */
+} ;
+
+XmPlatAtom
+_XmPlatAtomIntern (Display *dpy, const char *name,
+		   XmPlatBoolean only_if_exists)
+{
+    XmPlatAtom a ;
+
+    if (dpy == NULL || name == NULL) return NULL ;
+    a = (XmPlatAtom) XtMalloc (sizeof (struct _XmPlatAtomRec)) ;
+    a->atom = XInternAtom (dpy, name, only_if_exists ? True : False) ;
+    a->dpy = dpy ;
+    a->name = XtNewString (name) ;
+    return a ;
+}
+
+const char *
+_XmPlatAtomName (XmPlatAtom a)
+{
+    if (a == NULL) return NULL ;
+    if (a->name == NULL && a->atom != None && a->dpy != NULL)
+	a->name = XGetAtomName (a->dpy, a->atom) ;
+    return a->name ;
+}
+
+unsigned long
+_XmPlatAtomRaw (XmPlatAtom a)
+{
+    if (a == NULL) return 0 ;
+    return (unsigned long) a->atom ;
+}
+
+XmPlatAtom
+_XmPlatAtomOfRaw (Display *dpy, unsigned long raw)
+{
+    XmPlatAtom a ;
+
+    a = (XmPlatAtom) XtMalloc (sizeof (struct _XmPlatAtomRec)) ;
+    a->atom = (Atom) raw ;
+    a->dpy = dpy ;
+    a->name = NULL ;
+    return a ;
+}
+
+void
+_XmPlatAtomFree (XmPlatAtom a)
+{
+    if (a == NULL) return ;
+    if (a->name) XtFree (a->name) ;
+    XtFree ((char *) a) ;
+}
+
+void
+_XmPlatChangeProperty (Display *dpy, unsigned long win,
+		       unsigned long prop, unsigned long type,
+		       int format, int mode,
+		       const unsigned char *data, int nelements)
+{
+    XChangeProperty (dpy, (Window) win, (Atom) prop, (Atom) type,
+		     format, mode, data, nelements) ;
+}
+
+int
+_XmPlatGetWindowProperty (Display *dpy, unsigned long win,
+			  unsigned long prop, long offset, long length,
+			  XmPlatBoolean delete, unsigned long req_type,
+			  unsigned long *ret_type, int *ret_format,
+			  unsigned long *ret_nitems,
+			  unsigned long *ret_bytes_after,
+			  unsigned char **ret_data)
+{
+    Atom type ;
+    int status ;
+    unsigned long nitems, bytes_after ;
+
+    status = XGetWindowProperty (dpy, (Window) win,
+				 (Atom) prop,
+				 offset, length,
+				 delete ? True : False,
+				 (Atom) req_type,
+				 &type, ret_format, &nitems,
+				 &bytes_after, ret_data) ;
+    if (ret_type)
+	*ret_type = (status == Success) ? (unsigned long) type : 0 ;
+    if (ret_nitems) *ret_nitems = nitems ;
+    if (ret_bytes_after) *ret_bytes_after = bytes_after ;
+    return status ;
+}
+
+void
+_XmPlatDeleteProperty (Display *dpy, unsigned long win, unsigned long prop)
+{
+    XDeleteProperty (dpy, (Window) win, (Atom) prop) ;
+}
+
+XmPlatBoolean
+_XmPlatSendClientMessage (Display *dpy, unsigned long win,
+			  XmPlatBoolean propagate, long event_mask,
+			  const void *msg)
+{
+    return (XmPlatBoolean) XSendEvent (dpy, (Window) win,
+				       propagate ? True : False,
+				       event_mask, (XEvent *) msg) ;
+}
+
+void
+_XmPlatRotateBuffers (Display *dpy, int n)
+{
+    XRotateBuffers (dpy, n) ;
+}
+
+void
+_XmPlatSync (Display *dpy, XmPlatBoolean discard)
+{
+    XSync (dpy, discard ? True : False) ;
 }

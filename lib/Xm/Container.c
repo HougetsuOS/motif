@@ -1401,7 +1401,7 @@ Initialize(
      * Register as Drop site.
      */
     n = 0;
-    targets[0] = XInternAtom(XtDisplay(nw),XmS_MOTIF_DRAG_OFFSET,False);
+    targets[0] = _XmPlatInternAtomRaw(XtDisplay(nw),XmS_MOTIF_DRAG_OFFSET,False);
     XtSetArg(wargs[n],XmNimportTargets,targets); n++;
     XtSetArg(wargs[n],XmNnumImportTargets,1); n++;
     XmeDropSink(nw,wargs,n);
@@ -5163,7 +5163,7 @@ ContainerConvertProc(
 
   /* Get Atom values from cache. */
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(wid), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(wid), atom_names, XtNumber(atom_names), False, atoms);
 
   if (cs->target == atoms[XmA_MOTIF_LOSE_SELECTION])
     {
@@ -5337,7 +5337,7 @@ ContainerDestinationProc(
 
 	/* Get Atom values from cache. */
 	assert(XtNumber(atom_names) == NUM_ATOMS);
-	XInternAtoms(XtDisplay(wid), atom_names, XtNumber(atom_names), 
+	_XmPlatInternAtomsRaw(XtDisplay(wid), atom_names, XtNumber(atom_names), 
 		     False, atoms);
 
 	if (cs->selection != atoms[XmA_MOTIF_DROP])
@@ -5379,7 +5379,7 @@ ContainerDestPrehookProc(
   if (cs->selection != XA_PRIMARY)
       cs->location_data = NULL;
 
-  if (cs->selection == XInternAtom(XtDisplay(wid),XmS_MOTIF_DROP,False))
+  if (cs->selection == _XmPlatInternAtomRaw(XtDisplay(wid),XmS_MOTIF_DROP,False))
     {
       loc_data = (XPoint *) XtMalloc(sizeof(XPoint));
       dropproc_cs = (XmDropProcCallbackStruct *) cs->destination_data;
@@ -9309,7 +9309,7 @@ MoveItemCallback(
      the drop effect,  moving is enough (and faster) */
   if (ds -> flags & XmCONVERTING_SAME)
     XmTransferValue(cs->transfer_id,
-		    XInternAtom(XtDisplay(wid),
+		    _XmPlatInternAtomRaw(XtDisplay(wid),
 				XmS_MOTIF_CANCEL_DROP_EFFECT, False),
 		    (XtCallbackProc)NULL,NULL,
 		    XtLastTimestampProcessed(XtDisplay(wid)));

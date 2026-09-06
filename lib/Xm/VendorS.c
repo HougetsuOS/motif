@@ -33,6 +33,7 @@ static char rcsid[] = "$TOG: VendorS.c /main/21 1999/08/09 10:49:41 mgreess $"
 
 /* Make sure all wm properties can make it out of the resource manager */
 
+#include "XmPlat/XmPlatP.h"
 #include <stdio.h>
 #include <Xm/AccColorT.h>
 #include <Xm/AtomMgr.h>
@@ -1695,7 +1696,7 @@ VendorExtInitialize(
     XtAddCallback(extParent, XmNpopdownCallback, PopdownCallback,(XtPointer)new_w); 
 
     assert(XtNumber(atom_names) == NUM_ATOMS);
-    XInternAtoms(XtDisplay(extParent), atom_names,
+    _XmPlatInternAtomsRaw(XtDisplay(extParent), atom_names,
 		 XtNumber(atom_names), FALSE, atoms); 
 
     XmAddWMProtocols(extParent, &atoms[XmA_MOTIF_WM_MESSAGES], 1);
@@ -2750,7 +2751,7 @@ SetMwmHints(
     Atom		mwm_hints_atom;
     Widget		shell = ve->ext.logicalParent;
 
-    mwm_hints_atom = XInternAtom(XtDisplay(shell),
+    mwm_hints_atom = _XmPlatInternAtomRaw(XtDisplay(shell),
 				   _XA_MWM_HINTS, 
 				   FALSE);
 
@@ -2762,7 +2763,7 @@ SetMwmHints(
     SET(status);
 #undef SET
 
-    XChangeProperty (XtDisplay(shell), 
+    _XmPlatChangeProperty (XtDisplay(shell), 
 		      XtWindow(shell),
 		      mwm_hints_atom,mwm_hints_atom, 
 		      32, PropModeReplace, 
@@ -2787,7 +2788,7 @@ SetMwmMenu(
     int		  status;
 
 
-    mwm_menu_atom = XInternAtom(XtDisplay(shell),
+    mwm_menu_atom = _XmPlatInternAtomRaw(XtDisplay(shell),
 				_XA_MWM_MENU, 
 				FALSE);
 

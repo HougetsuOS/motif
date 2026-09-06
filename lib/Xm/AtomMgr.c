@@ -32,6 +32,7 @@ static char rcsid[] = "$TOG: AtomMgr.c /main/13 1997/09/08 14:06:18 cshi $"
 
 #include <Xm/AtomMgr.h>
 #include <Xm/XmP.h>
+#include "XmPlat/XmPlatP.h"
 #include <X11/Xresource.h>
   
 /*****************************************************************************
@@ -50,9 +51,9 @@ XmInternAtom(
         Boolean only_if_exists )
 #endif /* NeedWidePrototypes */
 {
-  /* While not yet obsolete, this routine is not in favor.  Use */
-  /* XInternAtom directly. */
-  return XInternAtom(display, name, only_if_exists);
+  /* While not yet obsolete, this routine is not in favor.  Interning
+     goes through the XmPlat backend. */
+  return (Atom) _XmPlatInternAtomRaw (display, name, only_if_exists) ;
 }
 
 /*****************************************************************************
@@ -67,6 +68,5 @@ XmGetAtomName(
         Atom atom )
 {
   /* While not yet obsolete, this routine is not in favor.  Use */
-  /* XGetAtomName directly. */
-  return XGetAtomName(display, atom);
+  return (String) _XmPlatAtomNameRaw (display, (unsigned long) atom) ;
 }    

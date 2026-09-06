@@ -44,6 +44,7 @@ in this Software without prior written authorization from the X Consortium.
 #endif
 
 
+#include "XmPlat/XmPlatP.h"
 #include <X11/IntrinsicP.h>	/* To get into the composite and core widget
 				   structures. */
 #include <X11/ObjectP.h>	/* For XtIs<Classname> macros. */
@@ -225,7 +226,7 @@ Boolean *cont;
 		EDITRES_PROTOCOL_ATOM, EDITRES_CLIENT_VALUE };
 		
 	    first_time = TRUE;
-	    XInternAtoms(dpy, names, 4, FALSE, atoms);
+	    _XmPlatInternAtomsRaw(dpy, names, 4, FALSE, atoms);
 	    res_editor = atoms[0];
 	    res_editor_command = atoms[1];
 	    res_editor_protocol = atoms[2];

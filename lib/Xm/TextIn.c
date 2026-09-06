@@ -1044,7 +1044,7 @@ _XmTextSetDestinationSelection(Widget w,
   XmTextWidget tw = (XmTextWidget) w;
   InputData data = tw->text.input->data;
   Boolean result = TRUE;
-  Atom MOTIF_DESTINATION = XInternAtom(XtDisplay(w),
+  Atom MOTIF_DESTINATION = _XmPlatInternAtomRaw(XtDisplay(w),
 				       XmS_MOTIF_DESTINATION, False);
   
   if (!XtIsRealized(w)) return False;
@@ -1101,7 +1101,7 @@ DeleteOrKill(XmTextWidget tw,
   _XmTextDisableRedisplay(tw,False);
   if (kill && from < to) {
     ptr = _XmStringSourceGetString(tw, from, to, False);
-    XRotateBuffers(XtDisplay(tw), 1);
+    _XmPlatRotateBuffers (XtDisplay(tw), 1);
     XStoreBuffer(XtDisplay(tw), ptr, strlen(ptr), 0);
     XtFree(ptr);
   }
@@ -5843,7 +5843,7 @@ static void
 InputDestroy(Widget w)
 {
   XmTextWidget tw = (XmTextWidget) w;
-  Atom MOTIF_DESTINATION = XInternAtom(XtDisplay(tw),
+  Atom MOTIF_DESTINATION = _XmPlatInternAtomRaw(XtDisplay(tw),
 				       XmS_MOTIF_DESTINATION, False);
   Widget dest = XmGetDestination(XtDisplay(w));
   
@@ -5948,7 +5948,7 @@ DragProcCallback(Widget w,
   Atom atoms[XtNumber(atom_names)];
   
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   targets[0] = XmeGetEncodingAtom(w);
   targets[1] = atoms[XmACOMPOUND_TEXT];
@@ -6015,7 +6015,7 @@ RegisterDropSite(Widget w)
   Atom atoms[XtNumber(atom_names)];
   
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   targets[0] = XmeGetEncodingAtom(w);
   targets[1] = atoms[XmACOMPOUND_TEXT];

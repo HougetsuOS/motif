@@ -3620,7 +3620,7 @@ ListConvert(Widget w, XtPointer client_data,
     XmI18ListDragConvertStruct *ListDragConv = lw->ilist.drag_conv;
 
     assert(XtNumber(atom_names) == NUM_ATOMS);
-    XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+    _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
     if (cs->target == atoms[XmATARGETS])
     {
@@ -3817,7 +3817,7 @@ ListPreDestProc(Widget w,
 		XmDestinationCallbackStruct *cs)
 {
   XmDropProcCallbackStruct *ds;
-  Atom XA_MOTIF_DROP = XInternAtom(XtDisplay(w), XmS_MOTIF_DROP, False);
+  Atom XA_MOTIF_DROP = _XmPlatInternAtomRaw(XtDisplay(w), XmS_MOTIF_DROP, False);
   int index;
   short row, col;
 

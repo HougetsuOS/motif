@@ -25,6 +25,7 @@
 #endif
 
 
+#include "XmPlat/XmPlatP.h"
 #include "XmI.h"
 #include <Xm/PrintSP.h>
 #include "ImageCachI.h"
@@ -891,7 +892,7 @@ PDMPhase2Handler(Widget w,
     Atom atoms[XtNumber(atom_names)];
 
     assert(XtNumber(atom_names) == NUM_ATOMS);
-    XInternAtoms(XtDisplay(print_shell), atom_names, XtNumber(atom_names), 
+    _XmPlatInternAtomsRaw(XtDisplay(print_shell), atom_names, XtNumber(atom_names), 
 		 False, atoms);
 
     if (xevent->type == ClientMessage &&
@@ -942,7 +943,7 @@ static void PDMSelectionProc (Widget w,
     Atom atoms[XtNumber(atom_names)];
 
     assert(XtNumber(atom_names) == NUM_ATOMS);
-    XInternAtoms(XtDisplay(pdm_select_data->print_shell), atom_names,
+    _XmPlatInternAtomsRaw(XtDisplay(pdm_select_data->print_shell), atom_names,
 		 XtNumber(atom_names), False, atoms);
 
     /* set back the video shell widget usable */
@@ -1040,7 +1041,7 @@ XmPrintPopupPDM(Widget print_shell,
     pdm_select_data->print_shell = (XmPrintShellWidget) print_shell ; 
                                   /* need this one in all cases */
 
-    PDM_START = XInternAtom(XtDisplay(widget_for_selection), 
+    PDM_START = _XmPlatInternAtomRaw(XtDisplay(widget_for_selection), 
 			    XmIPDM_START, False);
 
     app = XtWidgetToApplicationContext(widget_for_selection);

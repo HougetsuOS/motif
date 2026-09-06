@@ -358,12 +358,12 @@ _XmIsISO10646(Display *dpy, XFontStruct *font)
     XFontProp *xfp;
 
     ok = False;
-    registry = XInternAtom(dpy, "CHARSET_REGISTRY", False);
+    registry = _XmPlatInternAtomRaw(dpy, "CHARSET_REGISTRY", False);
 
     for (i = 0, xfp = font->properties;
 	 ok == False && i < font->n_properties; xfp++, i++) {
 	if (xfp->name == registry) {
-	    regname = XGetAtomName(dpy, (Atom) xfp->card32);
+	    regname = _XmPlatAtomNameRaw(dpy, (Atom) xfp->card32);
 	    if (strcmp(regname, "ISO10646") == 0 ||
 		strcmp(regname, "iso10646") == 0)
 	      ok = True;

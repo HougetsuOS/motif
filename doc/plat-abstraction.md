@@ -332,26 +332,31 @@ DataF, TextF deliberately last.
 Total at baseline: 193 lines in 38 files.
 
 ```
-[ ] lib/Xm/CutPaste.c     34     [ ] lib/Xm/DropTrans.c      3
-[ ] lib/Xm/Transfer.c     24     [ ] lib/Xm/VendorSE.c       2
-[ ] lib/Xm/DragBS.c       17     [ ] lib/Xm/ValTime.c        2
-[ ] lib/Xm/DragICC.c      14     [ ] lib/Xm/List.c           2
-[ ] lib/Xm/TextSel.c      12     [ ] lib/Xm/IsMwmRun.c       2
-[ ] lib/Xm/TextFSel.c     12     [ ] lib/Xm/I18List.c        2
-[ ] lib/Xm/Text.c          8     [ ] lib/Xm/DataF.c          2
-[ ] lib/Xm/VirtKeys.c      5     [ ] lib/Xm/AtomMgr.c        2
-[ ] lib/Xm/DragC.c         5     [ ] lib/Xm/Container.c      5
-[ ] lib/Xm/TextIn.c        4     [ ] lib/Xm/ColorObj.c       4
-[ ] lib/Xm/TextF.c         3     [ ] lib/Xm/TearOff.c        3
-[ ] lib/Xm/PrintS.c        3     [ ] lib/Xm/Label.c          3
-[ ] lib/Xm/XmString.c      1     [ ] lib/Xm/Xm.c             1
-[ ] lib/Xm/SelectioB.c     1     [ ] lib/Xm/Screen.c         1
-[ ] lib/Xm/Scale.c         1     [ ] lib/Xm/ResEncod.c       1
-[ ] lib/Xm/ResConvert.c    1     [ ] lib/Xm/Protocols.c      1
-[ ] lib/Xm/FileSB.c        1     [ ] lib/Xm/EditresCom.c     1
-[ ] lib/Xm/Display.c       1     [ ] lib/Xm/DataFSel.c       1
-[ ] clients/mwm  (property/WM-protocol work moves onto the contract)
+[X] lib/Xm/CutPaste.c     34     [X] lib/Xm/DropTrans.c      3
+[X] lib/Xm/Transfer.c     24     [X] lib/Xm/VendorSE.c       2
+[X] lib/Xm/DragBS.c       17     [X] lib/Xm/ValTime.c        2
+[X] lib/Xm/DragICC.c      14     [X] lib/Xm/List.c           2
+[X] lib/Xm/TextSel.c      12     [X] lib/Xm/IsMwmRun.c       2
+[X] lib/Xm/TextFSel.c     12     [X] lib/Xm/I18List.c        2
+[X] lib/Xm/Text.c          8     [X] lib/Xm/DataF.c          2
+[X] lib/Xm/VirtKeys.c      5     [X] lib/Xm/AtomMgr.c        2
+[X] lib/Xm/DragC.c         5     [X] lib/Xm/Container.c      5
+[X] lib/Xm/TextIn.c        4     [X] lib/Xm/ColorObj.c       4
+[X] lib/Xm/TextF.c         3     [X] lib/Xm/TearOff.c        3
+[X] lib/Xm/PrintS.c        3     [X] lib/Xm/Label.c          3
+[X] lib/Xm/XmString.c      1     [X] lib/Xm/Xm.c             1
+[X] lib/Xm/SelectioB.c     1     [X] lib/Xm/Screen.c         1
+[X] lib/Xm/Scale.c         1     [X] lib/Xm/ResEncod.c       1
+[X] lib/Xm/ResConvert.c    1     [X] lib/Xm/Protocols.c      1
+[X] lib/Xm/FileSB.c        1     [X] lib/Xm/EditresCom.c     1
+[X] lib/Xm/Display.c       1     [X] lib/Xm/DataFSel.c       1
+[X] lib/Xm/TextIn.c XRotateBuffers (cut-buffer kill ring)
+[ ] clients/mwm  (property/WM-protocol work moves onto the contract —
+    separate commit; the lib/Xm side of the contract is complete)
 ```
+[X] = done 2026-09-06.  Gate: tools/gate/p5-atom-gate.sh (0 violations).
+XmInternAtom/XmGetAtomName remain as source-compat wrappers whose bodies
+route through the backend (verified by inspection).
 
 ### Census record
 
@@ -418,6 +423,20 @@ event:    0 XEvent field accesses outside XmPlat and the documented
           XmAnyCallbackStruct.event) still carry raw XEvent* as
           opaque pointers unwrapped at the seam.
 draw/font/image: 0 (unchanged); atoms unchanged.
+
+# after Phase 5 — 2026-09-06
+atoms:    0 direct X11 atom/property calls outside XmPlat (gate
+          p5-atom-gate.sh: XInternAtom/XInternAtoms/XChangeProperty/
+          XGetWindowProperty/XDeleteProperty/XSendEvent/XGetAtomName/
+          XRotateBuffers all at 0).  XmInternAtom/XmGetAtomName remain
+          as public source-compat wrappers routing through the backend.
+          Property prims take raw atom ids + raw windows (the transport
+          files are plumbing; XmPlatWindow unification is Phase-6).
+          The frozen `Atom` type in public structs/resources is
+          unaffected: interning goes through the contract, the integer
+          lands in the same fields as before.
+draw/font/image/event: 0 (unchanged); mwm (clients/) still direct —
+          Phase 5b.
 ```
 
 Phase-1 exit criterion met: zero `XDraw*`/`XFill*`/`XCreateGC`/`XChangeGC`/

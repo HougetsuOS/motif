@@ -268,7 +268,26 @@ or the widget-record `XEvent*` you already own; pass raw `XEvent*` through
 frozen signatures (callbacks, `XtCallActionProc`, `XtDispatchEvent`)
 unchanged — `_XmPlatEventRaw` unwraps a token where needed.
 
-### 4.7 Checklist
+### 4.8 Atoms and properties
+
+Phase 5 has landed.  `XmInternAtom` / `XmGetAtomName` keep their frozen
+signatures but now route through the platform backend — source compat,
+no action needed for apps.
+
+Custom widget code that interned atoms directly should switch to:
+
+```c
+Atom a = (Atom) _XmPlatInternAtomRaw (XtDisplay (w), "MY_TARGET", False);
+const char *nm = _XmPlatAtomNameRaw (XtDisplay (w), a);   /* XFree it */
+```
+
+Property I/O (selection/DnD transport) uses `_XmPlatChangeProperty` /
+`_XmPlatGetWindowProperty` / `_XmPlatDeleteProperty` with the same
+argument shapes as the Xlib calls they replace; fabricated client
+messages (WM protocols, DnD ACKs) go through `_XmPlatSendClientMessage`.
+The public `Atom` type in callback structs is unchanged.
+
+### 4.9 Checklist
 
 ```
 [ ] No XDraw* / XFill* / XCopy* / XPutImage / XCreateGC / XChangeGC /
@@ -352,7 +371,7 @@ phases land.
 | 2 — fonts | done | switch `_XmPlatFontOfGC` text sites to font tokens (`_XmPlatFontOf*D`); metrics via `_XmPlatTextWidth`/`Extents` | §4.4 |
 | 3 — images | done | hold `XmPlatImage` tokens; draw via `_XmPlatPutImage`; build via `_XmPlatImageCreate`/`BitmapOf`; screen reads via `_XmPlatImageFromSurface2`; pixel access via `Get/PutPixel` prims | §4.5 |
 | 4 — events | done | wrap once per handler (`_XmPlatEventOf`), read `_XmPlatEvent*` prims; raw `XEvent*` stays in frozen Xt/gadget/callback signatures as opaque plumbing | §4.6 |
-| 5 — atoms/DnD/mwm | after 4 | nothing for apps | new section |
+| 5 — atoms | done | apps: nothing; XmInternAtom/XmGetAtomName are now wrappers over the contract (same signatures). lib/Xm: interning via `_XmPlatInternAtomRaw`, property I/O via `_XmPlatChange/Get/DeleteProperty`, WM/DnD messages via `_XmPlatSendClientMessage` | §4.8 |
 | 6 — cairo backend | after 5 | custom widgets must be on the contract by now (**hard deadline**) | §4 rewrite |
 
 ## 8. FAQ

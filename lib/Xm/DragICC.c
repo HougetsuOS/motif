@@ -31,6 +31,7 @@ static char rcsid[] = "$TOG: DragICC.c /main/14 1997/06/18 17:38:07 samborn $"
 #endif
 
 
+#include "XmPlat/XmPlatP.h"
 #include <X11/Xatom.h>
 #include <Xm/AtomMgr.h>
 #include <Xm/DisplayP.h>
@@ -237,7 +238,7 @@ _XmICCCallbackToICCEvent(
     cmev->send_event = True;
     cmev->window = window;
     cmev->format = 8;
-    cmev->message_type = XInternAtom(display,
+    cmev->message_type = _XmPlatInternAtomRaw(display,
 		_Xm_MOTIF_DRAG_AND_DROP_MESSAGE, False);
 
     
@@ -398,8 +399,8 @@ _XmSendICCCallback(
 	    || (type == XmICC_RECEIVER_EVENT)) /* always ACK to the src win */
 	  receiverWindow = window;
 
-	XSendEvent(display, receiverWindow, False, 0,
-		(XEvent *) &msgEvent); 
+	_XmPlatSendClientMessage (display, receiverWindow, False, 0,
+				  (const void *) &msgEvent) ;
 }
 
 /************************************************************************
@@ -608,7 +609,7 @@ _XmICCEventToICCCallback(
     if ((msgEv->type != ClientMessage) || (msgEv->format != 8))
       return (False);
 
-    motif_dnd_message_atom = XInternAtom(msgEv->display,
+    motif_dnd_message_atom = _XmPlatInternAtomRaw(msgEv->display,
 				      _Xm_MOTIF_DRAG_AND_DROP_MESSAGE, False);
 
     if (msgEv->message_type != motif_dnd_message_atom)
@@ -746,12 +747,12 @@ _XmWriteInitiatorInfo(
       _XmTargetsToIndex((Widget)xmDisplay, exportTargets, numExportTargets);
     infoRec.icc_handle = iccHandle;
 
-    initiatorAtom = XInternAtom(XtDisplayOfObject(dc),
+    initiatorAtom = _XmPlatInternAtomRaw(XtDisplayOfObject(dc),
 				 XmI_MOTIF_DRAG_INITIATOR_INFO,
 				 False);
 
     /* write the buffer to the property */
-    XChangeProperty (XtDisplayOfObject(dc), 
+    _XmPlatChangeProperty (XtDisplayOfObject(dc), 
 		     srcWindow,
 		     iccHandle, initiatorAtom,
 		     8, PropModeReplace, 
@@ -792,11 +793,11 @@ _XmReadInitiatorInfo(
     
     XtGetValues(dc, args, i);
     
-    initiatorAtom = XInternAtom(XtDisplayOfObject(dc),
+    initiatorAtom = _XmPlatInternAtomRaw(XtDisplayOfObject(dc),
 				 XmI_MOTIF_DRAG_INITIATOR_INFO,
 				 FALSE);
     length = 100000L;
-    if (XGetWindowProperty (XtDisplayOfObject(dc), 
+    if (_XmPlatGetWindowProperty (XtDisplayOfObject(dc), 
 			     srcWindow,
 			     iccHandle,
 			     0L,
@@ -855,11 +856,11 @@ _XmGetDragReceiverInfo(
     unsigned int		bw;
     XmDisplay           dd = (XmDisplay) XmGetXmDisplay(display);
     
-    drag_hints_atom = XInternAtom(display,
+    drag_hints_atom = _XmPlatInternAtomRaw(display,
 				   XmI_MOTIF_DRAG_RECEIVER_INFO,
 				   FALSE);
     length = 100000L;
-    if (XGetWindowProperty(display,
+    if (_XmPlatGetWindowProperty(display,
 			    window,
 			    drag_hints_atom,
 			    0L,
@@ -1326,10 +1327,10 @@ _XmClearDragReceiverInfo(
 {
     Atom			receiverAtom;
 
-    receiverAtom = XInternAtom(XtDisplayOfObject(shell),
+    receiverAtom = _XmPlatInternAtomRaw(XtDisplayOfObject(shell),
 				XmI_MOTIF_DRAG_RECEIVER_INFO,
 				False);
-    XDeleteProperty(XtDisplayOfObject(shell),
+    _XmPlatDeleteProperty(XtDisplayOfObject(shell),
 		    XtWindow(shell),
 		    receiverAtom);
     return;
@@ -1361,7 +1362,7 @@ _XmSetDragReceiverInfo(
 
     dsm = _XmGetDropSiteManagerObject( dd) ;
 
-    receiverAtom = XInternAtom(XtDisplayOfObject(shell),
+    receiverAtom = _XmPlatInternAtomRaw(XtDisplayOfObject(shell),
 				XmI_MOTIF_DRAG_RECEIVER_INFO,
 				False);
     
@@ -1417,7 +1418,7 @@ _XmSetDragReceiverInfo(
     infoRecPtr->heap_offset = propBuf->data.size;
     
     /* write the buffer to the property */
-    XChangeProperty (XtDisplayOfObject(shell), 
+    _XmPlatChangeProperty (XtDisplayOfObject(shell), 
 		     XtWindow(shell),
 		     receiverAtom, receiverAtom,
 		     8, 
@@ -1428,7 +1429,7 @@ _XmSetDragReceiverInfo(
       XtFree((char *)propBuf->data.bytes);
     
     if (propBuf->heap.size) {
-	XChangeProperty (XtDisplayOfObject(shell),
+	_XmPlatChangeProperty (XtDisplayOfObject(shell),
 			 XtWindow(shell),
 			 receiverAtom, receiverAtom,
 			 8, PropModeAppend, 

@@ -453,3 +453,72 @@ extern int          _XmPlatEventVisibilityState (XmPlatEvent ev) ;
 extern const char *_XmPlatEventPropertyName (XmPlatEvent ev) ;
 /* Selection requestor window (XSelectionRequestEvent). */
 extern XmPlatWindow _XmPlatEventRequestor (XmPlatEvent ev) ;
+
+/* ---- Atom / property contract (Phase 5) ------------------------------ */
+
+/*
+ * An atom token is an interned name.  In the X11 backend it carries the
+ * server-side Atom plus a cached name so name<->id translation is free
+ * after the first interning.  The public `Atom` type of the frozen APIs
+ * is unaffected: tokens convert to/from raw at the seam (_XmPlatAtomRaw /
+ * _XmPlatAtomOfRaw) wherever a frozen struct field or Xlib call needs an
+ * integer.
+ */
+extern XmPlatAtom _XmPlatAtomIntern (Display *dpy, const char *name,
+				     XmPlatBoolean only_if_exists) ;
+/* Malloc'd name (XtFree when done); NULL on None/unknown. */
+extern const char *_XmPlatAtomName (XmPlatAtom a) ;
+/* Seam: the raw integer for frozen APIs and widget-record fields. */
+extern unsigned long _XmPlatAtomRaw (XmPlatAtom a) ;
+/* Seam inverse: token for an atom obtained elsewhere (public structs). */
+extern XmPlatAtom _XmPlatAtomOfRaw (Display *dpy, unsigned long raw) ;
+/* Releases the token (cached name + token struct; NOT the server atom). */
+extern void _XmPlatAtomFree (XmPlatAtom a) ;
+
+/* --- property I/O ------------------------------------------------------ */
+
+/*
+ * Property data plumbing for the selection/DnD transport.  `win` is the
+ * raw platform window handle (the transport files are plumbing; the
+ * XmPlatWindow unification is a Phase-6 cleanup).  data/nelements rules
+ * match the platform property request (X11: XChangeProperty semantics —
+ * format 8/16/32, nelements in units of format).
+ */
+/* prop/type arguments are raw atom ids (the transport plumbing holds
+   Atoms in widget records and frozen structs; interning itself goes
+   through the contract above). */
+extern void _XmPlatChangeProperty (Display *dpy, unsigned long win,
+				   unsigned long prop, unsigned long type,
+				   int format, int mode,
+				   const unsigned char *data,
+				   int nelements) ;
+
+extern int _XmPlatGetWindowProperty (Display *dpy, unsigned long win,
+				     unsigned long prop, long offset,
+				     long length, XmPlatBoolean delete,
+				     unsigned long req_type,
+				     unsigned long *ret_type, int *ret_format,
+				     unsigned long *ret_nitems,
+				     unsigned long *ret_bytes_after,
+				     unsigned char **ret_data) ;
+/* Caller XtFrees ret_data when the property returned one; ret_type is the
+   raw atom id (0 when None).  req_type is the requested type (the
+   platform's AnyPropertyType wildcard passes through). */
+
+extern void _XmPlatDeleteProperty (Display *dpy, unsigned long win,
+				   unsigned long prop) ;
+
+/* Send a fabricated client-message event (WM_PROTOCOLS, DnD protocol,
+   multi-chunk transfer).  msg is the platform wire-format record
+   (X11: XEvent) with .type/ClientMessage already set. */
+extern XmPlatBoolean _XmPlatSendClientMessage (Display *dpy,
+					       unsigned long win,
+					       XmPlatBoolean propagate,
+					       long event_mask,
+					       const void *msg) ;
+
+/* Cut-buffer rotation (TextF/TextIn kill-ring semantics). */
+extern void _XmPlatRotateBuffers (Display *dpy, int n) ;
+
+/* Increment the WM protocol "restart"/sync counters — XSync wrapper. */
+extern void _XmPlatSync (Display *dpy, XmPlatBoolean discard) ;

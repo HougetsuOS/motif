@@ -35,6 +35,7 @@ static char rcsid[] = "$TOG: DragC.c /main/29 1997/10/07 12:19:52 cshi $"
 #define DEFAULT_WM_TIMEOUT 5000
 #endif
 
+#include "XmPlat/XmPlatP.h"
 #include <X11/Xatom.h>
 #include <X11/cursorfont.h>
 #include <Xm/AtomMgr.h>
@@ -809,7 +810,7 @@ GetClientWindow(
     unsigned char 	*data = NULL;
     Window 		inf = 0;
 
-    XGetWindowProperty(dpy, win, atom, 0, 0, False, AnyPropertyType,
+    _XmPlatGetWindowProperty(dpy, win, atom, 0, 0, False, AnyPropertyType,
 		       &type, &format, &nitems, &after, &data);
     if (data)
 	XFree(data);
@@ -931,7 +932,7 @@ GetDestinationInfo(
 {
     Window	 	clientWin = win;
     Display		*dpy = XtDisplayOfObject((Widget) dc);
-    Atom 		WM_STATE =  XInternAtom(dpy, XmSWM_STATE, True);
+    Atom 		WM_STATE =  _XmPlatInternAtomRaw(dpy, XmSWM_STATE, True);
     unsigned char 	oldStyle = dc->drag.activeProtocolStyle;
     XmDragReceiverInfo 	currReceiverInfo;
 
@@ -1498,7 +1499,7 @@ DropConvertIncrCallback(
 	return False;
     }
     assert(XtNumber(atom_names) == NUM_ATOMS);
-    XInternAtoms(XtDisplayOfObject((Widget) dc), atom_names,
+    _XmPlatInternAtomsRaw(XtDisplayOfObject((Widget) dc), atom_names,
 		 XtNumber(atom_names), False, atoms);
     if ((success = (*target == atoms[XmATRANSFER_SUCCESS])) ||
 	(*target == atoms[XmATRANSFER_FAILURE]))
@@ -1595,7 +1596,7 @@ DropConvertCallback(
 	return False;
     }
     assert(XtNumber(atom_names) == NUM_ATOMS);
-    XInternAtoms(XtDisplayOfObject((Widget) dc), atom_names,
+    _XmPlatInternAtomsRaw(XtDisplayOfObject((Widget) dc), atom_names,
 		 XtNumber(atom_names), False, atoms);
     if ((success = (*target == atoms[XmATRANSFER_SUCCESS])) ||
 	(*target == atoms[XmATRANSFER_FAILURE]))
@@ -2335,7 +2336,7 @@ DragStart(
 	Atom atoms[XtNumber(atom_names)];
 
 	assert(XtNumber(atom_names) == NUM_ATOMS);
-	XInternAtoms(XtDisplay(dc), atom_names, XtNumber(atom_names), 
+	_XmPlatInternAtomsRaw(XtDisplay(dc), atom_names, XtNumber(atom_names), 
 		     False, atoms);
 
 	XtGetSelectionValue((Widget)dd,

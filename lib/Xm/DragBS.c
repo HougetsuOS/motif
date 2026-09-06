@@ -98,6 +98,7 @@ static char rcsid[] = "$TOG: DragBS.c /main/29 1998/03/18 15:10:28 csn $"
  *  _XmGetDragProxyWindow() returns the window id stored there.
  ***************************************************************************/
 
+#include "XmPlat/XmPlatP.h"
 #include <Xm/XmP.h>
 #include "XmI.h"
 #include "DragICCI.h"
@@ -546,9 +547,9 @@ ReadMotifWindow(
     RMW_ErrorFlag = False;
     _XmProcessUnlock();
 
-    motifWindowAtom = XInternAtom (display, XmI_MOTIF_DRAG_WINDOW, False);
+    motifWindowAtom = _XmPlatInternAtomRaw (display, XmI_MOTIF_DRAG_WINDOW, False);
 
-    if ((XGetWindowProperty (display,
+    if ((_XmPlatGetWindowProperty (display,
                              RootWindow (display, 0),
                              motifWindowAtom,
                              0L, MAXPROPLEN,
@@ -634,9 +635,9 @@ WriteMotifWindow(
 {
     Atom	motifWindowAtom;
 
-    motifWindowAtom = XInternAtom (display, XmI_MOTIF_DRAG_WINDOW, False);
+    motifWindowAtom = _XmPlatInternAtomRaw (display, XmI_MOTIF_DRAG_WINDOW, False);
 
-    XChangeProperty (display,
+    _XmPlatChangeProperty (display,
                      RootWindow (display, 0),
                      motifWindowAtom,
 		     XA_WINDOW,
@@ -701,11 +702,11 @@ WriteAtomsTable(
      *  Write the buffer to the property within a protected section.
      */
 
-    atomsTableAtom = XInternAtom (display, XmI_MOTIF_DRAG_ATOMS, False);
+    atomsTableAtom = _XmPlatInternAtomRaw (display, XmI_MOTIF_DRAG_ATOMS, False);
     motifWindow = GetMotifWindow (display);
     _XmProcessLock();
     StartProtectedSection (display, motifWindow);
-    XChangeProperty (display, 
+    _XmPlatChangeProperty (display, 
                      motifWindow,
 		     atomsTableAtom,
 		     atomsTableAtom,
@@ -748,11 +749,11 @@ ReadAtomsTable(
     Boolean			ret;
     Window			motifWindow;
 
-    atomsTableAtom = XInternAtom (display, XmI_MOTIF_DRAG_ATOMS, False);
+    atomsTableAtom = _XmPlatInternAtomRaw (display, XmI_MOTIF_DRAG_ATOMS, False);
     motifWindow = GetMotifWindow (display);
     _XmProcessLock();
     StartProtectedSection (display, motifWindow);
-    ret = ((XGetWindowProperty (display, 	/* display* */
+    ret = ((_XmPlatGetWindowProperty (display, 	/* display* */
     				motifWindow,	/* window */
 			        atomsTableAtom,	/* property atom */
 			        0L, MAXPROPLEN,	/* long_offset, long_length */
@@ -915,11 +916,11 @@ WriteTargetsTable(
      *  Write the buffer to the property within a protected section.
      */
 
-    targetsTableAtom = XInternAtom (display, XmI_MOTIF_DRAG_TARGETS, False);
+    targetsTableAtom = _XmPlatInternAtomRaw (display, XmI_MOTIF_DRAG_TARGETS, False);
     motifWindow = GetMotifWindow (display);
     _XmProcessLock();
     StartProtectedSection (display, motifWindow);
-    XChangeProperty (display, 
+    _XmPlatChangeProperty (display, 
                      motifWindow,
 		     targetsTableAtom,
 		     targetsTableAtom,
@@ -967,11 +968,11 @@ ReadTargetsTable(
     CARD16Item			shortItem;
     CARD32Item			longItem;
 
-    targetsTableAtom = XInternAtom (display, XmI_MOTIF_DRAG_TARGETS, False);
+    targetsTableAtom = _XmPlatInternAtomRaw (display, XmI_MOTIF_DRAG_TARGETS, False);
     motifWindow = GetMotifWindow (display);
     _XmProcessLock();
     StartProtectedSection (display, motifWindow);
-    ret = ((XGetWindowProperty (display, 
+    ret = ((_XmPlatGetWindowProperty (display, 
     				motifWindow,
 			        targetsTableAtom,
 			        0L, MAXPROPLEN,
@@ -1156,7 +1157,7 @@ CreateDefaultAtomsTable(
 	(xmAtomsTableEntry) XtMalloc(sizeof(xmAtomsTableEntryRec));
 
     atomsTable->entries[0].atom =
-	XInternAtom (display, XmS_MOTIF_ATOM_0, False);
+	_XmPlatInternAtomRaw (display, XmS_MOTIF_ATOM_0, False);
     atomsTable->entries[0].time = 0;
 
     SetAtomsTable (display, atomsTable);
@@ -1451,7 +1452,7 @@ _XmAllocMotifAtom(
   	    (atomsTable->numEntries * sizeof(xmAtomsTableEntryRec)));
 
         sprintf(atomname, "%s%d", "_MOTIF_ATOM_", i);
-        atomsTable->entries[i].atom = XInternAtom (display, atomname, False);
+        atomsTable->entries[i].atom = _XmPlatInternAtomRaw (display, atomname, False);
         atomsTable->entries[i].time = time;
         atomReturn = atomsTable->entries[i].atom;
     }
@@ -1604,8 +1605,8 @@ _XmDestroyMotifWindow(
     Atom	motifWindowAtom;
 
     if ((motifWindow = ReadMotifWindow (display)) != None) {
-        motifWindowAtom = XInternAtom (display, XmI_MOTIF_DRAG_WINDOW, False);
-        XDeleteProperty (display,
+        motifWindowAtom = _XmPlatInternAtomRaw (display, XmI_MOTIF_DRAG_WINDOW, False);
+        _XmPlatDeleteProperty (display,
                          DefaultRootWindow (display),
                          motifWindowAtom);
 	XDestroyWindow (display, motifWindow);
@@ -1634,12 +1635,12 @@ _XmGetDragProxyWindow(
     if ((motifWindow = ReadMotifWindow (display)) != None) {
 
 	motifProxyWindowAtom =
-	    XInternAtom (display, XmI_MOTIF_DRAG_PROXY_WINDOW, False);
+	    _XmPlatInternAtomRaw (display, XmI_MOTIF_DRAG_PROXY_WINDOW, False);
 
 	_XmProcessLock();
 	StartProtectedSection (display, motifWindow);
 
-	if ((XGetWindowProperty (display,
+	if ((_XmPlatGetWindowProperty (display,
                                  motifWindow,
                                  motifProxyWindowAtom,
                                  0L, MAXPROPLEN,

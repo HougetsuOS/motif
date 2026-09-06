@@ -30,6 +30,7 @@
 #endif
 
 
+#include "XmPlat/XmPlatP.h"
 #include <X11/Xatom.h>
 #include <Xm/AtomMgr.h>
 #include <Xm/DragDrop.h>
@@ -145,7 +146,7 @@ _XmConvertHandler(Widget wid, Atom *selection, Atom *target,
   int my_local_convert_flag;
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(wid), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(wid), atom_names, XtNumber(atom_names), False, atoms);
 
   _XmProcessLock();
   my_local_convert_flag = local_convert_flag;
@@ -300,7 +301,7 @@ DragConvertHandler(Widget drag_context, Atom *selection, Atom *target,
 		      unsigned long *size, int *fmt)
 {
   ConvertContext cc;
-  Atom MOTIF_DROP = XInternAtom(XtDisplay(drag_context), XmS_MOTIF_DROP, False);
+  Atom MOTIF_DROP = _XmPlatInternAtomRaw(XtDisplay(drag_context), XmS_MOTIF_DROP, False);
 
   /* Find the context block */
 
@@ -375,7 +376,7 @@ SecondaryConvertHandler(Widget w,
   _XmProcessUnlock();
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   if (cs -> target == atoms[XmAINSERT_SELECTION])
     operation = XmCOPY;
@@ -453,7 +454,7 @@ ReleaseSecondaryLock(Widget w,	/* unused */
 static void
 ClipboardLoseProc(Widget w, Atom *selection)
 {
-  Atom DELETE = XInternAtom(XtDisplay(w), XmSDELETE, False);
+  Atom DELETE = _XmPlatInternAtomRaw(XtDisplay(w), XmSDELETE, False);
   XtPointer value;
   Atom type;
   unsigned long size;
@@ -478,7 +479,7 @@ LoseProc(Widget w, Atom *selection)
   Atom type;
   unsigned long size;
   int fmt;
-  Atom MOTIF_LOSE = XInternAtom(XtDisplay(w), XmS_MOTIF_LOSE_SELECTION, False);
+  Atom MOTIF_LOSE = _XmPlatInternAtomRaw(XtDisplay(w), XmS_MOTIF_LOSE_SELECTION, False);
 
   _XmConvertHandlerSetLocal();
   _XmConvertHandler(w, selection, &MOTIF_LOSE, 
@@ -649,7 +650,7 @@ XmeSecondaryTransfer(Widget w, Atom target, XtEnum op, Time time)
 
   _XmAppLock(app);
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   cc = LookupContextBlock(XtDisplay(w), XA_SECONDARY);
   cc -> op = op;
@@ -686,7 +687,7 @@ SecondaryDone(Widget wid,
   ConvertContext cc;
   Boolean success;
   Atom convert_selection;
-  Atom DELETE = XInternAtom(XtDisplay(wid), XmSDELETE, False);
+  Atom DELETE = _XmPlatInternAtomRaw(XtDisplay(wid), XmSDELETE, False);
 
   cc = LookupContextBlock(XtDisplay(wid), XA_SECONDARY);
 
@@ -744,7 +745,7 @@ XmeClipboardSource(Widget w, XtEnum op, Time time)
   display = XtDisplay(w);
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(display, atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(display, atom_names, XtNumber(atom_names), False, atoms);
 
   if (time == 0) time = XtLastTimestampProcessed(display);
 
@@ -918,7 +919,7 @@ ClipboardCallback(Widget w, long *data_id, long *target, int *reason)
   unsigned long size;
   int format;
   Display *display;
-  Atom CLIPBOARD = XInternAtom(XtDisplay(w), XmSCLIPBOARD, False);
+  Atom CLIPBOARD = _XmPlatInternAtomRaw(XtDisplay(w), XmSCLIPBOARD, False);
   SnapshotRequest req;
   ConvertContext cc;
 
@@ -962,7 +963,7 @@ ClipboardCallback(Widget w, long *data_id, long *target, int *reason)
   }
 
   if (req -> outstanding == 0) {
-    Atom done = XInternAtom(display, XmIDONE, False);
+    Atom done = _XmPlatInternAtomRaw(display, XmIDONE, False);
 
     /* If this was the last item,  call _XmConvertHandler with
        DELETE on the distinguisher and then free the req */
@@ -1000,7 +1001,7 @@ XmeDragSource(Widget w, XtPointer location_data, XEvent *event,
   _XmAppLock(app);
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   /* merge and copy arg list */
   arg_count = in_arg_count + 10;
@@ -1066,7 +1067,7 @@ _XmDestinationHandler(Widget wid, Atom selection, XtEnum op,
   TransferContext tc;
   XmDestinationCallbackStruct *cbstruct;
   XmTransferTrait ttrait;
-  Atom MOTIF_DROP = XInternAtom(XtDisplay(wid), XmS_MOTIF_DROP, False);
+  Atom MOTIF_DROP = _XmPlatInternAtomRaw(XtDisplay(wid), XmS_MOTIF_DROP, False);
 
   cbstruct = (XmDestinationCallbackStruct *) 
     XtMalloc(sizeof(XmDestinationCallbackStruct));
@@ -1267,7 +1268,7 @@ DropDestinationHandler(Widget w,
 		       XtPointer client_data, /* unused */
 		       XmDropProcCallbackStruct *ds)
 {
-  Atom MOTIF_DROP = XInternAtom(XtDisplay(w), XmS_MOTIF_DROP, False);
+  Atom MOTIF_DROP = _XmPlatInternAtomRaw(XtDisplay(w), XmS_MOTIF_DROP, False);
   XtEnum op;
 
   if (ds -> dropAction == XmDROP_HELP ||
@@ -1323,7 +1324,7 @@ Boolean
 XmeSecondarySink(Widget w, Time time)
 {
   Boolean status;
-  Atom MOTIF_DESTINATION = XInternAtom(XtDisplay(w), XmS_MOTIF_DESTINATION, False);
+  Atom MOTIF_DESTINATION = _XmPlatInternAtomRaw(XtDisplay(w), XmS_MOTIF_DESTINATION, False);
   _XmWidgetToAppContext(w);
 
   _XmAppLock(app);
@@ -1350,7 +1351,7 @@ XmeSecondarySink(Widget w, Time time)
 Boolean
 XmeClipboardSink(Widget w, XtEnum op, XtPointer location_data)
 {
-  Atom CLIPBOARD = XInternAtom(XtDisplay(w), XmSCLIPBOARD, False);
+  Atom CLIPBOARD = _XmPlatInternAtomRaw(XtDisplay(w), XmSCLIPBOARD, False);
   Boolean ret_val;
   _XmWidgetToAppContext(w);
 
@@ -1406,7 +1407,7 @@ void
 XmTransferDone(XtPointer transfer_id, XmTransferStatus status)
 {
   TransferContext tc = (TransferContext) transfer_id;
-  Atom MOTIF_DROP = XInternAtom(XtDisplay(tc -> widget), XmS_MOTIF_DROP, False);
+  Atom MOTIF_DROP = _XmPlatInternAtomRaw(XtDisplay(tc -> widget), XmS_MOTIF_DROP, False);
   _XmWidgetToAppContext(tc->widget);
 
   _XmAppLock(app);
@@ -1533,7 +1534,7 @@ XmTransferValue(XtPointer transfer_id,
   }
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(tc -> widget), atom_names, XtNumber(atom_names), 
+  _XmPlatInternAtomsRaw(XtDisplay(tc -> widget), atom_names, XtNumber(atom_names), 
 	       False, atoms); 
 
   if (time == 0)
@@ -1691,7 +1692,7 @@ SelectionCallbackWrapper(Widget wid, XtPointer client_data,
   Atom atoms[XtNumber(atom_names)];
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(wid), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(wid), atom_names, XtNumber(atom_names), False, atoms);
 
   /* Get the real widget if this is a drop transfer */
   if (tc -> selection == atoms[XmA_MOTIF_DROP])
@@ -2033,7 +2034,7 @@ XmeStandardTargets(Widget w, int count, int *tcount)
   targets = (Atom *) XtMalloc(sizeof(Atom) * MAXBUILTIN);
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   targets[i] = atoms[XmATARGETS]; i++;
   targets[i] = atoms[XmATIMESTAMP]; i++;
@@ -2079,7 +2080,7 @@ XmeStandardConvert(Widget w,
 
   _XmAppLock(app);
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   if (atoms[XmATARGETS] == cs -> target) {
     int tcount;
@@ -2139,7 +2140,7 @@ XmeStandardConvert(Widget w,
 	current != (Widget) NULL; 
 	current = XtParent(current)) {
       if (XtIsShell(current)) {
-	XGetWindowProperty(XtDisplay(current), XtWindow(current), 
+	_XmPlatGetWindowProperty(XtDisplay(current), XtWindow(current), 
 			   XA_WM_CLASS, 0L, 100000L, False,
 			   (Atom) AnyPropertyType, 
 			   &cs -> type,
@@ -2163,7 +2164,7 @@ XmeStandardConvert(Widget w,
 	current != (Widget) NULL; 
 	current = XtParent(current)) {
       if (XtIsShell(current)) {
-	XGetWindowProperty(XtDisplay(current), XtWindow(current), 
+	_XmPlatGetWindowProperty(XtDisplay(current), XtWindow(current), 
 			   XA_WM_NAME, 0L, 100000L, False,
 			   (Atom) AnyPropertyType, 
 			   &type,
@@ -2266,9 +2267,9 @@ _XmTextToLocaleText(Widget w,
 		    unsigned long length,
 		    Boolean *success)
 {
-  Atom COMPOUND_TEXT = XInternAtom(XtDisplay(w), XmSCOMPOUND_TEXT, False);
+  Atom COMPOUND_TEXT = _XmPlatInternAtomRaw(XtDisplay(w), XmSCOMPOUND_TEXT, False);
 #ifdef UTF8_SUPPORTED
-  Atom UTF8_STRING = XInternAtom(XtDisplay(w), XmSUTF8_STRING, False);
+  Atom UTF8_STRING = _XmPlatInternAtomRaw(XtDisplay(w), XmSUTF8_STRING, False);
 #endif
   XTextProperty text_prop;
   int status;
@@ -2384,7 +2385,7 @@ GetSafeAtomName(Display *display, Atom a, FreeType *howFree)
   SIF_ErrorFlag = 0;
   _XmProcessUnlock();
 
-  returnvalue = XGetAtomName(display, a);
+  returnvalue = _XmPlatAtomNameRaw(display, a);
   *howFree = DoXFree;
 
   XSetErrorHandler(old_Handler);

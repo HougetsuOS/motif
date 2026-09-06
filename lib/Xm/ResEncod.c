@@ -31,6 +31,7 @@
 #endif
 
 
+#include "XmPlat/XmPlatP.h"
 #include <stdio.h>
 #ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
@@ -1388,7 +1389,7 @@ cvtCTsegment(ct_context *ctx,
   }
 
   tmp_prop.value = octets;
-  tmp_prop.encoding = XInternAtom(_XmGetDefaultDisplay(), 
+  tmp_prop.encoding = _XmPlatInternAtomRaw(_XmGetDefaultDisplay(), 
 				  XmSCOMPOUND_TEXT, False);
   tmp_prop.format = 8;
   tmp_prop.nitems = ctx->encodinglen + length;

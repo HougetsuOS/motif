@@ -135,7 +135,7 @@ static Boolean TabConvertProc _ARGS((Widget, Atom*, Atom*, Atom*,
 				     XtPointer*, unsigned long*, int*,
 				     unsigned long*, XtPointer, XtRequestId));
 static void XiMoveTabPanel _ARGS((Widget, Widget));
-#define WidgetAtom(w) XmInternAtom(XtDisplay(w), "WIDGET", False)
+#define WidgetAtom(w) _XmPlatInternAtomRaw(XtDisplay(w), "WIDGET", False)
 #endif
 
 
@@ -4529,7 +4529,7 @@ TabAtom(widget)
     char pid_buf[64];
 
     sprintf(pid_buf, "ICS_TAB_PID_%d\n", (int)getpid());
-    return( XmInternAtom(XtDisplay(widget), pid_buf, False) );
+    return( _XmPlatInternAtomRaw(XtDisplay(widget), pid_buf, False) );
 }
 
 Widget

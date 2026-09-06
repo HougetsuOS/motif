@@ -658,21 +658,21 @@ _XmCreateCutBuffers(Widget w)
 		  (XtCallbackProc) _XmTextFreeContextData,
 		  (XtPointer) ctx_data);
     
-    XChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER0,
+    _XmPlatChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER0,
 		    XA_STRING, 8, PropModeAppend, NULL, 0);
-    XChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER1,
+    _XmPlatChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER1,
 		    XA_STRING, 8, PropModeAppend, NULL, 0);
-    XChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER2,
+    _XmPlatChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER2,
 		    XA_STRING, 8, PropModeAppend, NULL, 0);
-    XChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER3,
+    _XmPlatChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER3,
 		    XA_STRING, 8, PropModeAppend, NULL, 0);
-    XChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER4,
+    _XmPlatChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER4,
 		    XA_STRING, 8, PropModeAppend, NULL, 0);
-    XChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER5,
+    _XmPlatChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER5,
 		    XA_STRING, 8, PropModeAppend, NULL, 0);
-    XChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER6,
+    _XmPlatChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER6,
 		    XA_STRING, 8, PropModeAppend, NULL, 0);
-    XChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER7,
+    _XmPlatChangeProperty(dpy, RootWindowOfScreen(screen), XA_CUT_BUFFER7,
 		    XA_STRING, 8, PropModeAppend, NULL, 0);
     
     XSaveContext(dpy, (Window)screen, local_context, tmp);

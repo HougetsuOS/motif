@@ -30,6 +30,7 @@ static char rcsid[] = "$XConsortium: Protocols.c /main/15 1996/10/17 12:00:24 cd
 #endif
 
 
+#include "XmPlat/XmPlatP.h"
 #include <Xm/XmosP.h>           /* for bzero et al */
 #include <Xm/ProtocolsP.h>
 #include "BaseClassI.h"
@@ -397,7 +398,7 @@ GetAllProtocolsMgr(
  *
  *************************************<+>************************************/
 #define SetProtocolProperty(shell, property, prop_type, atoms, num_atoms) \
-  XChangeProperty((shell)->core.screen->display, XtWindow(shell), \
+  _XmPlatChangeProperty((shell)->core.screen->display, XtWindow(shell), \
 		  property, prop_type, 32, PropModeReplace, \
 		  atoms, num_atoms)
 
@@ -647,7 +648,7 @@ RemoveProtocolMgr(
           XtFree((char *) p_mgr->protocols[i]);
       }
     if (XtIsRealized(shell))
-	XDeleteProperty(XtDisplay(shell), 
+	_XmPlatDeleteProperty(XtDisplay(shell), 
 			XtWindow(shell), 
 			p_mgr->property);
     

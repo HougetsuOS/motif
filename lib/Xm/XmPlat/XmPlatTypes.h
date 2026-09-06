@@ -13,6 +13,7 @@ typedef struct _XmPlatDrawCtxRec   *XmPlatDrawCtx ;
 typedef struct _XmPlatFontRec      *XmPlatFont ;
 typedef struct _XmPlatImageRec     *XmPlatImage ;
 typedef struct _XmPlatEventRec     *XmPlatEvent ;
+typedef struct _XmPlatAtomRec      *XmPlatAtom ;
 
 /*
  * Window token (Phase 4): identifies a window for event-field purposes

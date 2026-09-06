@@ -32,6 +32,7 @@
 #endif
 
 
+#include "XmPlat/XmPlatP.h"
 #include <Xm/XmP.h>
 #include <Xm/MwmUtil.h>
 #include "XmI.h"
@@ -56,12 +57,12 @@ XmIsMotifWMRunning(
  
     _XmAppLock(app);
 
-    motif_wm_info_atom = XInternAtom(XtDisplay(shell),
+    motif_wm_info_atom = _XmPlatInternAtomRaw(XtDisplay(shell),
 				       _XA_MOTIF_WM_INFO,
 				       FALSE);
     _XmProcessLock();
 
-    XGetWindowProperty (XtDisplay(shell), 
+    _XmPlatGetWindowProperty (XtDisplay(shell), 
 			 root,
 			 motif_wm_info_atom,
 			 0, (long)PROP_MOTIF_WM_INFO_ELEMENTS,

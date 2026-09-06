@@ -240,6 +240,21 @@ _XmPlatWindowOf (Widget w)
     return (XmPlatWindow) (w ? XtWindow (w) : 0) ;
 }
 
+/* Bulk interning (Phase 5 migration glue): XInternAtoms replacement.
+   names has nnames entries; the raw ids land in atoms. */
+extern void _XmPlatInternAtomsRaw (Display *dpy, char **names,
+				   unsigned int nnames,
+				   XmPlatBoolean only_if_exists,
+				   unsigned long *atoms) ;
+
+/* One-shot atom interning (Phase 5 migration glue): returns the raw
+   Atom for widget-record fields / frozen APIs while the interning goes
+   through the backend.  Token lifecycle is managed internally (the
+   backend caches per-display, so repeated interns are cheap). */
+extern unsigned long _XmPlatInternAtomRaw (Display *dpy, const char *name,
+					   XmPlatBoolean only_if_exists) ;
+extern char *_XmPlatAtomNameRaw (Display *dpy, unsigned long raw) ;
+
 /* Display behind an event token (event-plumbing use only: display-scoped
    caches and unique-event stamps; NOT for drawing). */
 extern Display *_XmPlatEventDisplayOf (XmPlatEvent ev) ;

@@ -30,6 +30,7 @@ static char rcsid[] = "$TOG: CutPaste.c /main/27 1999/05/26 17:42:48 samborn $"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include "XmPlat/XmPlatP.h"
 #include "XmI.h"		/* for MAX */
 #include <Xm/CutPaste.h>
 #include "MessagesI.h"
@@ -492,10 +493,10 @@ ClipboardGetCurrentTime(
         Display *dpy )
 {
     XEvent event;
-    Atom XmA_MOTIF_CLIP_TIME = XInternAtom(dpy, XmS_MOTIF_CLIP_TIME, False);
+    Atom XmA_MOTIF_CLIP_TIME = _XmPlatInternAtomRaw(dpy, XmS_MOTIF_CLIP_TIME, False);
 
     XSelectInput(dpy, RootWindow(dpy, 0), PropertyChangeMask);
-    XChangeProperty(dpy, RootWindow(dpy, 0),
+    _XmPlatChangeProperty(dpy, RootWindow(dpy, 0),
                     XmA_MOTIF_CLIP_TIME, XmA_MOTIF_CLIP_TIME,
                     8,PropModeAppend,NULL,0);
     XWindowEvent(dpy, RootWindow(dpy, 0), PropertyChangeMask,&event);
@@ -560,7 +561,7 @@ WeOwnSelection(
 	ClipboardHeader header )
 {
     Window selectionwindow;
-    Atom XmA_CLIPBOARD = XInternAtom( display, XmSCLIPBOARD, False );
+    Atom XmA_CLIPBOARD = _XmPlatInternAtomRaw( display, XmSCLIPBOARD, False );
 
     selectionwindow = XGetSelectionOwner( display, XmA_CLIPBOARD );
 
@@ -599,7 +600,7 @@ AssertClipboardSelection(
     header->ownSelection = window;
     header->selectionTimestamp = time;
 
-    XmA_CLIPBOARD = XInternAtom( display, XmSCLIPBOARD, False );
+    XmA_CLIPBOARD = _XmPlatInternAtomRaw( display, XmSCLIPBOARD, False );
     XtOwnSelection(widget, XmA_CLIPBOARD, time, ClipboardConvertProc, 
 		   NULL, NULL);
     return;
@@ -662,7 +663,7 @@ ClipboardConvertProc(Widget wid,
   Atom atoms[XtNumber(atom_names)];
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms( display, atom_names, XtNumber(atom_names), False, atoms );
+  _XmPlatInternAtomsRaw( display, atom_names, XtNumber(atom_names), False, atoms );
 
   *value = NULL;
   *type = XA_INTEGER;
@@ -744,7 +745,7 @@ ClipboardConvertProc(Widget wid,
       unsigned long outlength;
 
       /* convert atom to format name */
-      format_name = XGetAtomName( display, *target );
+      format_name = _XmPlatAtomNameRaw( display, *target );
       ClipboardGetLenFromFormat( display, format_name, format) ;
 
       /* Make sure a byname item is first retrieved */
@@ -795,7 +796,7 @@ InitializeSelection(
         Time time )
 {
     Window selectionwindow;    
-    Atom XmA_CLIPBOARD = XInternAtom( display, XmSCLIPBOARD, False );
+    Atom XmA_CLIPBOARD = _XmPlatInternAtomRaw( display, XmSCLIPBOARD, False );
 
     /* If there is no CLIPBOARD owner, and we have clipboard
        data, then assert ownership, and use that data. */
@@ -871,7 +872,7 @@ RegisterFormat(
 	return ClipboardFail;
     }
 
-    XChangeProperty( display, 
+    _XmPlatChangeProperty( display, 
 		     rootwindow, 
 		     formatatom,
 		     XA_INTEGER,
@@ -888,9 +889,9 @@ static void
 CleanupHeader(
 	      Display * display )
 {
-   XDeleteProperty (display,
+   _XmPlatDeleteProperty (display,
 		    RootWindow (display, 0), 
-		    XInternAtom (display, XmS_MOTIF_CLIP_HEADER, False)); 
+		    _XmPlatInternAtomRaw (display, XmS_MOTIF_CLIP_HEADER, False)); 
 
    XFlush(display);
 }
@@ -940,7 +941,7 @@ ClipboardEventHandler(
     display = XtDisplay(widget);
 
     assert(XtNumber(atom_names) == NUM_ATOMS);
-    XInternAtoms( display, atom_names, XtNumber(atom_names), False, atoms );
+    _XmPlatInternAtomsRaw( display, atom_names, XtNumber(atom_names), False, atoms );
     if (event_rcvd->message_type != atoms[XmA_MOTIF_CLIP_MESSAGE])
       return ;
 
@@ -1106,7 +1107,7 @@ GetWindowProperty(
     while ( bytes_left > 0 )
     {
 	/* retrieve the item from the root */
-	ret_value = XGetWindowProperty( display, 
+	ret_value = _XmPlatGetWindowProperty( display, 
 					window, 
 					property_atom,
 					offset, /*offset*/
@@ -1126,7 +1127,7 @@ GetWindowProperty(
         {
             if ( delete_flag )
             {
-                XDeleteProperty( display, window, property_atom );
+                _XmPlatDeleteProperty( display, window, property_atom );
 	    }
 	    if (loc_pointer != NULL) XFree ((char *)loc_pointer);
             return ClipboardFail;
@@ -1153,7 +1154,7 @@ GetWindowProperty(
 
     if ( delete_flag )
     {
-        XDeleteProperty( display, window, property_atom );
+        _XmPlatDeleteProperty( display, window, property_atom );
     }
 
     if ( format != NULL ) 
@@ -1169,7 +1170,7 @@ GetWindowProperty(
       Boolean equal = True;
 
       len = strlen(match);
-      temp = XGetAtomName(display, loc_type);
+      temp = _XmPlatAtomNameRaw(display, loc_type);
 
       for(i = 0; i < len; i++) {
 	if (temp[i] == 0 || temp[i] != match[i]) {
@@ -1304,7 +1305,7 @@ ClipboardReplaceItem(
 	if (type == 0 || type == None) type = itematom;
 
 	/* put the new values in the root */
-	XChangeProperty( display, 
+	_XmPlatChangeProperty( display, 
 			 rootwindow, 
 			 itematom,
 			 type,
@@ -1348,7 +1349,7 @@ ClipboardGetAtomFromId(
 	    break;	
     }
 
-    return XInternAtom( display, item, False );
+    return _XmPlatInternAtomRaw( display, item, False );
 }
 /*---------------------------------------------*/
 static Atom 
@@ -1364,7 +1365,7 @@ ClipboardGetAtomFromFormat(
 
     sprintf( item, atomname_format, format_name );
 
-    ret_value = XInternAtom( display, item, False );
+    ret_value = _XmPlatInternAtomRaw( display, item, False );
 
     XtFree( (char *) item );
 
@@ -1393,7 +1394,7 @@ ClipboardGetLenFromFormat(
     rootwindow = RootWindow( display, 0 );
 
     /* get the format record */
-    ret_value = XGetWindowProperty( display, 
+    ret_value = _XmPlatGetWindowProperty( display, 
 				    rootwindow, 
 				    format_atom,
 				    0, /*offset*/
@@ -1560,7 +1561,7 @@ ClipboardDeleteId(
 
     itematom = ClipboardGetAtomFromId( display, itemid ); 
 
-    XDeleteProperty( display, rootwindow, itematom );
+    _XmPlatDeleteProperty( display, rootwindow, itematom );
 
 }
 
@@ -1628,7 +1629,7 @@ ClipboardFindFormat(
     matchformat = 0;
     *matchlength = 0;
     index = 1;
-    formatatom = XInternAtom( display, format, False );
+    formatatom = _XmPlatInternAtomRaw( display, format, False );
 
     /* run through all the formats for the query item looking */
     /* for a name match with the input format name */
@@ -2173,7 +2174,7 @@ ClipboardSendMessage(
     if ( widgetwindow == 0 ) return 0;
 
     assert(XtNumber(atom_names) == NUM_ATOMS);
-    XInternAtoms( display, atom_names, XtNumber(atom_names), False, atoms );
+    _XmPlatInternAtomsRaw( display, atom_names, XtNumber(atom_names), False, atoms );
     event_sent.type         = ClientMessage;
     event_sent.window       = widgetwindow;
     event_sent.message_type = atoms[XmA_MOTIF_CLIP_MESSAGE];
@@ -2230,8 +2231,8 @@ ClipboardSendMessage(
         if ( !ClipboardWindowExists( display, widgetwindow )) return 0;
 
 	/* send a client message to the window supplied by the user */
-	XSendEvent( display, widgetwindow, True, event_mask, 
-		    (XEvent*)&event_sent ); 
+	_XmPlatSendClientMessage (display, widgetwindow, True, event_mask,
+				  (const void *) &event_sent) ;
     }
 
     return 1;
@@ -2372,7 +2373,7 @@ ClipboardGetSelection(Display *display,
     info.type = None;
 
     /* ask for the data in the specified format */
-    XmA_CLIPBOARD = XInternAtom( display, XmSCLIPBOARD, False );
+    XmA_CLIPBOARD = _XmPlatInternAtomRaw( display, XmSCLIPBOARD, False );
     XtGetSelectionValue(dest, XmA_CLIPBOARD, target,
 			ClipboardReceiveData, &info, 
 			XtLastTimestampProcessed(display));
@@ -2601,10 +2602,10 @@ ClipboardSetAccess(
 {
     Atom itematom;
 
-    itematom = XInternAtom( display, XmS_MOTIF_CLIP_LOCK_ACCESS_VALID, False );
+    itematom = _XmPlatInternAtomRaw( display, XmS_MOTIF_CLIP_LOCK_ACCESS_VALID, False );
 
     /* put the clipboard lock access valid property on window */
-    XChangeProperty( display, 
+    _XmPlatChangeProperty( display, 
 		     window, 
 		     itematom,
 		     itematom,
@@ -2632,7 +2633,7 @@ ClipboardLock(
     _XmDisplayToAppContext(display);
 
     assert(XtNumber(atom_names) == NUM_ATOMS);
-    XInternAtoms(display, atom_names, XtNumber(atom_names), False, atoms);
+    _XmPlatInternAtomsRaw(display, atom_names, XtNumber(atom_names), False, atoms);
 
     _XmAppLock(app);
 
@@ -2741,7 +2742,7 @@ ClipboardUnlock(
 {
     unsigned long length;
     ClipboardLockPtr lockptr;
-    Atom _MOTIF_CLIP_LOCK = XInternAtom (display, XmS_MOTIF_CLIP_LOCK, False);
+    Atom _MOTIF_CLIP_LOCK = (Atom) _XmPlatInternAtomRaw (display, XmS_MOTIF_CLIP_LOCK, False);
     Window lock_owner = XGetSelectionOwner (display, _MOTIF_CLIP_LOCK);
     Boolean release_lock = False;
     Atom ignoretype;
@@ -2861,9 +2862,9 @@ ClipboardWindowExists(
 	   it doesn't then this is a new assignment of the window id
 	   and the lock is bogus due to a crash of the application 
 	   with the original locking window */
-       itematom = XInternAtom(display, XmS_MOTIF_CLIP_LOCK_ACCESS_VALID, False);
+       itematom = _XmPlatInternAtomRaw(display, XmS_MOTIF_CLIP_LOCK_ACCESS_VALID, False);
 
-       XGetWindowProperty( display, 
+       _XmPlatGetWindowProperty( display, 
 			window, 
 			itematom,
 			0, /*offset*/
@@ -3018,7 +3019,7 @@ XmClipboardStartCopy(
 			   PropModeReplace,
 			   8,
 			   False, 
-			   XInternAtom(display, 
+			   _XmPlatInternAtomRaw(display, 
 				       XmS_MOTIF_COMPOUND_STRING, False));
 
       XtFree(asn1string);
@@ -3092,7 +3093,7 @@ XmClipboardCopy(
       type = _passed_type;
       _passed_type = None;
     } else {
-      type = GetTypeFromTarget(display, XInternAtom(display, format, False));
+      type = GetTypeFromTarget(display, _XmPlatInternAtomRaw(display, format, False));
     }
     _XmProcessUnlock();
 
@@ -3164,7 +3165,7 @@ XmClipboardCopy(
 
 	/* initialize the fields in the format record */
 	formatptr->recordType = XM_FORMAT_HEADER_TYPE;
-	formatptr->formatNameAtom = XInternAtom( display, format, False );
+	formatptr->formatNameAtom = _XmPlatInternAtomRaw( display, format, False );
 	formatptr->itemLength = 0;
 	formatptr->formatNameLength = strlen( format );
 	formatptr->formatDataId = formatdataid;
@@ -3965,11 +3966,11 @@ ClipboardRetrieve(Display *display, Window window,
 	   interface.  Go ask for a type if type is bogus */
 	if (*outtype == None)
 	  *outtype = GetTypeFromTarget(display, 
-				       XInternAtom(display, format, False));
+				       _XmPlatInternAtomRaw(display, format, False));
     }else{
 	/* we don't own the selection, get the data from selection owner */
         if ( ClipboardGetSelection(display, window, 
-				   XInternAtom(display, format, False),
+				   _XmPlatInternAtomRaw(display, format, False),
 				   (XtPointer *) &formatdata, 
 				   outtype, &loc_outlength,
 				   &outformatsize ) )
@@ -4093,7 +4094,7 @@ XmClipboardInquireCount(
     }else{
 	/* we don't own the selection, get the data from selection owner */
         if ( !ClipboardGetSelection(display, window, 
-				    XInternAtom(display, XmSTARGETS, False),
+				    _XmPlatInternAtomRaw(display, XmSTARGETS, False),
 				    (XtPointer *) &alloc_to_free, 
 				    &ignoretype,
 				    &loc_count_len,
@@ -4122,7 +4123,7 @@ XmClipboardInquireCount(
 		    {
 		        char *str;
 
-			str =  XGetAtomName( display, *atomptr );
+			str =  _XmPlatAtomNameRaw( display, *atomptr );
 			temp = strlen(str);
 			XFree(str);
 
@@ -4210,7 +4211,7 @@ XmClipboardInquireFormat(
 					     &loc_matchlength );
 
 	if ( matchformat != 0 ) {
-	  ptr = XGetAtomName( display, matchformat->formatNameAtom ); 
+	  ptr = _XmPlatAtomNameRaw( display, matchformat->formatNameAtom ); 
 	  XtFree( (char *) matchformat );
 	} else {
 	  status = ClipboardNoData;
@@ -4218,7 +4219,7 @@ XmClipboardInquireFormat(
     }else{
         /* we don't own the selection, get the data from selection owner */
         if ( !ClipboardGetSelection(display, window, 
-				    XInternAtom(display, XmSTARGETS, False),
+				    _XmPlatInternAtomRaw(display, XmSTARGETS, False),
 				    (XtPointer *) &alloc_to_free,
 				    &ignoretype,
 				    &loc_matchlength, &ignoreformat ) )
@@ -4241,7 +4242,7 @@ XmClipboardInquireFormat(
             {
                 nth_atom = nth_atom + n - 1;
 
-                ptr = XGetAtomName( display, *nth_atom );
+                ptr = _XmPlatAtomNameRaw( display, *nth_atom );
 
                 XtFree( (char *) alloc_to_free );
             }
@@ -4344,7 +4345,7 @@ XmClipboardInquireLength(
     }else{
         /* we don't own the selection, get the data from selection owner */
         if ( !ClipboardGetSelection(display, window,
-				    XInternAtom(display, format, False),
+				    _XmPlatInternAtomRaw(display, format, False),
 				    (XtPointer *) &alloc_to_free,
 				    &ignoretype, &loc_length, &ignoreformat ) )
         {
@@ -4593,7 +4594,7 @@ GetTypeFromTarget(Display *display, Atom target)
   Atom atoms[XtNumber(atom_names)];
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(display, atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(display, atom_names, XtNumber(atom_names), False, atoms);
 
   if (target == atoms[XmATARGETS] ||
       target == atoms[XmA_MOTIF_EXPORT_TARGETS] ||

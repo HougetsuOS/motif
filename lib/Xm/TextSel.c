@@ -31,6 +31,7 @@ static char rcsid[] = "$TOG: TextSel.c /main/24 1998/12/07 11:12:08 mgreess $"
 #endif
 #endif
 
+#include "XmPlat/XmPlatP.h"
 #include <X11/Xatom.h>
 #include <Xm/AtomMgr.h>
 #include <Xm/DragC.h>
@@ -170,7 +171,7 @@ static void
 TextSecondaryWrapper(Widget w, XtPointer closure,
 			XmSelectionCallbackStruct *ds)
 {
-  Atom XA_TARGETS = XInternAtom(XtDisplay(w), XmSTARGETS, False);
+  Atom XA_TARGETS = _XmPlatInternAtomRaw(XtDisplay(w), XmSTARGETS, False);
 
   if (ds -> target == XA_TARGETS)
     HandleInsertTargets(w, closure, &(ds -> selection), &(ds -> type),
@@ -199,9 +200,9 @@ InsertSelection(
   XmTextPosition left = 0;
   XmTextPosition right = 0;
   Boolean dest_disjoint = False;
-  Atom COMPOUND_TEXT = XInternAtom(XtDisplay(w), XmSCOMPOUND_TEXT, False);
+  Atom COMPOUND_TEXT = _XmPlatInternAtomRaw(XtDisplay(w), XmSCOMPOUND_TEXT, False);
 #ifdef UTF8_SUPPORTED
-  Atom UTF8_STRING = XInternAtom(XtDisplay(w), XmSUTF8_STRING, False);
+  Atom UTF8_STRING = _XmPlatInternAtomRaw(XtDisplay(w), XmSUTF8_STRING, False);
 #endif
   char * total_value = NULL;
   XmTextBlockRec block, newblock;
@@ -355,7 +356,7 @@ HandleInsertTargets(
   }
   
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   atom_ptr = (Atom *)value;
   
@@ -443,7 +444,7 @@ _XmTextConvert(
   if (w == NULL) return False;
   
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
   CS_OF_ENCODING = XmeGetEncodingAtom(w);
 
   if (req_event == NULL) 
@@ -662,7 +663,7 @@ _XmTextLoseSelection(
 {
   XmTextWidget tw = (XmTextWidget) w;
   XmTextSource source = tw->text.source;
-  Atom MOTIF_DESTINATION = XInternAtom(XtDisplay(w),
+  Atom MOTIF_DESTINATION = _XmPlatInternAtomRaw(XtDisplay(w),
 				       XmS_MOTIF_DESTINATION, False);
   /* Losing Primary Selection */
   if (*selection == XA_PRIMARY && _XmStringSourceHasSelection(source)) {
@@ -735,7 +736,7 @@ HandleDrop(Widget w,
     Boolean utf8_string_found = False;
     
     assert(XtNumber(atom_names) == NUM_ATOMS);
-    XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+    _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
     /* intialize data to send to drop transfer callback */
     transfer_rec = (_XmTextDropTransferRec *)
@@ -846,7 +847,7 @@ HandleTargets(Widget w,
   }
   
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
   CS_OF_ENCODING = XmeGetEncodingAtom(w);
 
   atom_ptr = (Atom *)ds->value;
@@ -960,7 +961,7 @@ DoStuff(Widget w,
   Boolean freeBlock;
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   if (!o_data->hasfocus && _XmGetFocusPolicy(w) == XmEXPLICIT)
     (void) XmProcessTraversal(w, XmTRAVERSE_CURRENT);
@@ -1176,7 +1177,7 @@ DropTransferProc(Widget w,
   Boolean freeBlock;
   
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   /* When type = NULL, we are assuming a DELETE request has been requested */
   if (ds->type == atoms[XmANULL]) {
@@ -1396,7 +1397,7 @@ TextConvertCallback(Widget w,
   Atom atoms[XtNumber(atom_names)];
   
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   value = NULL;
 
@@ -1496,7 +1497,7 @@ TextDestinationCallback(Widget w,
   static XPoint DropPoint;
 
   assert(XtNumber(atom_names) == NUM_ATOMS);
-  XInternAtoms(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
+  _XmPlatInternAtomsRaw(XtDisplay(w), atom_names, XtNumber(atom_names), False, atoms);
 
   /*
    ** In case of a primary transfer operation where a location_data

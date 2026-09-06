@@ -31,6 +31,7 @@ static char rcsid[] = "$TOG: Screen.c /main/16 1997/06/18 17:41:50 samborn $"
 #endif
 
 
+#include "XmPlat/XmPlatP.h"
 #include <stdio.h>
 #include <X11/Xatom.h>
 #include <Xm/Xm.h>		/* To make cpp on Sun happy. CR 5943 */
@@ -354,7 +355,7 @@ GetUnitFromFont(
 
     if (fst) {
       assert(XtNumber(atom_names) == NUM_ATOMS);
-      XInternAtoms(display, atom_names, XtNumber(atom_names), TRUE, atoms);
+      _XmPlatInternAtomsRaw(display, atom_names, XtNumber(atom_names), TRUE, atoms);
 
               /* Horizontal units */
       if (ph_unit) {

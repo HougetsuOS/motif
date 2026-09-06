@@ -31,6 +31,7 @@ static char rcsid[] = "$TOG: Display.c /main/23 1997/06/18 17:36:59 samborn $"
 #endif
 
 
+#include "XmPlat/XmPlatP.h"
 #include <stdio.h>
 
 #include <X11/Intrinsic.h>
@@ -508,7 +509,7 @@ DisplayInitialize(
      * Pre-load the Xlib atom cache with atoms we are likely to use,
      * similar to the way _XmInitAtomPairs() did in  Motif 1.2.x.
      */
-    XInternAtoms(XtDisplay(xmDisplay), atom_names, XtNumber(atom_names),
+    _XmPlatInternAtomsRaw(XtDisplay(xmDisplay), atom_names, XtNumber(atom_names),
 		 False, atoms); 
 
     xmDisplay->display.shellCount = 0;
@@ -1090,9 +1091,9 @@ GetDisplay(
 	     * Otherwise, clients (ie: xwd) may get the wrong window
 	     * using the -name option.
 	     */
-	    XDeleteProperty(display, XtWindow(xmDisplay), XA_WM_NAME);
-	    XDeleteProperty(display, XtWindow(xmDisplay), XA_WM_ICON_NAME);
-	    XDeleteProperty(display, XtWindow(xmDisplay), XA_WM_CLASS);
+	    _XmPlatDeleteProperty(display, XtWindow(xmDisplay), XA_WM_NAME);
+	    _XmPlatDeleteProperty(display, XtWindow(xmDisplay), XA_WM_ICON_NAME);
+	    _XmPlatDeleteProperty(display, XtWindow(xmDisplay), XA_WM_CLASS);
 	  }
 
 	return ((Widget)xmDisplay);
