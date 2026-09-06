@@ -89,47 +89,95 @@ static cairo_t *
 PrimState (XmPlatDrawCtx ctx, int need_line)
 {
     cairo_t *cr ;
-    XGCValues v ;
     static const double dash_on[1]  = { 4.0 } ;
     static const double dash_off[2] = { 2.0, 4.0 } ;
+    unsigned int line_width ;
+    int cap, join, line_style ;
 
-    XGetGCValues (ctx->dpy, ctx->gc,
-		  GCFunction | GCLineWidth | GCLineStyle | GCCapStyle |
-		  GCJoinStyle | GCClipMask | GCClipXOrigin | GCClipYOrigin |
-		  GCFillStyle, &v) ;
+    if (ctx->gc == NULL) {
+	/* Memory (image-surface) mode: attributes come from the ctx
+	   mirror (Phase 7 test backend; no X server involved). */
+	cr = (ctx->cr != NULL) ? (cairo_t *) ctx->cr : NULL ;
+	if (cr == NULL) return NULL ;
+	cairo_set_source_rgb (cr, ctx->mem_fg[0], ctx->mem_fg[1],
+			      ctx->mem_fg[2]) ;
+	cairo_set_operator (cr, CAIRO_OPERATOR_OVER) ;
+	if (need_line) {
+	    double dash_offset = ctx->dash_offset ;
 
-    /* raster-operator and clip-mask fallbacks (see file header) */
-    if (v.function != GXcopy) return NULL ;
-    if (v.clip_mask != None)  return NULL ;
-
-    cr = CairoOf (ctx) ;
-    if (cr == NULL) return NULL ;
-
-    /* source = GC foreground */
-    {
-	double r, g, b ;
-	GcColor (ctx, GCForeground, &r, &g, &b) ;
-	cairo_set_source_rgb (cr, r, g, b) ;
+	    line_width = ctx->mem_line_width ;
+	    cap = ctx->mem_cap ;
+	    join = ctx->mem_join ;
+	    line_style = ctx->mem_line_style ;
+	    cairo_set_line_width (cr, line_width ? line_width : 1.0) ;
+	    cairo_set_line_cap (cr,
+				cap == 1 ? CAIRO_LINE_CAP_ROUND :
+				cap == 2 ? CAIRO_LINE_CAP_SQUARE :
+					   CAIRO_LINE_CAP_BUTT) ;
+	    cairo_set_line_join (cr,
+				 join == 1 ? CAIRO_LINE_JOIN_ROUND :
+				 join == 2 ? CAIRO_LINE_JOIN_BEVEL :
+					     CAIRO_LINE_JOIN_MITER) ;
+	    if (line_style == XmPlatLineOnOffDash ||
+		line_style == XmPlatLineDoubleDash) {
+		if (ctx->ndash > 0) {
+		    double pats[18] ;
+		    int i, np = ctx->ndash < 18 ? ctx->ndash : 18 ;
+		    for (i = 0 ; i < np ; i++)
+			pats[i] = ctx->dash[i] ? ctx->dash[i] : 1.0 ;
+		    cairo_set_dash (cr, pats, np, dash_offset) ;
+		} else {
+		    cairo_set_dash (cr, dash_on, 2, dash_offset) ;
+		}
+	    } else {
+		cairo_set_dash (cr, NULL, 0, 0.0) ;
+	    }
+	}
+	return cr ;
     }
 
-    /* Clip: _XmPlatSetClipRect (shared) has already mirrored the clip
-       into the cairo context at set time; nothing to do per-prim. */
+    {
+	XGCValues v ;
 
-    cairo_set_operator (cr, CAIRO_OPERATOR_OVER) ;
+	XGetGCValues (ctx->dpy, ctx->gc,
+		      GCFunction | GCLineWidth | GCLineStyle | GCCapStyle |
+		      GCJoinStyle | GCClipMask | GCClipXOrigin |
+		      GCClipYOrigin | GCFillStyle, &v) ;
 
-    if (need_line) {
-	double dash_offset ;
-	cairo_set_line_width (cr, v.line_width ? v.line_width : 1.0) ;
-	cairo_set_line_cap (cr,
-			    v.cap_style == CapRound ? CAIRO_LINE_CAP_ROUND :
-			    v.cap_style == CapProjecting ?
-			      CAIRO_LINE_CAP_SQUARE : CAIRO_LINE_CAP_BUTT) ;
-	cairo_set_line_join (cr,
-			     v.join_style == JoinRound ? CAIRO_LINE_JOIN_ROUND :
-			     v.join_style == JoinBevel ?
-			       CAIRO_LINE_JOIN_BEVEL : CAIRO_LINE_JOIN_MITER) ;
-	dash_offset = ctx->dash_offset ;
-	if (v.line_style == LineOnOffDash) {
+	/* raster-operator and clip-mask fallbacks (see file header) */
+	if (v.function != GXcopy) return NULL ;
+	if (v.clip_mask != None)  return NULL ;
+
+	cr = CairoOf (ctx) ;
+	if (cr == NULL) return NULL ;
+
+	/* source = GC foreground */
+	{
+	    double r, g, b ;
+	    GcColor (ctx, GCForeground, &r, &g, &b) ;
+	    cairo_set_source_rgb (cr, r, g, b) ;
+	}
+
+	/* Clip: _XmPlatSetClipRect (shared) has already mirrored the clip
+	   into the cairo context at set time; nothing to do per-prim. */
+
+	cairo_set_operator (cr, CAIRO_OPERATOR_OVER) ;
+
+	if (need_line) {
+	    double dash_offset ;
+	    cairo_set_line_width (cr, v.line_width ? v.line_width : 1.0) ;
+	    cairo_set_line_cap (cr,
+				v.cap_style == CapRound ? CAIRO_LINE_CAP_ROUND :
+				v.cap_style == CapProjecting ?
+				  CAIRO_LINE_CAP_SQUARE : CAIRO_LINE_CAP_BUTT) ;
+	    cairo_set_line_join (cr,
+				 v.join_style == JoinRound ?
+				   CAIRO_LINE_JOIN_ROUND :
+				 v.join_style == JoinBevel ?
+				   CAIRO_LINE_JOIN_BEVEL :
+				   CAIRO_LINE_JOIN_MITER) ;
+	    dash_offset = ctx->dash_offset ;
+	    if (v.line_style == LineOnOffDash) {
 	    if (ctx->ndash > 0) {
 		double pats[18] ;
 		int i, np = ctx->ndash < 18 ? ctx->ndash : 18 ;
@@ -141,8 +189,9 @@ PrimState (XmPlatDrawCtx ctx, int need_line)
 				v.line_style == LineDoubleDash ?
 				  dash_off : dash_on, 2, dash_offset) ;
 	    }
-	} else {
-	    cairo_set_dash (cr, NULL, 0, 0.0) ;
+	    } else {
+		cairo_set_dash (cr, NULL, 0, 0.0) ;
+	    }
 	}
     }
     return cr ;
@@ -187,10 +236,21 @@ _XmPlatCairoClipRect (XmPlatDrawCtx ctx, int x, int y,
 {
     cairo_t *cr ;
 
-    if (ctx == NULL || ctx->surface == NULL) return ;
+    if (ctx == NULL) return ;
+    if (ctx->mem) {
+	/* memory mode: mirror into the image-surface cairo ctx */
+	if (ctx->cr == NULL) return ;
+	cairo_reset_clip ((cairo_t *) ctx->cr) ;
+	if (w != 0 && h != 0) {
+	    cairo_rectangle ((cairo_t *) ctx->cr, x, y, w, h) ;
+	    cairo_clip ((cairo_t *) ctx->cr) ;
+	}
+	return ;
+    }
     /* Mirror only into an existing cairo context: several sites build a
        GC-only ctx (drawable None) just to push clip state into the GC
        for later use; there is nothing to mirror there. */
+    if (ctx->surface == NULL) return ;
     if (ctx->cr == NULL) return ;
     if (ctx->surface->d == None) return ;
     cr = (cairo_t *) ctx->cr ;
@@ -199,6 +259,23 @@ _XmPlatCairoClipRect (XmPlatDrawCtx ctx, int x, int y,
 	cairo_rectangle (cr, x, y, w, h) ;
 	cairo_clip (cr) ;
     }
+}
+
+/*
+ * Arc join mode: X11 GC arc_mode (ArcPieSlice default, ArcChord).  The
+ * shared setters keep it in the GC; memory mode always uses the X
+ * default (pie slice).
+ */
+static int
+ArcModeOf (XmPlatDrawCtx ctx)
+{
+    XGCValues v ;
+
+    if (ctx->gc == NULL) return ArcPieSlice ;
+    if (XGetGCValues (ctx->dpy, ctx->gc, GCArcMode, &v) &&
+	v.arc_mode == ArcChord)
+	return ArcChord ;
+    return ArcPieSlice ;
 }
 
 /* ---- the 14 vector primitives ---------------------------------------- */
@@ -374,10 +451,16 @@ _XmPlatDrawArc (XmPlatDrawCtx ctx, int x, int y, unsigned int w,
     cairo_save (cr) ;
     cairo_translate (cr, x + w / 2.0, y + h / 2.0) ;
     cairo_scale (cr, w / 2.0, h / 2.0) ;
-    /* X angles start at 3 o'clock going clockwise; cairo likewise
-       (positive = clockwise in the flipped y). */
-    cairo_arc (cr, 0.0, 0.0, 1.0, -a1 * M_PI / 180.0,
-	       -(a1 + a2) * M_PI / 180.0) ;
+    /* X11 and cairo both measure positive angles from 3 o'clock toward
+       +y (visually clockwise with y down); a1..a1+a2 transfers 1:1.
+       ArcChord joins the arc endpoints directly; ArcPieSlice (the X
+       default) joins through the center. */
+    cairo_arc (cr, 0.0, 0.0, 1.0, a1 * M_PI / 180.0,
+	       (a1 + a2) * M_PI / 180.0) ;
+    if (ArcModeOf (ctx) == ArcChord)
+	cairo_close_path (cr) ;
+    else
+	cairo_line_to (cr, 0.0, 0.0) ;
     cairo_restore (cr) ;
     cairo_stroke (cr) ;
 }
@@ -468,10 +551,13 @@ _XmPlatFillArc (XmPlatDrawCtx ctx, int x, int y, unsigned int w,
     cairo_save (cr) ;
     cairo_translate (cr, x + w / 2.0, y + h / 2.0) ;
     cairo_scale (cr, w / 2.0, h / 2.0) ;
-    cairo_arc (cr, 0.0, 0.0, 1.0, -a1 * M_PI / 180.0,
-	       -(a1 + a2) * M_PI / 180.0) ;
+    cairo_arc (cr, 0.0, 0.0, 1.0, a1 * M_PI / 180.0,
+	       (a1 + a2) * M_PI / 180.0) ;
+    if (ArcModeOf (ctx) == ArcChord)
+	cairo_close_path (cr) ;
+    else
+	cairo_line_to (cr, 0.0, 0.0) ;
     cairo_restore (cr) ;
-    cairo_close_path (cr) ;
     cairo_fill (cr) ;
 }
 
@@ -516,6 +602,103 @@ _XmPlatFillRectangleStippled (XmPlatDrawCtx ctx, int x, int y,
     XFillRectangle (ctx->dpy, ctx->surface->d, ctx->gc, x, y, w, h) ;
     v.fill_style = FillSolid ;
     XChangeGC (ctx->dpy, ctx->gc, mask, &v) ;
+}
+
+/* ---- Phase 7: memory (image-surface) mode -----------------------------
+ *
+ * Headless test backend: a draw context whose destination is a cairo
+ * image surface.  gc == NULL switches every shared setter/prim to the
+ * ctx mirror fields; nothing touches an X server.  The test pulls the
+ * pixel buffer out and probes it (tools/gate/p7-memory-gate.sh).
+ */
+static cairo_t *
+MemCairoOf (int w, int h)
+{
+    cairo_surface_t *s = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
+						     w, h) ;
+    cairo_t *cr = cairo_create (s) ;
+
+    cairo_surface_destroy (s) ;	/* cr owns its reference */
+    return cr ;
+}
+
+XmPlatDrawCtx
+_XmPlatMemCtxCreate (int w, int h)
+{
+    XmPlatDrawCtx c = (XmPlatDrawCtx) XtMalloc (sizeof (struct _XmPlatDrawCtxRec)) ;
+
+    memset (c, 0, sizeof (struct _XmPlatDrawCtxRec)) ;
+    c->dpy = NULL ;
+    c->gc = NULL ;
+    c->surface = NULL ;
+    c->mem = 1 ;
+    c->cr = (void *) MemCairoOf (w, h) ;
+    /* defaults matching a fresh Xlib GC: black on white, thin line */
+    c->mem_fg[0] = c->mem_fg[1] = c->mem_fg[2] = 0.0 ;
+    c->mem_bg[0] = c->mem_bg[1] = c->mem_bg[2] = 1.0 ;
+    c->mem_line_style = XmPlatLineSolid ;
+    return c ;
+}
+
+void
+_XmPlatMemCtxFree (XmPlatDrawCtx c)
+{
+    if (c == NULL) return ;
+    if (c->cr != NULL) {
+	cairo_destroy ((cairo_t *) c->cr) ;
+	c->cr = NULL ;
+    }
+    XtFree ((char *) c) ;
+}
+
+/* ARGB32 pixel buffer (premultiplied, cairo byte order on little-endian:
+   B, G, R, A per pixel).  stride is in bytes. */
+unsigned char *
+_XmPlatMemCtxData (XmPlatDrawCtx c, int *stride)
+{
+    cairo_surface_t *s ;
+
+    if (c == NULL || c->cr == NULL) return NULL ;
+    s = cairo_get_target ((cairo_t *) c->cr) ;
+    cairo_surface_flush (s) ;
+    if (stride) *stride = cairo_image_surface_get_stride (s) ;
+    return cairo_image_surface_get_data (s) ;
+}
+
+int
+_XmPlatMemCtxWidth (XmPlatDrawCtx c)
+{
+    if (c == NULL || c->cr == NULL) return 0 ;
+    return cairo_image_surface_get_width (cairo_get_target ((cairo_t *) c->cr)) ;
+}
+
+int
+_XmPlatMemCtxHeight (XmPlatDrawCtx c)
+{
+    if (c == NULL || c->cr == NULL) return 0 ;
+    return cairo_image_surface_get_height (cairo_get_target ((cairo_t *) c->cr)) ;
+}
+
+/* Write the surface to a PNG (screenshot-style regression artifact). */
+/* After direct writes to the buffer returned by _XmPlatMemCtxData,
+   cairo must be told the surface changed (its internal caches are
+   otherwise stale). */
+void
+_XmPlatMemCtxMarkDirty (XmPlatDrawCtx c)
+{
+    if (c == NULL || c->cr == NULL) return ;
+    cairo_surface_mark_dirty (cairo_get_target ((cairo_t *) c->cr)) ;
+}
+
+int
+_XmPlatMemCtxWritePng (XmPlatDrawCtx c, const char *path)
+{
+    cairo_surface_t *s ;
+
+    if (c == NULL || c->cr == NULL) return -1 ;
+    s = cairo_get_target ((cairo_t *) c->cr) ;
+    cairo_surface_flush (s) ;
+    return cairo_surface_write_to_png (s, path) ;
 }
 
 #endif /* XMPLAT_CAIRO_RENDER */

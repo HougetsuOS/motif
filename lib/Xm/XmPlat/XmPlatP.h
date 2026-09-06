@@ -36,6 +36,14 @@ extern void _XmPlatCairoCtxDashes (XmPlatDrawCtx c, const unsigned char *l,
 				   int n, unsigned int off) ;
 extern void _XmPlatCairoClipRect (XmPlatDrawCtx c, int x, int y,
 				  unsigned int w, unsigned int h) ;
+/* Phase 7 memory (image-surface) mode: headless prim verification. */
+extern XmPlatDrawCtx _XmPlatMemCtxCreate (int w, int h) ;
+extern void _XmPlatMemCtxFree (XmPlatDrawCtx c) ;
+extern unsigned char *_XmPlatMemCtxData (XmPlatDrawCtx c, int *stride) ;
+extern int _XmPlatMemCtxWidth (XmPlatDrawCtx c) ;
+extern int _XmPlatMemCtxHeight (XmPlatDrawCtx c) ;
+extern void _XmPlatMemCtxMarkDirty (XmPlatDrawCtx c) ;
+extern int _XmPlatMemCtxWritePng (XmPlatDrawCtx c, const char *path) ;
 #endif
 
 struct _XmPlatSurfaceRec {
@@ -72,6 +80,19 @@ struct _XmPlatDrawCtxRec {
     unsigned char dash[36] ;
     int           ndash ;
     double        dash_offset ;
+    /* memory (image-surface) mode, Phase 7 test backend: gc == NULL and
+       the attributes below are the draw state (no X server involved).
+       The X11 paths never read them. */
+    int           mem ;
+    double        mem_fg[3] ;
+    double        mem_bg[3] ;
+    unsigned int  mem_line_width ;
+    int           mem_line_style ;
+    int           mem_cap ;
+    int           mem_join ;
+    int           mem_clip_on ;
+    int           mem_clip_x, mem_clip_y ;
+    unsigned int  mem_clip_w, mem_clip_h ;
 };
 
 /* Constructors for migration (Phase 1).  Not part of the contract. */
@@ -108,6 +129,8 @@ _XmPlatCtx (Display *dpy, Drawable d, GC gc)
     c->dpy = dpy ; c->gc = gc ; c->surface = _XmPlatSurface (dpy, d) ;
     c->cached_mask = 0 ;
     c->cr = NULL ; c->ndash = 0 ; c->dash_offset = 0 ;
+    c->mem = 0 ; c->mem_line_width = 0 ; c->mem_line_style = 0 ;
+    c->mem_cap = 0 ; c->mem_join = 0 ; c->mem_clip_on = 0 ;
 #ifdef XMPLAT_CAIRO_RENDER
     _XmPlatCairoCtxInit (c) ;
 #endif
@@ -171,6 +194,8 @@ _XmPlatClrClip (Display *dpy, GC gc)
     XmPlatDrawCtx c = (XmPlatDrawCtx) XtMalloc (sizeof (struct _XmPlatDrawCtxRec)) ;
     c->dpy = dpy ; c->gc = gc ; c->surface = NULL ; c->cached_mask = 0 ;
     c->cr = NULL ; c->ndash = 0 ; c->dash_offset = 0 ;
+    c->mem = 0 ; c->mem_line_width = 0 ; c->mem_line_style = 0 ;
+    c->mem_cap = 0 ; c->mem_join = 0 ; c->mem_clip_on = 0 ;
     XSetClipMask (dpy, gc, None) ;
     XtFree ((char *) c) ;
 }

@@ -154,13 +154,20 @@ each phase and paste the numbers here as the record.
 - *Exit:* screenshot suite passes; exactly one render implementation per
   binary.
 
-**Phase 7 — Test backend (optional, no display server involved)**
-- A memory-surface `XmPlat` implementation (same contract, no X11 at all) for
-  headless unit tests and CI screenshot diffs without a running X server.
-- This is **not** a second display backend — it never creates windows, handles
-  no input, and exists only to make Phases 1–5 continuously verifiable.
-- Cheap once the contract exists; schedule it after Phase 1 lands if the
-  screenshot harness alone proves insufficient.
+**Phase 7 — Test backend (optional, no display server involved)**  [X] done 2026-09-07
+- Prim-level memory backend (scoped with agreement: Xt stays, so real
+  widgets cannot run X-free; the honest scope is prim verification):
+  the cairo backend gained `_XmPlatMemCtxCreate` — a draw context whose
+  destination is a cairo image surface and whose GC is NULL, so every
+  setter/prim reads the ctx attribute mirror instead of an X server.
+  `tests/primtest.c` drives the real contract entry points headlessly
+  (fills, strokes, clip, dash, arcs incl. pie-slice/chord mode, polygons,
+  points, attribute readback) with pixel probes; PNG export available.
+- This is **not** a second display backend — it never creates windows,
+  handles no input, and exists only to make the contract continuously
+  verifiable without a running X server.
+- Gate: `tools/gate/p7-memory-gate.sh` (builds against the backend
+  sources, runs with no X server).
 
 ## 4. Guardrails
 

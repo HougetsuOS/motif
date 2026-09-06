@@ -48,6 +48,8 @@ _XmPlatDrawCtxOf (Display *dpy, GC gc)
     c->cr = NULL ;
     c->ndash = 0 ;
     c->dash_offset = 0 ;
+    c->mem = 0 ; c->mem_line_width = 0 ; c->mem_line_style = 0 ;
+    c->mem_cap = 0 ; c->mem_join = 0 ; c->mem_clip_on = 0 ;
 #ifdef XMPLAT_CAIRO_RENDER
     _XmPlatCairoCtxInit (c) ;
 #endif
@@ -65,6 +67,15 @@ _XmPlatSurfaceDrawable (XmPlatSurface surface)
 void
 _XmPlatSetForeground (XmPlatDrawCtx ctx, XmPlatPixel fg)
 {
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc == NULL) {
+	/* memory mode: pixel is 0xRRGGBB */
+	ctx->mem_fg[0] = ((fg >> 16) & 0xFF) / 255.0 ;
+	ctx->mem_fg[1] = ((fg >>  8) & 0xFF) / 255.0 ;
+	ctx->mem_fg[2] = ( fg        & 0xFF) / 255.0 ;
+	return ;
+    }
+#endif
     XSetForeground (ctx->dpy, ctx->gc, fg) ;
 }
 
@@ -73,6 +84,9 @@ _XmPlatSetLineWidth (XmPlatDrawCtx ctx, unsigned int width)
 {
     XGCValues v ;
     unsigned long mask = GCLineWidth ;
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc == NULL) { ctx->mem_line_width = width ; return ; }
+#endif
     v.line_width = (int)width ;
     XChangeGC (ctx->dpy, ctx->gc, mask, &v) ;
 }
@@ -80,6 +94,15 @@ _XmPlatSetLineWidth (XmPlatDrawCtx ctx, unsigned int width)
 void
 _XmPlatSetLineAttr (XmPlatDrawCtx ctx, const XmPlatLineAttr *la)
 {
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc == NULL) {
+	ctx->mem_line_width = la->width ;
+	ctx->mem_line_style = la->style ;
+	ctx->mem_cap = la->cap ;
+	ctx->mem_join = la->join ;
+	return ;
+    }
+#endif
     XSetLineAttributes (ctx->dpy, ctx->gc, (int) la->width,
 			(la->style == XmPlatLineOnOffDash)?
 			  LineOnOffDash :
@@ -97,6 +120,15 @@ _XmPlatGetLineAttr (XmPlatDrawCtx ctx)
     XGCValues v ;
     XmPlatLineAttr la ;
 
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc == NULL) {
+	la.width = ctx->mem_line_width ;
+	la.style = ctx->mem_line_style ;
+	la.cap = ctx->mem_cap ;
+	la.join = ctx->mem_join ;
+	return la ;
+    }
+#endif
     XGetGCValues (ctx->dpy, ctx->gc,
 		  GCLineWidth | GCLineStyle | GCCapStyle | GCJoinStyle, &v) ;
     la.width = (unsigned int) v.line_width ;
@@ -115,6 +147,9 @@ _XmPlatGetLineWidth (XmPlatDrawCtx ctx)
 {
     XGCValues v ;
 
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc == NULL) return ctx->mem_line_width ;
+#endif
     XGetGCValues (ctx->dpy, ctx->gc, GCLineWidth, &v) ;
     return (unsigned int) v.line_width ;
 }
@@ -124,6 +159,9 @@ _XmPlatSetLineStyle (XmPlatDrawCtx ctx, int style)
 {
     XGCValues v ;
     unsigned long mask = GCLineStyle ;
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc == NULL) { ctx->mem_line_style = style ; return ; }
+#endif
     v.line_style = (style == XmPlatLineOnOffDash)? LineOnOffDash :
 		   (style == XmPlatLineDoubleDash)? LineDoubleDash : LineSolid ;
     XChangeGC (ctx->dpy, ctx->gc, mask, &v) ;
@@ -133,7 +171,11 @@ void
 _XmPlatSetDashes (XmPlatDrawCtx ctx, const unsigned char *dash_list,
 		  int ndash, unsigned int offset)
 {
-    XSetDashes (ctx->dpy, ctx->gc, (int)offset, (const char *) dash_list, ndash) ;
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc != NULL)
+#endif
+	XSetDashes (ctx->dpy, ctx->gc, (int)offset, (const char *) dash_list,
+		    ndash) ;
 #ifdef XMPLAT_CAIRO_RENDER
     _XmPlatCairoCtxDashes (ctx, dash_list, ndash, offset) ;
 #endif
@@ -145,6 +187,17 @@ _XmPlatSetClipRect (XmPlatDrawCtx ctx, int x, int y,
 {
     XRectangle r ;
 
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc == NULL) {
+	/* memory mode: mirror the clip into the ctx; the prim re-derives
+	   it from the cairo clip (set below). */
+	ctx->mem_clip_on = (w != 0 && h != 0) ;
+	ctx->mem_clip_x = x ; ctx->mem_clip_y = y ;
+	ctx->mem_clip_w = w ; ctx->mem_clip_h = h ;
+	_XmPlatCairoClipRect (ctx, x, y, w, h) ;
+	return ;
+    }
+#endif
     if (ctx->gc == NULL) return ;	/* Xft-draw-only ctx */
     if (w == 0 || h == 0) {
 	XSetClipMask (ctx->dpy, ctx->gc, None) ;
@@ -171,6 +224,9 @@ _XmPlatSetClipMask (XmPlatDrawCtx ctx, XmPlatSurface mask, int x, int y)
 void
 _XmPlatFlush (XmPlatDrawCtx ctx)
 {
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc == NULL) return ;	/* memory mode: nothing to flush */
+#endif
     XFlush (ctx->dpy) ;
 }
 
@@ -183,6 +239,14 @@ _XmPlatClearWindow (XmPlatSurface surface)
 void
 _XmPlatSetBackground (XmPlatDrawCtx ctx, XmPlatPixel bg)
 {
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc == NULL) {
+	ctx->mem_bg[0] = ((bg >> 16) & 0xFF) / 255.0 ;
+	ctx->mem_bg[1] = ((bg >>  8) & 0xFF) / 255.0 ;
+	ctx->mem_bg[2] = ( bg        & 0xFF) / 255.0 ;
+	return ;
+    }
+#endif
     XSetBackground (ctx->dpy, ctx->gc, bg) ;
 }
 
@@ -191,6 +255,14 @@ _XmPlatGetForeground (XmPlatDrawCtx ctx)
 {
     XGCValues v ;
 
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc == NULL) {
+	unsigned long r = (unsigned long) (ctx->mem_fg[0] * 255.0 + 0.5) ;
+	unsigned long g = (unsigned long) (ctx->mem_fg[1] * 255.0 + 0.5) ;
+	unsigned long b = (unsigned long) (ctx->mem_fg[2] * 255.0 + 0.5) ;
+	return (r << 16) | (g << 8) | b ;
+    }
+#endif
     XGetGCValues (ctx->dpy, ctx->gc, GCForeground, &v) ;
     return v.foreground ;
 }
@@ -200,6 +272,14 @@ _XmPlatGetBackground (XmPlatDrawCtx ctx)
 {
     XGCValues v ;
 
+#ifdef XMPLAT_CAIRO_RENDER
+    if (ctx->gc == NULL) {
+	unsigned long r = (unsigned long) (ctx->mem_bg[0] * 255.0 + 0.5) ;
+	unsigned long g = (unsigned long) (ctx->mem_bg[1] * 255.0 + 0.5) ;
+	unsigned long b = (unsigned long) (ctx->mem_bg[2] * 255.0 + 0.5) ;
+	return (r << 16) | (g << 8) | b ;
+    }
+#endif
     XGetGCValues (ctx->dpy, ctx->gc, GCBackground, &v) ;
     return v.background ;
 }
