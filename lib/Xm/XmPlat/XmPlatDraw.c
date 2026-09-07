@@ -1218,8 +1218,14 @@ _XmPlatImageCreate (XmPlatDrawCtx ctx, int depth,
     xi = XCreateImage (dpy,
 		       DefaultVisual (dpy, DefaultScreen (dpy)),
 		       depth, (depth == 1) ? XYBitmap : ZPixmap,
-		       0, NULL, width, height, 8, 0) ;
+		       0, NULL, width, height,
+		       (depth == 1) ? 8 : 32, 0) ;
     if (xi == NULL) return NULL ;
+    /* XPutImage for depth>=8 ZPixmap requires scanline units of 32 bits
+       (bitmap_pad 8 breaks 24/32-bpp uploads — rows arrive byte-packed
+       and the server garbles them). */
+    xi->byte_order = LSBFirst ;
+    xi->bitmap_bit_order = LSBFirst ;
     /* XCreateImage left data NULL; allocate it ourselves. */
     xi->data = XtMalloc (xi->bytes_per_line * (int) height) ;
     memset (xi->data, 0, (size_t) (xi->bytes_per_line * (int) height)) ;
@@ -1240,8 +1246,11 @@ _XmPlatImageCreateOnVisual (XmPlatDrawCtx ctx, const void *visual,
 
     xi = XCreateImage (dpy, (Visual *) visual,
 		       depth, (depth == 1) ? XYBitmap : ZPixmap,
-		       0, NULL, width, height, 8, 0) ;
+		       0, NULL, width, height,
+		       (depth == 1) ? 8 : 32, 0) ;
     if (xi == NULL) return NULL ;
+    xi->byte_order = LSBFirst ;
+    xi->bitmap_bit_order = LSBFirst ;
     xi->data = XtMalloc (xi->bytes_per_line * (int) height) ;
     memset (xi->data, 0, (size_t) (xi->bytes_per_line * (int) height)) ;
 
