@@ -5262,10 +5262,17 @@ _render(Display *d,
       }
   }
   if (restore_clip) {
-	  /* Clip is a GC attribute; clearing it through the contract
-	     clears it for both core-X and Xft draws (the backend's
-	     XftDraw derives its clip from the GC). */
-	  _XmPlatClrClip (d, gc) ; 
+	  _XmPlatClrClip (d, gc) ;
+#ifdef USE_XFT
+	  /* The XftDraw clip is NOT derived from the GC — XftDraw keeps
+	     its own clip state.  A previous clipped draw (tiny widget,
+	     pre-popup menu pane) would otherwise persist and kill all
+	     later text on this window. */
+	  if (_XmRendFontType (rend) == XmFONT_IS_XFT ||
+	      _XmRendFontType (rend1) == XmFONT_IS_XFT ||
+	      _XmRendFontType (rend2) == XmFONT_IS_XFT)
+	      _XmXftSetClipRectangles (d, w, 0, 0, NULL, 0) ;
+#endif
   }
 
   if (_XmRendTags(rend1) != NULL) XtFree((char *)_XmRendTags(rend1));

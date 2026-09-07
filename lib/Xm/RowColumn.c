@@ -3814,11 +3814,24 @@ Redisplay(
         if (event == NULL)          /* Fast exposure is happening */
         {
             event = &tempEvent;
+            memset (&tempEvent, 0, sizeof (tempEvent)) ;
+            /* The XmPlat event prims dispatch on the event type — an
+               uninitialized type made the gadget intersection test read
+               0x0 dimensions and skip every child. */
+            tempEvent.type = Expose ;
+            tempEvent.xexpose.display = XtDisplay (m) ;
+            tempEvent.xexpose.window = XtWindow (m) ;
             event->xexpose.x = 0;
             event->xexpose.y = 0;
             event->xexpose.width = m->core.width;
             event->xexpose.height = m->core.height;
         }
+
+        /* Menu panes repaint fully: a stale expose region captured before
+           the pane reached its final size would clip every gadget out of
+           its own redraw (visible as an empty dropdown). */
+        if (IsPopup (m) || IsPulldown (m) || IsBar(m))
+            region = NULL;
 
         XmeRedisplayGadgets( (Widget) m, event, region);
 

@@ -2324,6 +2324,12 @@ LRectangle *background_box)
     } else
     {
     _XmPlatClrClip (XtDisplay (lw), clipgc);
+#ifdef USE_XFT
+    /* Mirror the GC clip clear on the XftDraw: its clip is independent
+       of the GC, and a stale clip from an earlier tiny-geometry draw
+       would hide all subsequent text on this window. */
+    _XmXftSetClipRectangles (XtDisplay (lw), XtWindow (lw), 0, 0, NULL, 0);
+#endif
     }
 
 #ifdef FIX_1517

@@ -1459,6 +1459,10 @@ Redisplay(
     } else
     {
       _XmPlatClrClip (XtDisplay (lw), clipgc);
+#ifdef USE_XFT
+      /* Mirror the GC clip clear on the XftDraw (independent clip state) */
+      _XmXftSetClipRectangles (XtDisplay (lw), XtWindow (lw), 0, 0, NULL, 0);
+#endif
     }
 
 #ifdef USE_XFT
