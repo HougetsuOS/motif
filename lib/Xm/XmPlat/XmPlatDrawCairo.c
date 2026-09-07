@@ -52,12 +52,19 @@ CairoOf (XmPlatDrawCtx ctx)
 {
     if (ctx->cr == NULL) {
 	cairo_surface_t *s ;
+	cairo_t *cr ;
 
 	s = cairo_xlib_surface_create (ctx->dpy, ctx->surface->d,
 				       DefaultVisual (ctx->dpy,
 						      DefaultScreen (ctx->dpy)),
 				       0, 0) ;
-	ctx->cr = s ;
+	/* ctx->cr must hold a cairo_t, NOT the surface — storing the
+	   surface here made _XmPlatCairoCtxFini cairo_destroy() a
+	   cairo_surface_t as a cairo_t (type confusion; tripped the
+	   CAIRO_REFERENCE_COUNT assertion in menu drawing). */
+	cr = cairo_create (s) ;
+	cairo_surface_destroy (s) ;	/* cr owns its reference */
+	ctx->cr = cr ;
     }
     return (cairo_t *) ctx->cr ;
 }
