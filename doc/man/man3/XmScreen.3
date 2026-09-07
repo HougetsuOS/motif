@@ -141,6 +141,8 @@ XmNmenuCursorXmCCursorCursorarrowC
 _____
 XmNmoveOpaqueXmCMoveOpaqueBooleanFalseCSG
 _____
+XmNscaleFactorXmCScaleFactorint1000CSG
+_____
 XmNunpostBehaviorXmCUnpostBehaviorunsigned charXmUNPOST_AND_REPLAYCSG
 _____
 XmNuseColorObjectXmCUseColorObjectBooleanFalseC
@@ -394,6 +396,13 @@ itself during the move\&.
 If the value is True, the operation displays a representation of the
 window during the move\&.
 If the value is False, the operation displays an outline of the window\&.
+.IP "\fBXmNscaleFactor\fP" 10
+Specifies the display scale factor in permille (1000 = 1x)\&.\&
+At initialization the value comes from the \fBXmNscaleFactor\fP
+resource; when unset (0), the \fBMOTIF_SCALE\fP environment
+variable, then the \fBXft.dpi\fP setting, then 1000\&.\&
+The factor scales Xft render\-table fonts at the platform
+font seam\&; server\-side bitmap fonts are not scaled\&.
 .IP "\fBXmNunpostBehavior\fP" 10
 Specifies the behavior of an active menu posted in traversal mode when
 a subsequent menu button selection is made outside the posted

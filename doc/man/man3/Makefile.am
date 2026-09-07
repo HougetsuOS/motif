@@ -49,6 +49,7 @@ man_MANS = ApplicationShell.3 \
     XmCascadeButtonGadgetHighlight.3 \
     XmCascadeButtonHighlight.3 \
     XmChangeColor.3 \
+    XmLoadTheme.3 \
     XmClipboardCancelCopy.3 \
     XmClipboardCopy.3 \
     XmClipboardCopyByName.3 \

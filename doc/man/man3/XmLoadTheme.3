@@ -1,0 +1,76 @@
+.TH XmLoadTheme 3X "Motif 2.3.8 modernization"
+.SH NAME
+XmLoadTheme \(em merge a named theme profile and re-apply appearance
+resources to a widget subtree
+.SH SYNOPSIS
+.PP
+.nf
+#include <Xm/Xm\&.h>
+\fBvoid \fBXmLoadTheme\fP\fR(
+\fBWidget \fBshell\fR\fR,
+\fBconst char *\fBname\fR\fR);
+.fi
+.SH DESCRIPTION
+.PP
+\fBXmLoadTheme\fP loads a theme profile named \fIname\fP and merges it
+into the resource database of the screen that \fIshell\fP lives on\&.
+The theme profile is an ordinary Xrm resource file\&.  The function
+searches, in order:
+.IP "  1." 3
+\fB$XDG_CONFIG_HOME/motif/themes/\fIname\fB\fR (or
+\fB$HOME/.config/motif/themes/\fIname\fB\fR when
+\fBXDG_CONFIG_HOME\fP is unset)
+.IP "  2." 3
+each directory in \fB$XDG_DATA_DIRS\fR (default \fB/usr/share\fR), as
+\fB<dir>/motif/themes/\fIname\fB\fR
+.LP
+A \fIname\fP containing a \fB/\fP is used as a direct file path\&.
+.PP
+After merging, the theme's palette key (the \fB*background\fP resource)
+is applied: every Manager, Primitive and Gadget under \fIshell\fP has
+its background updated and the foreground, select and shadow colors are
+recalculated through the color-calculation procedure (see
+\fBXmSetColorCalculation(3)\fP and \fBXmChangeColor(3)\fP)\&.  Other
+resources in the theme file take effect for widgets created
+afterwards\&.
+.PP
+Applications can be themed without code changes by setting the
+\fBMOTIF_THEME\fP environment variable to a theme name; it is applied
+at the first vendor shell realize\&.
+.SH ARGUMENTS
+.IP "\fIshell\fP" 10
+Specifies the shell whose subtree is re-applied
+.IP "\fIname\fP" 10
+Specifies the theme profile name (or a file path)
+.SH EXAMPLE
+.PP
+.nf
+/* explicit control */
+XmLoadTheme (toplevel, "high-contrast");
+
+/* zero-code-change alternative */
+setenv ("MOTIF_THEME", "high-contrast", 1);
+.fi
+.SH ENVIRONMENT
+.IP "\fBMOTIF_THEME\fP" 10
+Theme profile applied at the first vendor shell realize (zero
+application code changes)\&.
+.IP "\fBMOTIF_SCALE\fP" 10
+Display scale factor in permille (e.g. 2000 = 2x); consumed by the
+\fBXmScreen\fP resource \fBXmNscaleFactor\fP (see
+\fBXmScreen(3)\fP)\&.
+.IP "\fBMOTIF_A11Y_LOG\fP" 10
+When set to a writable file path, the accessibility bridge skeleton
+reports every widget creation (name, class, role, geometry) to that
+file as JSON lines\&.  Unset means no accessibility reporting and no
+behavior change\&.
+.SH FILES
+.IP "  \(bu" 3
+themes/default, themes/high\-contrast, themes/monochrome\-legacy
+(in the source tree) are the shipped example profiles
+.SH ERRORS
+.PP
+If the theme profile cannot be found or parsed, a warning is issued
+through \fBXmeWarning(3)\fP and the widget tree is left unchanged\&.
+.SH "SEE ALSO"
+XmChangeColor(3), XmGetColorCalculation(3), XmRenderTable(3)

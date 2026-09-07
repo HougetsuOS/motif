@@ -16,6 +16,7 @@ whether you need to do anything at all.
 | A downstream fork / packager | **Yes — build system** | at next repackage | §5 |
 | A vendor of an Xm fork with private-API patches | **Yes** | before Phase 6 | §6 |
 | Motif window manager (mwm) config or `.mwmrc` user | **No** | never | §2.5 |
+| An app that wants theming / HiDPI / a11y | **Opt-in** | whenever you want | §4.10 |
 
 The governing rule (plan §4) is **no API break**: every signature in
 `include/…/Xm.h`, `Mrm.h`, the uil grammar, the `mwm` RC file format, and the
@@ -49,15 +50,17 @@ antialiased shadows, alpha icons.  Two consequences to be aware of:
    libXm output pixel-for-pixel, budget for that commit.
 2. Colors remain identical — the palette still flows through
    `XmSetColorCalculation`/`XmChangeColor`; no theme engine sneaks in
-   behind your back.  Data-driven theming arrives as opt-in
-   `XmLoadTheme` (plan §7.1), not as a behavior change.
+   behind your back.  Data-driven theming landed as opt-in `XmLoadTheme`
+   (§4.10 below; `MOTIF_THEME` env to enable, unset changes nothing).
 
 ### 2.3 Build-system notes for application developers
 
 - `libXm` now embeds the `XmPlat` objects; you still link exactly
   `-lXm` plus the same X11/Xt/fontconfig/Xft/jpeg/png libraries as before.
-- No new external dependency was added in Phases 0–1.  Phase 6 will add
-  cairo (+pixman) at link time; that change will be announced in this guide.
+- Phase 6 added cairo at link time (default build; `--disable-cairo-render`
+  keeps the core-Xlib backend without it).  Link line unchanged otherwise.
+- Phase 7 added `tools/gate/p7-memory-gate.sh` (test-only; never in the
+  libXm dependency graph).
 
 ### 2.4 UIL / Mrm users
 
@@ -301,6 +304,39 @@ The public `Atom` type in callback structs is unchanged.
 [ ] Widget compiles against the c89 and c99 gates (see §5.2)
 ```
 
+### 4.10 Theming, HiDPI and accessibility (opt-in, additive)
+
+Phase 6/7 plus the §7 workstreams added three opt-in surfaces.  None of
+them changes existing behavior; all are additive public API.
+
+**Theming (§7.1).**  `XmLoadTheme (shell, name)` merges a theme profile
+into the shell's screen resource database and re-applies the palette
+through `XmChangeColor` (derived colors stay behind
+`XmSetColorCalculation`).  Theme files are ordinary Xrm resource files
+looked up in `$XDG_CONFIG_HOME/motif/themes/<name>` then
+`${XDG_DATA_DIRS:-/usr/share}/motif/themes/<name>`.  Three profiles ship
+in the tree (`themes/`): `default`, `high-contrast`,
+`monochrome-legacy`.  Applications get theming with zero code changes by
+setting `MOTIF_THEME=<name>` in the environment (applied at the first
+vendor-shell realize); calling `XmLoadTheme` yourself gives explicit
+control.  Colors set by a theme flow through the normal color
+calculation — nothing bypasses your palette code.
+
+**HiDPI (§7.2).**  `XmScreen` gained `XmNscaleFactor` (int, permille;
+1000 = 1×).  Default resolution order: `MOTIF_SCALE` env, `Xft.dpi`
+heuristic, 1000.  The Xft font seam scales rendition point/pixel sizes,
+so text (and text-driven geometry) follows the factor for render-table
+fonts.  Core-font `fontList`s are server-side bitmaps and do not scale —
+move to render tables (`XmNrenderTable`, `XmRendition*`) for scalable
+text.  No per-monitor support on the 2.x line (per plan).
+
+**Accessibility (§7.3).**  The bridge skeleton registers on
+`XtHooksOfDisplay` and reports widget creates (name, class, role,
+geometry) as JSON lines to the file named by `MOTIF_A11Y_LOG`.  Roles
+derive from the class hierarchy; the planned `XmA11yRole` constraint
+resource and the ATSPI D-Bus transport are follow-ups behind the same
+seam.  Apps that set nothing see no behavior change. 
+
 ## 5. Downstream forks and packagers
 
 ### 5.1 Build
@@ -319,6 +355,7 @@ Run these from the tree root; both are cheap and are the contract:
 
 ```sh
 tools/gate/p1-draw-gate.sh          # 0 violations required
+tools/gate/p7-memory-gate.sh        # headless prim verification; no X needed
 tools/gate/screenshot-harness.sh    # renders + diffs; needs Xvfb, xwd
 ```
 
@@ -374,6 +411,7 @@ phases land.
 | 5 — atoms+DnD+mwm | done | apps: nothing; XmInternAtom/XmGetAtomName are now wrappers over the contract (same signatures). lib/Xm and clients/mwm: interning via `_XmPlatInternAtomRaw`, property I/O via `_XmPlatChange/Get/DeleteProperty`, WM/DnD messages via `_XmPlatSendClientMessage` | §4.8 |
 | 6 — cairo backend | done (default; `--disable-cairo-render` keeps core-Xlib) | apps: nothing — the render backend swapped under the frozen contract; custom drawing done against `_XmPlatDraw*` prims keeps working on both render variants | §4 rewrite |
 | 7 — headless test backend | done | apps: nothing; CI can now verify the render contract without an X server (`tools/gate/p7-memory-gate.sh`) | — |
+| 8 — theming/HiDPI/a11y (§7) | done (`1d24e49`) | opt-in only: `XmLoadTheme`/`MOTIF_THEME`, `XmNscaleFactor`/`MOTIF_SCALE`, `MOTIF_A11Y_LOG`; existing apps unchanged | §4.10 |
 
 ## 8. FAQ
 
@@ -390,5 +428,18 @@ A: Within 2.3.x, yes.  A rebuild is recommended (not required) to pick up
 the bug fixes that rode along (DataF off-by-one, DropDown switch bug, etc).
 
 **Q: Where is the render backend selected?**
-A: Link time, inside libXm.  There is exactly one implementation at any
-moment (plan §2.2 rule 1).  Applications never choose.
+A: Build time, inside libXm — cairo by default, core-Xlib behind
+`--disable-cairo-render`.  There is exactly one implementation compiled
+in at any moment (plan §2.2 rule 1 as amended; see doc/phase6-notes.md).
+Applications never choose.
+
+**Q: How do I theme my app without touching its code?**
+A: `MOTIF_THEME=high-contrast ./myapp` (theme file from the XDG search
+path), or call `XmLoadTheme (toplevel, "high-contrast")` yourself.
+Theme files are plain Xrm resource files.
+
+**Q: Why doesn't my app scale at `MOTIF_SCALE=2000`?**
+A: The scale applies to Xft-based render-table fonts.  If your widgets
+use core-font `fontList`s (e.g. `fixed`), those are server-side bitmaps
+with no scalable source — switch to `XmNrenderTable` with an Xft
+rendition.
